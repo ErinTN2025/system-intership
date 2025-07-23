@@ -42,7 +42,7 @@ Công thức cần nhớ:
   - 192.168.2.254 : địa chỉ host cuối
   - 192.168.2.255 : địa chỉ broadcast
 
-**b\)**192.168.12.0/24 mượn 3 bit
+**b\)** 192.168.12.0/24 mượn 3 bit
 - Số subnet có thể có: 2<sup>3</sup>
 - Số host trên mỗi subnet: 2<sup>8-3</sup>
 - Địa chỉ mạng có octet thứ 4 là bội số của 32(octet này bị mượn 3 bit)
@@ -73,7 +73,7 @@ Công thức cần nhớ:
   - 192.168.2.254 : địa chỉ host cuối
   - 192.168.2.255 : địa chỉ broadcast
 
-**c\)**172.16.2.0/24 mượn 2 bit
+**c\)** 172.16.2.0/24 mượn 2 bit
 - Số subnet có thể có: 2<sup>2</sup> = 4
 - Số host trên mỗi subnet: 2<sup>8-2</sup>
 - Địa chỉ mạng có octet thứ 4 là bội số của 64(octet này bị mượn 2 bit)
@@ -104,33 +104,64 @@ Công thức cần nhớ:
   - 172.16.2.254 : địa chỉ host cuối
   - 172.16.2.255 : địa chỉ broadcast
 
-**d\)**172.16.0.0/16 mượn 3 bit
+**d\)** 172.16.0.0/16 mượn 3 bit
 - Số subnet có thể có: 2<sup>3</sup> = 8
 - Số host trên mỗi subnet: 2<sup>13</sup>
 - Địa chỉ mạng có octet thứ 3 là bội số của 32(octet này bị mượn 3 bit)
-  - 192.168.2.0 : địa chỉ mạng
-  - 192.168.2.1 : địa chỉ host đầu
+  - 172.16.0.0 : địa chỉ mạng
+  - 172.16.0.1 : địa chỉ host đầu
 
     .......
 
-  - 192.168.2.62 : địa chỉ host cuối
-  - 192.168.2.63 : địa chỉ broadcast
+  - 172.16.31.254 : địa chỉ host cuối
+  - 172.16.31.255 : địa chỉ broadcast
   
 
-  - 192.168.2.64 : địa chỉ mạng
-  - 192.168.2.65 : địa chỉ host đầu
+  - 172.16.32.0 : địa chỉ mạng
+  - 172.16.32.1 : địa chỉ host đầu
 
     .......
 
-  - 192.168.2.126 : địa chỉ host cuối
-  - 192.168.2.127 : địa chỉ broadcast
+  - 172.16.63.254 : địa chỉ host cuối
+  - 172.16.63.255 : địa chỉ broadcast
     
     **................................**
 
-  - 192.168.2.192 : địa chỉ mạng
-  - 192.168.2.193 : địa chỉ host đầu
+  - 172.16.224.0 : địa chỉ mạng
+  - 172.16.224.1 : địa chỉ host đầu
 
     .......
 
-  - 192.168.2.254 : địa chỉ host cuối
-  - 192.168.2.255 : địa chỉ broadcast
+  - 172.16.224.254 : địa chỉ host cuối
+  - 172.16.224.255 : địa chỉ broadcast
+
+**e\)** 172.16.0.0/16 mượn 12 bit
+- Số subnet có thể có: 2<sup>4</sup> = 16 
+- Số host trên mỗi subnet: 2<sup>4</sup>
+- Địa chỉ mạng có octet thứ 4 là bội số của 16(octet này bị mượn 4 bit)
+  - 172.16.0.0 : địa chỉ mạng
+  - 172.16.0.1 : địa chỉ host đầu
+
+    .......
+
+  - 172.16.0.14 : địa chỉ host cuối
+  - 172.16.0.15 : địa chỉ broadcast
+  
+
+  - 172.16.0.16 : địa chỉ mạng
+  - 172.16.0.17 : địa chỉ host đầu
+
+    .......
+
+  - 172.16.0.31 : địa chỉ host cuối
+  - 172.16.0.32 : địa chỉ broadcast
+    
+    **................................**
+
+  - 172.16.0.240 : địa chỉ mạng
+  - 172.16.0.241 : địa chỉ host đầu
+
+    .......
+
+  - 172.16.0.254 : địa chỉ host cuối
+  - 172.16.0.255 : địa chỉ broadcast
