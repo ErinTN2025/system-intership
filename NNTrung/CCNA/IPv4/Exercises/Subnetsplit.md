@@ -299,6 +299,8 @@ thử mượn bao nhiêu bit là phù hợp:
 
 m = 2 và n = 1 là tối ưu nhất. Vậy ta mượn 1 bit mạng với 2<sup>1</sup> = 172.16.5.248 và 172.16.5.252 để gán cho 2 liên kết serial.
 
+![altimage](..\Images\4.6.2.png)
+
 ## 4.6.3 
 
 **a\)** 192.168.1.130/29 
