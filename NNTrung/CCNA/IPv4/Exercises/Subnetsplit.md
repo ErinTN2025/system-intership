@@ -261,7 +261,7 @@ Công thức cần nhớ:
   
 ## 4.6.2 Cho mạng 172.16.5.0/24
 
-![altimage](..\Images\bt4.6.2.png)
+![altimage](../Images/bt4.6.2.png)
 
 Xét mạng nhiều host nhất có 78 host  và 5 host thêm.
 Ta cần giải hệ:
@@ -299,7 +299,7 @@ thử mượn bao nhiêu bit là phù hợp:
 
 m = 2 và n = 1 là tối ưu nhất. Vậy ta mượn 1 bit mạng với 2<sup>1</sup> = 172.16.5.248 và 172.16.5.252 để gán cho 2 liên kết serial.
 
-![altimage](..\Images\4.6.2.png)
+![altimage](../Images/4.6.2.png)
 
 ## 4.6.3 
 

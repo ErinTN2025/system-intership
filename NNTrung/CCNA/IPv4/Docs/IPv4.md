@@ -12,8 +12,8 @@
 - **Nhược điểm:** Không được tích hợp sẵn bảo mật
 - Số lượng địa chỉ giới hạn khoảng 4,3 tỷ thiết bị. Do số lượng địa chỉ giới hạn, IPv4 đang dần bị thay thế bởi IPv6.
 
-![alt text](..\Images\IPstructure.png)
-![alt text](..\Images\IP_structure2.png)
+![alt text](../Images/IPstructure.png)
+![alt text](../Images/IP_structure2.png)
 
 - **Đặt địa chỉ IP phải tuân theo các quy tắc sau:**
   - Các bit phần mạng không được phép đồng thời bằng 0.
@@ -39,20 +39,20 @@
 - Bit đầu của một lớp A luôn được giữ là 0 nên dải địa chỉ 1.0.0.0 -> 127.0.0.0. Tuy nhiên 127.0.0.0 được giữ làm mạng loopback nên dải sử dụng được từ 1.0.0.0 đến 126.0.0.0 (126 mạng)
 - Phần host có 24 bit ( 3 octet) nên mỗi mạng lớp A có (2<sup>24</sup>-2) host.
 
-![Cấu trúc địa chỉ lớp A](..\Images\ClassAstructure.png)
+![Cấu trúc địa chỉ lớp A](../Images/ClassAstructure.png)
 ### 4.2\) Lớp B
 - Địa chỉ lớp B sử dụng 2 octet đầu làm phần mạng, 2 octet sau làm phần host.
 - Hai bit đầu của một địa chỉ lớp B luôn được giữ là 1 0 nên dải địa chỉ 128.0.0.0 -> 191.255.0.0 , có tất cả 2<sup>14</sup> mạng trong lớp B.
 - Phần host có 16 bit, một mạng lớp B có 2<sup>16</sup>-2 host.
 
-![ClassB-Structure](..\Images\ClassB-structure.png)
+![ClassB-Structure](../Images/ClassB-structure.png)
 ### 4.3\) Lớp C
 - Địa chỉ lớp C sử dụng 3 octet đầu làm phần mạng, 1 octet sau làm phần host.
 - Ba bit đầu của lớp C luôn được giữ là 1 1 0. Do đó các địa chỉ lớp C gồm 192.0.0.0 đến 223.255.255.0
 - Có tất cả 2<sup>21</sup> mạng trong lớp C
 - Phần host có 8 bit, một mạng lớp C có 2<sup>8</sup>-2 = 254 host. 
 
-![alt text](..\Images\ClassC-Structure.png)
+![alt text](../Images/ClassC-Structure.png)
 ### 4.4\) Lớp D
 - Dải địa chỉ: 224.0.0.0 đến 239.255.255.255
   - Dùng làm địa chỉ Multicast.
@@ -88,7 +88,7 @@ Các địa chỉ IPv1, IPv2 và IPv3 có tồn tại nhưng:
 
 - **IP Private**: là địa chỉ IP được sử dụng trong các mạng nội bộ (LAN) như trong gia đình, công ty hoặc trường học. Các địa chỉ này không thể truy cập trực tiếp từ Internet và được dùng để giao tiếp giữa các thiết bị trong cùng một mạng nội bộ.
 
-![altimage](..\Images\Public-and-Private-IP-Addresses.jpg)
+![altimage](../Images/Public-and-Private-IP-Addresses.jpg)
 ## 7. Multicast và Broadcast
 
 **7.1\) Broadcast**
@@ -138,7 +138,7 @@ Ví dụ khi máy có địa chỉ IP là 192.168.2.1 truyền tin đến 255.25
 
 Để có thể chia nhỏ một mạng lớn thành nhiều mạng con bằng nhau, người ta thực hiện mượn thêm một số bit bên phần host để làm phần mạng, các bit mượn này được gọi là cac bit subnet. Tùy thuộc vào số bit subnet mà ta có được các số lượng mạng con khác nhau với các kích cỡ khác nhau.
 
-![alt text](..\Images\Subnet_description.png)
+![alt text](../Images/Subnet_description.png)
 
 Chúng ta có thêm phần subnet ở giữa phần Network và phần host.
 
