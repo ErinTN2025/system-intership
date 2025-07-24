@@ -13,7 +13,7 @@ Công thức cần nhớ:
 ## 4.6.1
 **a\)** 192.168.2.0/24 mượn 5 bit.
 - Số subnet có thể có = 2<sup>5</sup> 
-- Số host trên mỗi subnet: 2<sup>8-5</sup>
+- Số host trên mỗi subnet: 2<sup>8-5</sup>-2
 - Địa chỉ mạng có octet thứ 4 là bội số của 8(octet này bị mượn 5 bit)
   - 192.168.2.0 : địa chỉ mạng
   - 192.168.2.1 : địa chỉ host đầu
@@ -44,7 +44,7 @@ Công thức cần nhớ:
 
 **b\)** 192.168.12.0/24 mượn 3 bit
 - Số subnet có thể có: 2<sup>3</sup>
-- Số host trên mỗi subnet: 2<sup>8-3</sup>
+- Số host trên mỗi subnet: 2<sup>8-3</sup>-2
 - Địa chỉ mạng có octet thứ 4 là bội số của 32(octet này bị mượn 3 bit)
   - 192.168.2.0 : địa chỉ mạng
   - 192.168.2.1 : địa chỉ host đầu
@@ -75,7 +75,7 @@ Công thức cần nhớ:
 
 **c\)** 172.16.2.0/24 mượn 2 bit
 - Số subnet có thể có: 2<sup>2</sup> = 4
-- Số host trên mỗi subnet: 2<sup>8-2</sup>
+- Số host trên mỗi subnet: 2<sup>8-2</sup>-2
 - Địa chỉ mạng có octet thứ 4 là bội số của 64(octet này bị mượn 2 bit)
   - 172.16.2.0 : địa chỉ mạng
   - 172.16.2.1 : địa chỉ host đầu
@@ -106,7 +106,7 @@ Công thức cần nhớ:
 
 **d\)** 172.16.0.0/16 mượn 3 bit
 - Số subnet có thể có: 2<sup>3</sup> = 8
-- Số host trên mỗi subnet: 2<sup>13</sup>
+- Số host trên mỗi subnet: 2<sup>13</sup>-2
 - Địa chỉ mạng có octet thứ 3 là bội số của 32(octet này bị mượn 3 bit)
   - 172.16.0.0 : địa chỉ mạng
   - 172.16.0.1 : địa chỉ host đầu
@@ -137,7 +137,7 @@ Công thức cần nhớ:
 
 **e\)** 172.16.0.0/16 mượn 12 bit
 - Số subnet có thể có: 2<sup>4</sup> = 16 
-- Số host trên mỗi subnet: 2<sup>4</sup>
+- Số host trên mỗi subnet: 2<sup>4</sup>-2
 - Địa chỉ mạng có octet thứ 4 là bội số của 16(octet này bị mượn 4 bit)
   - 172.16.0.0 : địa chỉ mạng
   - 172.16.0.1 : địa chỉ host đầu
@@ -168,7 +168,7 @@ Công thức cần nhớ:
 
 **f\)** 10.0.0.0/8 mượn 5 bit.
   - Số subnet có thể có: 2<sup>5</sup>
-  - Số host trên mỗi subnet: 2<sup>19</sup>
+  - Số host trên mỗi subnet: 2<sup>19</sup>-2
   - Địa chỉ mạng có octet thứ 2 là bội số của 8(octet này bị mượn 5 bit)
   - 10.0.0.0 : địa chỉ mạng
   - 10.0.0.1 : địa chỉ host đầu
@@ -199,7 +199,7 @@ Công thức cần nhớ:
 
 **g\)** 10.0.0.0/8 mượn 10 bit
   - Số subnet có thể có: 2<sup>2</sup>
-  - Số host trên mỗi subnet: 2<sup>14</sup>
+  - Số host trên mỗi subnet: 2<sup>14</sup>-2
   - Địa chỉ mạng có octet thứ 3 là bội số của 64(octet này bị mượn 2 bit)
   - 10.0.0.0 : địa chỉ mạng
   - 10.0.0.1 : địa chỉ host đầu
@@ -230,7 +230,7 @@ Công thức cần nhớ:
 
 **h\)** 10.0.0.0/8 mượn 18 bit
   - Số subnet có thể có: 2<sup>2</sup>
-  - Số host trên mỗi subnet: 2<sup>12</sup>
+  - Số host trên mỗi subnet: 2<sup>12</sup>-2
   - Địa chỉ mạng có octet thứ 4 là bội số của 64(octet này bị mượn 2 bit)
   - 10.0.0.0 : địa chỉ mạng
   - 10.0.0.1 : địa chỉ host đầu
