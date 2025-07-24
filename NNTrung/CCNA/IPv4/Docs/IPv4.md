@@ -14,7 +14,8 @@
 
 ![alt text](..\Images\IPstructure.png)
 ![alt text](..\Images\IP_structure2.png)
-- Đặt địa chỉ IP phải tuân theo các quy tắc sau:
+
+- **Đặt địa chỉ IP phải tuân theo các quy tắc sau:**
   - Các bit phần mạng không được phép đồng thời bằng 0.
   - Nếu các bit phần host đồng thời bằng 0, ta có một địa chỉ mạng.
   - Nếu các bit phần host đồng thời bằng 1, ta có một địa chỉ broadcast
