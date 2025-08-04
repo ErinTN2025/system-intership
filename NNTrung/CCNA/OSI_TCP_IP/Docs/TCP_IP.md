@@ -7,6 +7,7 @@
   - [2.2. Phần hai](#22-phan-hai)
 
 ## Khái quát về mô hình TCP/IP
+![alt](../Images/TCP_IP.png)
 - TCP/IP(Transmission Control Protocol/ Internet Protocol): là một framework được sử dụng để mô hình quá trình giao tiếp trong một mạng máy tính hay tổ chức các giao thức truyền thông được sử dụng trên Internet và các bộ máy tính tương tự theo các tiêu chí, chức năng.
 - Hai giao thức nền tảng của bộ giao thức là TCP và IP:
 - TCP: là một tiêu chuẩn cộng đồng cho phép các chương trình ứng dụng và thiết bị máy tính trao đổi dữ liệu qua mạng. Giao thức này được thiết kế để truyền các gói dữ liệu trên Internet và đảm bảo dữ liệu được giao nhận thành công giữa các thiết bị trong mạng.
@@ -30,6 +31,8 @@
 
 
   ## 4 Tầng của TCP/IP  
+  ![img](../Images/LayerTCP.png)
+  
   ### 4.1 Tầng truy cập mạng (Network Access Layer)
   - Tầng này tương ứng với 2 tầng Data Link và Physical trong mô hình OSI, tầng truy cập mạng trong mô hình TCP/IP đảm bảo việc gửi dữ liệu trên phương tiện vật lý của mạng. Nó sẽ định nghĩa data được truyền đi như thế nào từ ứng dụng này qua đường truyền vật lý tới ứng dụng khác, xử lý quá trình vật lý gửi và nhận dữ liệu.
   - **Chức năng chính**:
@@ -102,3 +105,42 @@
       - Cờ thứ 4 - Reset (RST). Cờ RST là cờ được sử dụng khi 1 Segment đến mà không được dự định dùng trong kết nối hiện thời. Nói cách khác, nếu ta gửi 1 gói tin đến 1 máy chủ để thiết lập kết nối và không có dịch vụ nào chờ đợi để trả lời yêu cầu, máy chủ sẽ tự động gửi 1 gói tin trả lời với cờ RST được bật. Điều này chỉ ra rằng máy chủ đã thiết lập lại kết nối.
       - Cờ thứ 5 - SYNchronisation. Cờ thứ 5 trong TCP Flag Options có lẽ thường được sử dụng nhất trong truyền thông sử dụng TCP. Như chúng ta đã biết, cờ SYN được sử dụng để khởi tạo quá trình bắt tay 3 bước trong TCP.
       ![img](../Images/tcpheader.png)
+
+  - **Workflow TCP/IP**
+    - TCP/IP chia các tác vụ truyền thông thành các tầng nhằm chuẩn hóa quá trình truyền dữ liệu, giúp các nhà cung cấp phần cứng và phần mềm không cần phải tự xử lý từng bước. Các gói dữ liệu phải đi qua bốn tầng trước khi được thiết bị đích nhận, sau đó TCP/IP sẽ đi qua các tầng theo thứ tự ngược lại để khôi phục lại thông điệp ban đầu.
+
+    - Là một giao thức dựa trên kết nối, TCP thiết lập và duy trì kết nối giữa các ứng dụng hoặc thiết bị cho đến khi việc trao đổi dữ liệu hoàn tất. Nó xác định cách chia nhỏ thông điệp gốc thành các gói tin, đánh số và sắp xếp lại các gói tin, sau đó gửi chúng đến các thiết bị khác trong mạng như bộ định tuyến (router), cổng bảo mật (security gateway), và switch, rồi tiếp tục đến đích cuối. TCP cũng gửi và nhận các gói từ tầng mạng, xử lý việc truyền lại các gói bị mất, quản lý luồng dữ liệu, và đảm bảo tất cả các gói đều đến được nơi nhận.
+
+    - Một ví dụ thực tế cho cách thức hoạt động này là khi một email được gửi thông qua SMTP từ máy chủ email. Đầu tiên, tầng TCP tại máy chủ sẽ chia nhỏ thông điệp thành các gói tin, đánh số chúng, và chuyển tiếp xuống tầng IP, tầng này sẽ vận chuyển từng gói đến máy chủ email đích. Khi các gói tin đến nơi, chúng sẽ được chuyển ngược lại lên tầng TCP để sắp xếp thành thông điệp gốc và bàn giao cho máy chủ email, nơi sẽ đưa email vào hộp thư đến của người dùng.
+
+    - TCP/IP sử dụng cơ chế "bắt tay ba bước" (three-way handshake) để thiết lập kết nối giữa thiết bị và máy chủ. Cơ chế này đảm bảo rằng nhiều kết nối TCP socket có thể được truyền song song hai chiều. Cả thiết bị và máy chủ phải đồng bộ và xác nhận các gói tin trước khi việc truyền thông bắt đầu, sau đó họ có thể thỏa thuận, phân tách và truyền các kết nối TCP socket.
+
+  ![image](../Images/WorkflowTCPIP.png)
+
+    - **So sánh TCP/IP và OSI model**
+      - TCP/IP và OSI là hai mô hình giao thức mạng truyền thông được sử dụng rộng rãi nhất hiện nay.
+      - OSI là một mô hình khái niệm, không được sử dụng trực tiếp trong thực tế để truyền dữ liệu. Thay vào đó, nó cung cấp định nghĩa về cách các ứng dụng có thể giao tiếp qua mạng.
+      - TCP/IP lại là một mô hình thực tiễn, được triển khai rộng rãi để thiết lập các kết nối và truyền thông mạng.
+      - Các giao thức trong TCP/IP định ra các tiêu chuẩn đã xây dựng nên Internet, trong khi mô hình OSI chỉ đưa ra hướng dẫn về cách thức giao tiếp nên thực hiện như thế nào. Do đó, TCP/IP là mô hình có tính ứng dụng thực tế cao hơn.
+      - Mô hình OSI có 7 Layers gồm: Application Layer, Presentation Layer, Session Layer, Transport Layer, Network Layer, Data-Link Layer, Physical Layer
+      - *_Điểm giống nhau_*
+        - Cả hai đều là mô hình logic.
+        - Cả hai đều định nghĩa các tiêu chuẩn trong mạng.
+        - Đều chia quá trình truyền thông mạng thành các tầng riêng biệt.
+        - Đều cung cấp khung chuẩn để tạo và triển khai các tiêu chuẩn mạng và thiết bị.
+        - Cho phép thiết bị của các nhà sản xuất khác nhau có thể tương thích và hoạt dộng cùng nhau.
+      - *_Điểm khác nhau*_
+
+        | Tiêu chí          | TCP/IP                                | OSI                                   |
+        |-------------------|---------------------------------------|---------------------------------------|
+        | Số tầng          | 4 tầng                                | 7 tầng                               |
+        | Tầng ứng dụng    | Gộp chung Application, Presentation, Session | Tách riêng Application, Presentation, Session |
+        | Tầng mạng        | Gộp Physical + Data Link              | Tách riêng Physical và Data Link      |
+        | Cách phát triển  | Giao thức được phát triển sau đó mới xây dựng mô hình          | Mô hình trước, sau đó phát triển giao thức cho từng tầng        |
+        | Kích thước header| 20 byte                               | 5 byte                               |
+        | Hướng tiếp cận   | Ngang (thực tiễn, linh hoạt)                  | Dọc (học thuật)                      |
+        | Mục tiêu         | Kết nối hệ các loại máy tính khác nhau          | Chuẩn hóa thiết bị như switch, router, bo mạch chủ, v..v. mạng               |
+        | Tính chất        | Dựa trên giao thức thực tế            | Dựa trên chức năng của từng tầng      |
+
+        ![img](../Images/osivstcp.png)
+            
