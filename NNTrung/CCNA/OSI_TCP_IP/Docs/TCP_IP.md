@@ -159,7 +159,8 @@
       - Đều chia quá trình truyền thông mạng thành các tầng riêng biệt.
       - Đều cung cấp khung chuẩn để tạo và triển khai các tiêu chuẩn mạng và thiết bị.
       - Cho phép thiết bị của các nhà sản xuất khác nhau có thể tương thích và hoạt dộng cùng nhau.
-      - *_Điểm khác nhau*_
+    
+    - *_Điểm khác nhau_*
 
     | Tiêu chí          | TCP/IP                                | OSI                                   |
     |-------------------|---------------------------------------|---------------------------------------|
