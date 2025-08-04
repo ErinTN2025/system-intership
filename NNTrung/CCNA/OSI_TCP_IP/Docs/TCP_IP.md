@@ -148,17 +148,17 @@
     - **4.4 Tầng Application**
     
   ## 6. So sánh TCP/IP và OSI model
-      - TCP/IP và OSI là hai mô hình giao thức mạng truyền thông được sử dụng rộng rãi nhất hiện nay.
-      - OSI là một mô hình khái niệm, không được sử dụng trực tiếp trong thực tế để truyền dữ liệu. Thay vào đó, nó cung cấp định nghĩa về cách các ứng dụng có thể giao tiếp qua mạng.
-      - TCP/IP lại là một mô hình thực tiễn, được triển khai rộng rãi để thiết lập các kết nối và truyền thông mạng.
-      - Các giao thức trong TCP/IP định ra các tiêu chuẩn đã xây dựng nên Internet, trong khi mô hình OSI chỉ đưa ra hướng dẫn về cách thức giao tiếp nên thực hiện như thế nào. Do đó, TCP/IP là mô hình có tính ứng dụng thực tế cao hơn.
-      - Mô hình OSI có 7 Layers gồm: Application Layer, Presentation Layer, Session Layer, Transport Layer, Network Layer, Data-Link Layer, Physical Layer
-      - *_Điểm giống nhau_*
-        - Cả hai đều là mô hình logic.
-        - Cả hai đều định nghĩa các tiêu chuẩn trong mạng.
-        - Đều chia quá trình truyền thông mạng thành các tầng riêng biệt.
-        - Đều cung cấp khung chuẩn để tạo và triển khai các tiêu chuẩn mạng và thiết bị.
-        - Cho phép thiết bị của các nhà sản xuất khác nhau có thể tương thích và hoạt dộng cùng nhau.
+    - TCP/IP và OSI là hai mô hình giao thức mạng truyền thông được sử dụng rộng rãi nhất hiện nay.
+    - OSI là một mô hình khái niệm, không được sử dụng trực tiếp trong thực tế để truyền dữ liệu. Thay vào đó, nó cung cấp định nghĩa về cách các ứng dụng có thể giao tiếp qua mạng.
+    - TCP/IP lại là một mô hình thực tiễn, được triển khai rộng rãi để thiết lập các kết nối và truyền thông mạng.
+    - Các giao thức trong TCP/IP định ra các tiêu chuẩn đã xây dựng nên Internet, trong khi mô hình OSI chỉ đưa ra hướng dẫn về cách thức giao tiếp nên thực hiện như thế nào. Do đó, TCP/IP là mô hình có tính ứng dụng thực tế cao hơn.
+    - Mô hình OSI có 7 Layers gồm: Application Layer, Presentation Layer, Session Layer, Transport Layer, Network Layer, Data-Link Layer, Physical Layer
+    - *_Điểm giống nhau_*
+      - Cả hai đều là mô hình logic.
+      - Cả hai đều định nghĩa các tiêu chuẩn trong mạng.
+      - Đều chia quá trình truyền thông mạng thành các tầng riêng biệt.
+      - Đều cung cấp khung chuẩn để tạo và triển khai các tiêu chuẩn mạng và thiết bị.
+      - Cho phép thiết bị của các nhà sản xuất khác nhau có thể tương thích và hoạt dộng cùng nhau.
       - *_Điểm khác nhau*_
 
     | Tiêu chí          | TCP/IP                                | OSI                                   |
