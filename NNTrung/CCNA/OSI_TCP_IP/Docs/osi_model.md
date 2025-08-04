@@ -13,7 +13,8 @@
     2.5 [Session Layer](#25-session-layer)  
     2.6 [Presentation Layer](#26-presentation-layer)  
     2.7 [Application Layer](#27-application-layer)  
-3. [Workflow với mô hình OSI](#how-does-osi-model-work)
+3. [Workflow với mô hình OSI](#how-does-osi-model-work)                                                           
+4. [Link Tham khảo](#link-tham-khảo)
 
 ## 1. Khái quát về mô hình OSI
 
@@ -237,3 +238,8 @@
 - Tầng phiên duy trì hoạt động cho tới khi quá trình nhận email được hoàn tất.
 - Tầng Presentation giải mã và định dạng lại email. Tầng ứng dụng phát email tới máy người nhận, email sẽ xuất hiện ở inbox.
 ---
+## Link Tham khảo
+- https://www.cloudflare.com/learning/ddos/glossary/open-systems-interconnection-model-osi/
+- https://www.imperva.com/learn/application-security/osi-model/
+- https://bytebytego.com/guides/guides/what-is-osi-model/
+- https://studyopedia.com/computer-networks/application-layer-in-osi-model/
