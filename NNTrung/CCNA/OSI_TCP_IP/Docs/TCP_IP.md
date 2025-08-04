@@ -172,5 +172,5 @@
     | Mục tiêu          | Kết nối hệ các loại máy tính khác nhau          | Chuẩn hóa thiết bị như switch, router, bo mạch chủ, v..v. mạng               |
     | Tính chất         | Dựa trên giao thức thực tế            | Dựa trên chức năng của từng tầng      |
 
-        ![img](../Images/osivstcp.png)
+    ![imgtcp](../Images/osivstcp.png)
             
