@@ -113,6 +113,11 @@
 
     ![windowsize](../Images/Windowsize.png)
     
+    - Trường hợp không nhận được gói tin thứ 3, máy nhận sẽ gửi lại ACK = 3 là nó mong muốn nhận lại gói tin thứ 3 và thông báo windowsize bằng 2 vì nó chỉ còn 2 chỗ chống và đang bận xử lý các byte trc đó.
+
+    ![windowsize2](../Images/windowsize2.png)
+
+    ![windowsize3](../Images/windowsize3.png)
   - **Quy trình kết thúc kết nối**
   - Khi dữ liệu truyền dẫn kết thúc, giao thức TCP kết thúc kết nối giữa 2 thiết bị. Do đó, ta có quy trình 4 bước từ lúc thiết lập kết nối đến lúc hoàn thành quá trình truyền dẫn như sau:
     - Bước 1: Ứng dụng khách muốn kết thúc kết nối, vì vậy nó gửi một đoạn tin TCP với cờ FIN được đặt thành 1. Điều này là tín hiệu cho máy chủ biết rằng khách hàng muốn kết thúc kết nối.
