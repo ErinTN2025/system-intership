@@ -118,6 +118,8 @@
     ![windowsize2](../Images/windowsize2.png)
 
     ![windowsize3](../Images/windowsize3.png)
+
+    - Nhìn vào bức hình ta có thể dễ dàng mô tả, Đầu tiên bên Sender gửi 1 gói tin có source port là 1028, dest port là 23, Sequence number là 10: nó gửi 10 byte, ACK number = 1. Bên Receive sau khi nhận, nó đảo lại lần này source port là 23 , des port là 1028 do gửi ngược lại, Sequence number sẽ là 1 vì nó chỉ gửi 1 byte thông báo đã nhận. ACK lúc này sẽ là 11 vì nó thông báo đã nhận đc 10 gói tin mong muốn nhận tiếp từ byte thứ 11.
   - **Quy trình kết thúc kết nối**
   - Khi dữ liệu truyền dẫn kết thúc, giao thức TCP kết thúc kết nối giữa 2 thiết bị. Do đó, ta có quy trình 4 bước từ lúc thiết lập kết nối đến lúc hoàn thành quá trình truyền dẫn như sau:
     - Bước 1: Ứng dụng khách muốn kết thúc kết nối, vì vậy nó gửi một đoạn tin TCP với cờ FIN được đặt thành 1. Điều này là tín hiệu cho máy chủ biết rằng khách hàng muốn kết thúc kết nối.
