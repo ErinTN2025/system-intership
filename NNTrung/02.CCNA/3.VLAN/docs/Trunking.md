@@ -58,8 +58,4 @@ VLAN Trunking Protocol(VTP) là một giao thức do Cisco phát triển dùng �
 
 ![altimg](../images/vtpmodes.png)
 
-## Access Port và Trunk Port\
-### Access Port
-- Là một cổng Port trên Switch được cấu hình để kết nối với thiết bị đầu cuối( như PC, điện thoại IP, máy in) hoặc thiết bị không hỗ trợ VLAN tagging.
-- Nó chỉ thuộc một VLAN duy nhất và không gắn thẻ (tag) VLAN vào frame Ethernet khi gửi/nhận dữ liệu.
-- Mục đích: Kết nối thiết bị end-user vào một VLAN cụ thể, đảm bảo dữ liệu chỉ thuộc VLAN đó.
+## Access Port và Trunk Port
