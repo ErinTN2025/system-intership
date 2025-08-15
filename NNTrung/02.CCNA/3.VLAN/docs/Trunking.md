@@ -58,4 +58,108 @@ VLAN Trunking Protocol(VTP) là một giao thức do Cisco phát triển dùng �
 
 ![altimg](../images/vtpmodes.png)
 
-## Access Port và Trunk Port
+## 4. Access Port và Trunk Port
+### 4.1 Access Port
+- Access Port là cổng trên switch được cấu hình để kết nối với một thiết bị cuối (end device) như máy tính, máy in, hoặc điện thoại IP.
+- Access Port chỉ thuộc về một VLAN duy nhất và không gắn thẻ(tag) VLAN cho các khung dữ liệu(frame) mà nó gửi hoặc nhận.
+### 4.2 Trunk Port
+- Trunk Port là cổng trên switch được cấu hình để mang lưu lượng của nhiều VLAN(hoặc tất cả VLAN)
+- Trunk Port thường được sử dụng để kết nối giữa các switch hoặc giữa switch và router( trong trường hợp Router on a Stick).
+- Dữ liệu đi qua Trunk Port thường được gắn thẻ VLAN(tagged) để xác định VLAN nào mà khung dữ liệu thuộc về, trừ trường hợp của native VLAN.
+- Gửi dữ liệu: Khi Trunk Port gửi dữ liệu, nó gắn thẻ VLAN (VLAN tag) vào khung dữ liệu (theo chuẩn IEEE 802.1Q) để chỉ định VLAN mà dữ liệu thuộc về. Ngoại lệ là native VLAN, nơi dữ liệu được gửi ở dạng untagged.
+- Nhận dữ liệu: Trunk Port nhận dữ liệu từ các VLAN khác nhau, đọc thẻ VLAN để xác định VLAN tương ứng và chuyển tiếp dữ liệu đến đúng đích trong mạng.
+- Native VLAN: Là VLAN mà lưu lượng không được gắn thẻ (untagged) trên Trunk Port. Mặc định, native VLAN là VLAN 1, nhưng có thể được cấu hình khác.
+#### 4.2.1 Cấu hình cơ bản Access Port
+```plaintext
+Switch(config)#interface Fa0/1
+Switch(config-if)#switchport mode access
+Switch(config-if)#access vlan 10
+```
+#### 4.2.2 Cấu hình cơ bản Trunk Port
+```plaintext
+Switch(config)#interface Fa0/2
+Switch(config-if)#switchport mode trunk
+Switch(config-if)#switchport trunk allowed vlan 10,20,30
+Switch(config-if)#switchport trunk native vlan 1
+```
+
+- Trong môi trường thực tế, các giao thức như Dynamic Trunking Protocol (DTP) có thể tự động thương lượng chế độ Access hoặc Trunk, nhưng nên cấu hình thủ công để đảm bảo tính ổn định.
+## 5. STP (Spaning Tree Protocol)
+### 5.1 Nguyên nhân dẫn đến loop Layer 2
+- Trong hệ thống mạng việc đấu nối nhiều dây giữa các thiết bị lớp 2 nhằm tăng khả năng dự phòng khi có thiết bị hỏng đã không còn xa lạ, tuy nhiên việc này vô tình gây ra vòng lặp vô tận trên thiết bị lớp 2 hay còn được gọi là loop layer 2.
+#### 5.1.1 Vòng lặp Broadcast:
+  
+  ![alt](../images/broadcastloop.png)
+
+  - Vòng lặp broadcast (broadcast loop) xảy ra trong mạng khi các gói tin quảng bá (broadcast frame) bị truyền lặp lại vô hạn giữa các switch do thiết kế mạng tạo thành một vòng khép kín mà không có cơ chế chặn.
+  - **Giả sử rằng không có Switch nào trong mô hình này sử dụng giao thức STP( Spanning Tree Protocol)**: 
+  - Host A gửi 1 frame bằng địa chỉ Broadcast
+  - Frame đến cả SW1 và SW2 qua cồng Fa0/1
+  - SW1 chuyển gói frame qua cổng Fa0/2 ( Gói tin sẽ được gửi dưới dạng broad-cast ra tất cả các cổng còn lại trên đường dây Ethernet trừ cổng nhận tin.)
+  - Gói tin sẽ đến cổng Fa0/2 của SW2, SW2 tiếp tục đẩy gói tin ra cổng Fa0/1
+  -  Một lần nữa gói tin sẽ được đẩy đến cổng Fa0/1 của SW1 lần thứ 2. (Các dòng switch hiện tại có tốc độ xử lý rất nhanh do đó các gói tin lặp sẽ được nhân bản lên rất nhiều lần và đến 1 thời điểm switch sẽ bị tràn thậm chí là treo luôn cả con switch.)
+
+#### 5.1.2 Sự sai lệch của bảng MAC
+
+![qlti](../images/mactablemiss.png)
+
+- Host A muốn gửi 1 gói tin dạng unicast đến Host B, tuy nhiên Host B đã rời khỏi hệ thống mạng và trong bảng MAC không có địa chỉ MAC của Host B.
+- Gói tin sẽ đến được cổng Fa0/1 của cả 2 SW.
+- Do trong MAC của SW1 không có địa chỉ MAC của host B( do host B đã down) nên gói tin sẽ được tràn ra tất cả các cổng trừ cổng nhận gói tin và đến được cổng Fa0/2 của SW2
+- Vấn đề bắt đầu nảy sinh, SW2 không học được địa chỉ MAC của Host B nên nó tiếp tục tràn gói tin ra tất cả các cổng trừ cổng nhận gói tin. Một lần nữa gói tin lại đến cổng Fa0/1 của SW1 và bắt đầu xuất hiện loop-layer 2. Lúc này SW2 sẽ thay đổi địa chỉ MAC của Host A trong MAC-table của SW1 dẫn đến sai cổng.
+
+### 5.2 Giao thức Spanning Tree
+- Spanning Tree Protocol (STP) là một giao thức mạng hoạt động ở tầng liên kết dữ liệu(Data Link Layer- Layer 2) trong mô hình OSI, được thiết kế để ngăn chặn các vòng lặp(loop) trong mạng sử dụng các thiết bị chuyển mạch (Switch) hoặc cầu nối (bridge). STP đảm bảo rằng chỉ có một đường dẫn logic duy nhất giữa các nút mạng, loại bỏ các đường dẫn dư thừa để tránh hiện tượng "bão broadcast" (broadcast storm) lặp gói tin vô hạn. Giao thức được chuẩn hóa trong 802.1D
+#### 5.2.1 Gói tin BPDU
+- Khi switch bắt đầu khởi động, chúng sẽ liên tục gửi các gói tin BPDU cho nhau, gói tin BPDU này chứa các trường thông tin BID và chi phí đường đi giúp các switch bầu chọn và tính toán các câu trúc trong cây spanning tree.
+- Trong STP các switch sẽ liên lạc với nhau thông qua gói tin BPDU, sau đây là BPDU header.
+
+![alitfsd](../images/bpdu%20packet.png)
+
+#### 5.2.1.1 Bridge ID (BID)
+
+![altimge](../images/bridgeid.png)
+
+- BID là một trường có 8 bytes, nó gồm có 2 trường con là bridge priority và MAC address.
+- Bridge priority: bao gồm 2 bytes(16 bits) là độ ưu tiên bridge có giá trị từ 0-65.535. Độ ưu tiên bridge có giá trị mặc định là 32.768
+- MAC address có 6 bytes là địa chỉ gán cho Switch. Địa chỉ MAC trong BID sử dụng dạng Hexa.
+
+#### 5.2.2.2 Chi phí đường đi (Root Path cost)
+- Chi phí đường đi (path cost) được sử dụng để đánh giá đường đi từ các switch khác về switch root bridge (gốc trong cây). Chi phí STP càng thấp thì càng tốt
+
+![altimage](../images/pathcost.png)
+
+#### 5.2.2.3 Cơ chế hoạt động của STP
+**Thực hiện trình tự 4 bước**:
+- Bầu chọn Root Bridge
+- Bầu chọn Root Port
+- Bầu chọn Designated Port
+- Các port còn lại sẽ là block port
+
+![altimage](../images/spanningtree.png)
+
+- **Bầu chọn Root Bridge**
+  - Chọn ra Switch gốc, rễ trong cây spanning tree. Được coi như trung tâm của vạn vật, chịu trách nhiệm gửi các gói tin BPDU để duy trì giao thức STP(2s/ lần). Các switch còn lại chỉ có thể tiếp nhận, bổ sung thông tin vào trường BPDU và forward gói tin.
+  - Đầu tiên sẽ so sánh switch nào có trị số priority thấp nhất sẽ là Root-bridge. Trị số priority mặc định của switch đó là 32.678
+  - Nếu Priority được thiết lập như nhau, tiến hành so sánh địa chỉ MAC, Switch nào có MAC nhỏ nhất sẽ làm Root-Bridge. Địa chỉ MAC của mỗi thiết bị là duy nhất trên thế giới và không thể trùng được.
+  - Khi các thiết bị bắt đầu khởi động nó sẽ gửi gói tin BPDU một cách rất lộn xộn. Trong gói tin BPDU sẽ chứa thông tin của Root BID, Các bridge sẽ luôn đặt bridge ID của chính nó trong Sender BID.
+  - Giả sử ban đầu SW3 khởi động trước, nó sẽ gửi các gói tin BPDU và tự nhận mình là root bridge. Một lúc sau SW2 khởi động và cũng gửi các gói tin BPDU và cũng tự nhận chính mình mới là root bridge. Khi BPDU của nó đến được SW3 thì SW3 sẽ loại bỏ gói tin BPDU vì nó có BID thấp hơn(dựa trên đ/c MAC). Ngay lập tức SW3 sẽ gửi gói tin BPDU đến SW2 nhằm thông báo giả định ban đầu của nó là sai. Lúc này SW2 trở thành root bridge, nó bắt đầu gửi gói tin BPDU với root BID là 2, sender BID là 3.
+  - 1 thời gian sau SW1 khởi động và gửi gói tin BPDU đến SW2,SW3 tự nhận mình là root bridge. Lúc này SW2,SW3 sẽ nhường quyền root bridge cho SW1 do nó có trị số MAC thấp hơn.
+  - Các switch sẽ lắng nghe các gói tin BPDU từ các switch khác gửi tới, nó sẽ nhường quyền cho switch nào có trị số BID tốt hơn.
+- **Bầu chọn Root Port_RP - Cổng gốc**
+  - Sau khi các switch bầu chọn được root bridge, nó sẽ bắt đầu tiến hành bầu chọn Root Port dựa trên khái niệm chi phí đường đi. Cụ thể là các bridge theo dõi chi phí đường đi gốc, chi phí tích lũy của tất cả các liên kết đến bridge gốc. RP là port cung cấp đường về Root-bridge mà có tổng path-cost là nhỏ nhất.
+  - Ngoại trừ root bridge, các switch con còn lại sẽ phải bầu chọn 1 gốc root port. Path cost được tính theo chiều từ Root bridge đến Bridge đang xét theo nguyên tắc vào cộng, ra không cộng.
+  - SW1(root bridge) sẽ bắt đầu gửi gói tin BPDU chứa chi phí đường đi gốc là 0. Khi SW2 nhận được gói tin BPDU nó sẽ thêm vào chi phí đường đi của cổng Fa0/14 vào chi phí đường đi gốc chứa trong BPDU nhận. SW2 nhận chi phí đường đi gốc là 0 và thêm chi phí đường đi của cổng Fa0/14 là 19( các cổng kết nối ở đây đều là fastethernet có chi phí STP là 19) và thêm thông tin vào trường BPDU rồi gửi qua Fa0/16. Tương tự khi SW3 nhận gói tin từ SW2 nó sẽ tăng chi phí đường đi gốc thành 38( 19+19).
+  - SW2 sẽ tính toán và chọn cổng Fa0/14 làm root port với chi phí là 19. Tương tự SW3 sẽ chọn Fa0/14 làm root port do có chi phí STP thấp hơn cổng Fa0/16.
+  - Trong trường hợp nếu Path cost của các cổng là như nhau ra sẽ xét đến BID, rồi đến Port ID và cuối cùng là Port Number.
+
+  ![sfsad](../images/Rootportcal.png)
+
+- **Designated port_DP**
+  - Designated port là port cung cấp đường về root-bridge có tổng path cost nhỏ nhất trên phân đoạn mạng đang xét. Mỗi phân đoạn mạng đều phải có 1 cổng được chỉ định, có nhiệm vụ nhận và gửi lưu lượng dữ liệu đến phân đoạn mạng khác. DP là port cung cấp đường về Root-bridge trên phân đoạn mạng đang xét mà có tổng path-cost là nhỏ nhất.
+  - Tất cả các port của Root bridge là Designated port.
+  - Đối diện với Root port là Designated port
+
+  ![imgalt](../Images/designatedport.png)
+
+- **Các port còn lại sẽ là Block Port**    
