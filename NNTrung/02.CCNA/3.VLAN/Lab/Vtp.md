@@ -108,6 +108,7 @@ SW1>enable
 SW1#configure terminal
 SW1(config)#interface gig0/1
 SW1(config-if)#switchport mode trunk
+SW1(config-if)#switchport trunk encapsulation dot1q
 SW1(config-ip)#switchport trunk allowed vlan 1,10,20,30
 SW1(config-ip)#switchport trunk native vlan 1
 SW1(config-ip)#end
@@ -159,3 +160,9 @@ SW1#write memory
 - PC0 thuộc switch server ping to PC2 thuộc switch clien:
 
 ![sdasa](../images/pingkiemtra.png)
+
+### Phần bổ sung
+- `SW1(config-if)# switchport mode allowed vlan 10`: Xoá và ghi đè
+- `SW1(config-if)# switchport mode allowed add vlan 10`: Ghi thêm vào nếu muốn đổi thêm remove để xoá
+- Port Security là một tính năng trên switch Cisco được sử dụng để giới hạn và kiểm soát các địa chỉ MAC được phép truy cập qua một cổng cụ thể. Khi được cấu hình, port security giúp ngăn chặn truy cập trái phép bằng cách giới hạn số lượng địa chỉ MAC có thể dược học hoặc cấu hình tĩnh trên cổng.
+- Giới hạn số lượng MAC address: Mặc định, port security cho phép tối đa 1 địa chỉ MAC được học trên cổng (maximum 1). Nếu số lượng địa chỉ MAC vượt quá giới hạn này (ví dụ, switch học được hơn 1 MAC address), cổng sẽ chuyển sang trạng thái err-disabled để bảo vệ mạng.

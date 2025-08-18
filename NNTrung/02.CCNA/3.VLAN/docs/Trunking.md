@@ -18,7 +18,7 @@ VLAN Trunking Protocol(VTP) là một giao thức do Cisco phát triển dùng �
   - **Xử lý ở đầu nhận**: Thiết bị nhận (switch/router) đọc VLAN tag, xác định frame thuộc VLAN nào (VD: VLAN 10).
   Switch tách tag ra và chuyển frame đến các port thuộc VLAN tương ứng (hoặc xử lý tiếp nếu là router). Nếu frame thuộc native VLAN (mặc định VLAN 1 trên Cisco), nó không được gắn tag để tiết kiệm băng thông và tương thích với thiết bị không hỗ trợ 802.1Q.
   - **Truyền qua Trunk** Trunk Link thường là Ethernet hoặc quang mang frame của nhiều VLAN, mỗi frame được gắn tag để phân biệt (trừ native VLAN). Các thiết bị phải cấu hình trunk port với giao thức 802.1Q và danh sách VLAN được phép (allowed VLANs).
-  - **Native VLAN**: Frame của Native VLAN đi qua Trunk mà không gắn Tag, giúp tương thích với thiết bị không hỗ trợ VLAN hoặc giảm xử lý cho VLAN mặc định. Nếu hai đầu Trunk có Native VLAN khác nhau(miscòniguration), có thể gây lỗi (VLAN mismatch).
+  - **Native VLAN**: Frame của Native VLAN đi qua Trunk mà không gắn Tag, giúp tương thích với thiết bị không hỗ trợ VLAN hoặc giảm xử lý cho VLAN mặc định. Nếu hai đầu Trunk có Native VLAN khác nhau(misconfiguration), có thể gây lỗi (VLAN mismatch).
   - **Ứng dụng**: Kết nối switch-switch: Cho phép nhiều VLAN (VD: VLAN 10, 20, 30) chia sẻ một cáp. Router-on-a-Stick: Router dùng một giao diện trunk để định tuyến giữa các VLAN. Mạng doanh nghiệp lớn: Quản lý lưu lượng VLAN hiệu quả, tách biệt dữ liệu các phòng ban.
 ### Thành phần của IEEE 802Q.1
 
@@ -58,6 +58,23 @@ VLAN Trunking Protocol(VTP) là một giao thức do Cisco phát triển dùng �
 
 ![altimg](../images/vtpmodes.png)
 
+## Dynamic Auto & Dynamic Desirable
+### Dynamic Auto
+- Là chế độ tự động chấp nhận Trunk nếu phía bên kia đề nghị.
+- Nghĩa là cổng sẽ ở chế độ Access bình thường, nhưng nếu bên kia bật trunk( hoặc để Dynamic Desirable), thì nó sẽ chấp nhận trở thành Trunk.
+- Nó không chủ động đề nghị Trunk.
+### Dynamic Desirable
+- Là chế độ chủ động đề nghị trunk bằng cách gửi DTP frame sang bên kia.
+- Nếu bên kia ở chế độ Dynamic Auto hoặc Dynamic Desirable, thì 2 cổng sẽ thống nhất thành Trunk.
+
+| Chế độ                | Mô tả                                                                   | Khi gặp bên kia…                          |
+| --------------------- | ----------------------------------------------------------------------- | ----------------------------------------- |
+| **Access**            | Ép cổng luôn là Access, không bao giờ trunk.                            | Không tạo trunk.                          |
+| **Trunk**             | Ép cổng luôn là Trunk, không cần DTP.                                   | Luôn trunk.                               |
+| **Dynamic Auto**      | Thụ động, chỉ trở thành trunk nếu bên kia chủ động đề nghị.             | Trunk nếu bên kia = Trunk/Desirable.      |
+| **Dynamic Desirable** | Chủ động đề nghị trunk qua DTP.                                         | Trunk nếu bên kia = Auto/Desirable/Trunk. |
+| **Nonegotiate**       | Tắt DTP hoàn toàn. Muốn trunk thì phải cấu hình **trunk** ở cả hai bên. | Không đàm phán.                           |
+
 ## 4. Access Port và Trunk Port
 ### 4.1 Access Port
 - Access Port là cổng trên switch được cấu hình để kết nối với một thiết bị cuối (end device) như máy tính, máy in, hoặc điện thoại IP.
@@ -84,6 +101,18 @@ Switch(config-if)#switchport trunk native vlan 1
 ```
 
 - Trong môi trường thực tế, các giao thức như Dynamic Trunking Protocol (DTP) có thể tự động thương lượng chế độ Access hoặc Trunk, nhưng nên cấu hình thủ công để đảm bảo tính ổn định.
+
+## Cấu hình Native VLAN khác nhau
+
+![asad](../images/vlanmismatch.png)
+
+- Việc Trunk lên hay không không phụ thuộc vào Native VLAN có giống nhau hay khác nhau.
+- Trunk được hình thành dựa trên cấu hình switchport mode trunk hoặc thương lượng DTP (auto/desirable).
+- Trunk vẫn được thiết lập bình thường dù Native VLAN có cấu hình khác nhau.
+- **Cấu hình Native VLAN khác nhau**
+  - Native VLAN mismatch.
+  - Các VLAN tagged vẫn hoạt động bình thường nhưng lưu lượng untagged sẽ gặp vấn đề -> Sai VLAN gây lỗi truyền thông.
+
 ## 5. STP (Spaning Tree Protocol)
 ### 5.1 Nguyên nhân dẫn đến loop Layer 2
 - Trong hệ thống mạng việc đấu nối nhiều dây giữa các thiết bị lớp 2 nhằm tăng khả năng dự phòng khi có thiết bị hỏng đã không còn xa lạ, tuy nhiên việc này vô tình gây ra vòng lặp vô tận trên thiết bị lớp 2 hay còn được gọi là loop layer 2.
