@@ -93,3 +93,47 @@ Switch là một bộ chuyển mạch trong hệ thống mạng, dùng để k�
     
     ![altimt](../images/cachmodemhoatdong.png)
 ### Router
+#### Khái niệm
+Router(bộ định tuyến) là thiết bị mạng hoạt động ở tầng 3 mô hình OSI dùng để kết nối nhiều mạng IP khác nhau và định tuyến(chọn đường) cho các gói dữ liệu từ nguồn đến đích dựa trên địa chỉ IP đích.
+- Switch: nối các thiết bị trong cùng một mạng.
+- Router: nối các mạng khác nhau lại với nhau.
+#### Cách thức hoạt động
+- Nhận gói tin từ cổng mạng (interface).
+- Đọc thông tin địa chỉ IP đích trong header của gói tin.
+- So khớp với bảng định tuyến (Routing Table) để tìm đường tốt nhất( next hop, interface).
+- Chuyển tiếp gói tin ra cổng tương ứng để đến mạng tiếp theo hoặc đích cuối cùng.
+  - Router có thể dùng nhiều phương thức để tìm đường:
+    - Static routing: Quản trị viên cấu hình thủ công.
+    - Dynamic routing: Dùng giao thức định tuyến như OSPF, EIGRP, BGP để tự động cập nhật đường đi.
+
+### Firewall (Tường lửa)
+
+  ![alitimage](../images/Firewall.png)
+
+- Firewall là hệ thống phần cứng hoặc phần mềm dùng để giám sát, lọc và kiểm soát lưu lượng mạng vào/ra dựa trên tập hợp các quy tắc bảo mật.
+- Mục tiêu: Ngăn chặn truy cập trái phép, cho phép kết nối hợp lệ.
+- Có thể triển khai dưới dạng:
+  - Phần cứng: thiết bị chuyên dụng(Cisco ASA, FortGate...)
+  - Phần mềm: chạy trên máy tính/ máy chủ (Windows Firewall, iptables...)
+- **Cách thức hoạt động**:
+  - Nhận gói tin từ mạng vào (inbound) hoặc ra ngoài (outbound).
+  - Phân tích thông tin trong gói tin: Địa chỉ IP nguồn/ đích, Cổng TCP/UDP, Giao thức (HTTP,FTP, ICMP,...), Nội dung (nếu là firewall nâng cao - DPI)
+  - So sánh với quy tắc (rule/policy): Cho phép(allow), Chặn (deny/drop), Ghi log.
+  - Thực hiện hành động theo kết quả so khớp.
+
+| Loại Firewall            | Layer chính                             | Đặc điểm                                                            |
+| ------------------------ | --------------------------------------- | ------------------------------------------------------------------- |
+| **Packet Filtering**     | Layer 3 (Network) & Layer 4 (Transport) | Lọc dựa trên IP, port, protocol.                                    |
+| **Stateful Firewall**    | Layer 3–4                               | Theo dõi trạng thái kết nối, cho phép gói tin thuộc kết nối hợp lệ. |
+| **Application Firewall** | Layer 7 (Application)                   | Hiểu được dữ liệu ứng dụng (HTTP, SMTP…), lọc sâu nội dung.         |
+| **Next-Gen Firewall**    | Layer 3–7                               | Kết hợp stateful + DPI + IDS/IPS + lọc ứng dụng.                    |
+
+### Hub
+
+![jklk](../images/hub-la-gi-4.avif)
+
+- Hub là một thiết bị mạng đơn giản hoạt động ở Layer 1 của tầng mạng OSI (physical Layer) dùng để kết nối nhiều thiết bị trong cùng một mạng LAN. Nó hoạt động như một bộ lặp (repeater), nhận tín hiệu từ một cổng và phát (broadcast) ra tất cả các cổng còn lại.
+- **Cách thức hoạt động**
+  - Một thiết bị gửi dữ liệu vào Hub.
+  - Hub không phân tích địa chỉ gì hết mà chỉ nhân bản và phát dữ liệu đó ra tất cả các cổng còn lại.
+  - Tất cả các thiết bị nhận được dữ liệu, chỉ thiết bị có địa chỉ đích đúng mới xử lý, còn lại bỏ đi.
