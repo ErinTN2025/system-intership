@@ -189,6 +189,6 @@ Switch(config-if)#switchport trunk native vlan 1
   - Tất cả các port của Root bridge là Designated port.
   - Đối diện với Root port là Designated port
 
-  ![imgalt](../Images/designatedport.png)
+![imgalt](../Images/designatedport.png)
 
 - **Các port còn lại sẽ là Block Port**    
