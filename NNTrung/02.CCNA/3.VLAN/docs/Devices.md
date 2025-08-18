@@ -137,3 +137,12 @@ Router(bộ định tuyến) là thiết bị mạng hoạt động ở tầng 3
   - Một thiết bị gửi dữ liệu vào Hub.
   - Hub không phân tích địa chỉ gì hết mà chỉ nhân bản và phát dữ liệu đó ra tất cả các cổng còn lại.
   - Tất cả các thiết bị nhận được dữ liệu, chỉ thiết bị có địa chỉ đích đúng mới xử lý, còn lại bỏ đi.
+
+  ### Gig và Fa cổng trong Switch
+  - Fa(FastEthernet): chuẩn Ethernet tốc độ 100 Mbps, có thể chạy 10/100Mbps(half/full duplex).
+  - Gi(GigabitEthernet): chuẩn Ethernet tốc độ 1 Gbps = 1000 Mbps. Hỗ trợ tốc độ 10/100/1000 Mbps, thường chạy full duplex mặc định.
+  - **Ứng dụng**
+    - Fa: thường làm cổng kết nối cho pc
+    - Gi: thường dùng làm uplink(nối giữa switch-switch, switch-router) hoặc server vì bằng thông cao hơn.
+  - **Half-duplex**(Bán song công): Thiết bị chỉ truyền hoặc nhận tại một thời điểm, không thể làm cả hai cùng lúc.
+  - **Full-duplex**: Thiết bị có thể truyền và nhận dữ liệu đồng thời trên cùng đường truyền.
