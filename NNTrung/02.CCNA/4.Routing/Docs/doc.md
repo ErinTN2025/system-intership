@@ -1,6 +1,6 @@
 # ROUTING
 ## 1. Khái niệm
-- Routing là quá trình xác định và chuyển tiếp dữ liệu (gói tin) từ một điểm nguồn đến một điểm đích trong mạng máy tính hoặc trong một ứng dụng( như web hoặc ứng dụng di động).
+- Routing là quá trình xác định và chuyển tiếp dữ liệu (gói tin) từ một điểm nguồn đến một điểm đích trong mạng máy tính hoặc trong một ứng dụng( như web hoặc ứng dụng di động) một cách tối ưu.
 - Routing Process đảm bảo các gói tin được truyền đi một cách đầy đủ và đáng tin cậy bằng cách tìm ra đường đi ngắn nhất và an toàn dựa trên bảng routing.
 ### Routing trong mạng máy tính
 - Routing chỉ ra hướng, sự di chuyển của các gói (dữ liệu) được đánh địa chỉ từ mạng nguồn của chúng, hướng đến đích cuối thông qua các node trung gian; thiết bị phần cứng chuyên dùng được gọi là router( bộ định tuyến). Tiến trình định tuyến thường chỉ hướng đi dựa vào bảng định tuyến, đó là bảng chứa những lộ trình tốt nhất đến các đích khác nhau trên mạng.- **Cách thức hoạt động**
