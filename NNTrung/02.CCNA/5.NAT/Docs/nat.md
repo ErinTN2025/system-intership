@@ -98,6 +98,7 @@ Thông qua cách cố định địa chỉ IP cục bộ sang địa chỉ IP c�
 ![altimage](../Images/NATtable.png)
 
 Src = https://www.ccnablog.com/nat-network-address-translation/
+Src = https://lptech.asia/kien-thuc/nat-la-gi#M%E1%BB%99t_s%E1%BB%91_%E1%BB%A9ng_d%E1%BB%A5ng_c%E1%BB%A7a_NAT
 
 - NAT Table là nơi router lưu trữ thông tin ánh xạ giữa địa chỉ private <-> public(và có thể kèm port).
 - Khi gói tin đi qua NAT, router sẽ:

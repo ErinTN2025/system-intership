@@ -140,3 +140,6 @@
 - **Tính linh hoạt và mở rộng:** BGP là một giao thức linh hoạt và mở rộng, có khả năng thích ứng với môi trường mạng lớn và phức tạp trên Internet.
 
 ### 4.3 OSPF(Open Shortest Path First)
+- OSPF là một giao thức định tuyến nội vùng( IGP - Interior Gateway Protocol) dựa trên thuật toán Link-State.
+- Nó được chuẩn hoá bởi IETF trong RFC 2328(cho IPv4) và RFC 5340(cho IPv6 - OSPFv3).
+- Mục tiêu: tìm đường đi ngắn nhất(shortest path) từ nguồn đến đích bằng cách sử dụng thuật toán Dijkstra(SPF - Shortest Path First).

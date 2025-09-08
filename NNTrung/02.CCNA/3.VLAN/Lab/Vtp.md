@@ -24,7 +24,7 @@ Switch#configure terminal
 Switch(config)#hostname SW1
 SW1(config)#
 ```
-- `enable`: chuyển từ chế độ User EXEC(dấu nhắc >) sang Privileged EXEC(dấu nhắc #). EXEC mode: quyền hạn chế chỉ dùng được các lệnh cơ bản như xem thông tin (ping, show,...). Không cấu hình được thiết bị. Privileged EXEC mode: Có quyền chạy các lệnh quản trị nâng cao.
+- `enable`: chuyển từ chế độ User EXEC(dấu nhắc >) sang Privileged EXEC(dấu nhắc #). EXEC mode: quyền hạn chế chỉ dùng được các lệnh cơ bản như xem thông tin (ping, show,...). Không cấu hình được thiết bị. Privileged EXEC mode: Có quyền chạy các lệnh quản trị nâng cao. Chưa thực hiện được cấu hình thông số của Router.
 - `configure terminal`(conf t): là lệnh dùng để vào cấu hình toàn cục(Global Configuration Mode): cho phép thay đổi cấu hình chung của thiết bị. Tại đây cũng có thể vào các cấu hình con.
 - `hostname SW1`: Đặt tên cho thiết bị là "SW1".
 - Tương tự trên Switch 2 và 3.
