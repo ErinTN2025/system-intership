@@ -125,3 +125,5 @@
     S-->>R: DHCP ACK (IP + mask + gw + DNS + lease)
     R-->>C: DHCP ACK (broadcast/unicast tùy)
     Note over C: Cấu hình IP, gửi ARP check,<br/>trạng thái BOUND
+
+![altimage](../Images/IPtable.png)
