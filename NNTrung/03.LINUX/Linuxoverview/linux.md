@@ -3,7 +3,7 @@
 ### 1. Khái niệm
 - **Linux** là một hệ điều hành (Operating System - OS) mã nguồn mở (open-source), được phát triển dựa trên nhân(kernel) Linux do Linus Torvalds tạo ra năm 1991. Linux có nguồn gốc từ hệ điều hành Unix. Tương tự như Windows hay macOS, nhưng khác biệt ở chỗ hoàn toàn miễn phí và cho phép bất kỳ ai chỉnh sửa, phân phối lại.
 ### 2. Kiến trúc thành phần Linux
-![altimage](./images/1_7Rp8NQIF6LwUfIurYrevew.gif)
+![altimage](../images/1_7Rp8NQIF6LwUfIurYrevew.gif)
 #### 2.1 Kernel (Nhân)
 - Là lõi, quản lý tài nguyên phần cứng(CPU, RAM, ổ đĩa, thiết bị ngoại vi).
 - Cung cấp giao diện giữa phần cứng và phần mềm.
@@ -61,7 +61,7 @@
 
 ## Cấu trúc file, thư mục trong Linux
 - Mọi thứ trong Linux đều là file. Chúng được phân cấp theo tiêu chuẩn FHS(Filesystem Hierarchy Standard)
-![altimage](./images/Filelonuxtable.png)
+![altimage](../images/Filelonuxtable.png)
 
 ### 1. / - Root
 - Đây là thư mục gốc, người dùng có quyền cao nhất trong hệ thống Linux.
@@ -177,7 +177,7 @@
 - Mỗi Distro có cách quản lý, tối ưu và mục đích sử dụng khác nhau, phù hợp với nhiều đối tượng từ người mới dùng đến lập trình viên và quản trị hệ thống.
 
 ### 2. Thành phần chính của một bản phân phối Linux
-![altimage](./images/Linuxdistribution.png)
+![altimage](../images/Linuxdistribution.png)
 #### Lớp lõi (Core) - Trung tâm hệ thống
 - Kernel: nhân hệ điều hành, quản lý tài nguyên hệ thống và giao tiếp với phần cứng.
 - Quản lý tài nguyên như CPU, RAM, thiết bị ngoại vi, và hệ thống tệp.
@@ -196,4 +196,35 @@
 - **Browser:** Trình duyệt web được cài sẵn trong nhiều bản phân phối.
 
 ### Phân loại Linux Distro
-![altimage](./images/Linuxfamily)
+**Theo nguồn gốc(Dựa trên Distro gốc)**: Hầu hết các bản phân phối Linux đều phát triển từ một số ít các bản gốc, tạo thành các nhánh chính:
+![altimage](../images/Linuxfamily)
+- `Debian Family`(dựa trên Debian)
+  - Ổn định, dễ dùng, quản lý gói bằng `APT`(`.deb`).
+  - Ứng dụng: Phổ biến cho cả server và desktop.
+  - Tiêu biểu: Debian, Ubuntu, Linux Mint, Elementary OS, Kali Linux
+- `Red Hat Family`
+  - Xuất phát từ Red Hat, có các bản cộng động thay thế bản thương mại.
+  - Ứng dụng: Tập trung vào enterprise, server, cloud.
+  - Tiêu biểu: Fedora, CentOS, AlmaLinux, Rocky Linux
+- `Slackware Family`
+  - Một trong những distro lâu đời nhất, tối giản, gần với Unix nguyên thủy, người dùng phải tự tay cấu hình nhiều.
+  - Phù hợp với người dùng thích học sâu về Linux.
+  - Tiêu biểu: Slackware, Salix
+- `Arch Family`
+  - Đơn giản, tối thiếu, chỉ cài những gì cần thiết
+  - Dành cho người dùng muốn tùy biến toàn bộ hệ thống từ đầu. Rolling release(cập nhật liên tục, không cần cài lại bản mới).
+  - Tiêu biểu: Arch Linux(gốc, cần cài thủ công). Manjaro, EndeavourOS
+- `Gentoo Family`
+  - Dựa trên mã nguồn(source-based)-> người dùng tự biên dịch phần mềm để tối ưu cho hệ thống.
+  - Rất mạnh mẽ, tùy biến cao, nhưng mất nhiều thời gian cài đặt và bảo trì.
+  - Phù hợp cho người dùng nâng cao hoặc những ai muốn hệ thống được tối ưu tuyệt đối.
+  - Tiêu biểu: Gentoo, Sabayon, Calculate Linux
+### Phân loại theo mô hình phát hành(Release Model)
+- `Fixed Release` (Phát hành cố định)
+  - Tiêu biểu: Ubuntu, Debian, Fedora, RHEL
+  - Đặc điểm: Cập nhật định kỳ(6 tháng - 2 năm), ổn định hơn.
+  - Ứng dụng: Người dùng phổ thông, doanh nghiệp
+- `Rolling Release` (Phát hành liên tục)
+  - Tiêu biểu: Arch, Linux, Manjaro, OpenSUSE, Tumbleweed.
+  - Luôn cập nhật phiên bản mới nhất, ít cần cài đặt lại.
+  - Ứng dụng: Lập trình viên, người thích cập nhật công nghệ mới.
