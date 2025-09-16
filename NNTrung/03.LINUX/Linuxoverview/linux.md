@@ -61,8 +61,10 @@
 
 ## Cấu trúc file, thư mục trong Linux
 - Mọi thứ trong Linux đều là file. Chúng được phân cấp theo tiêu chuẩn FHS(Filesystem Hierarchy Standard)
+- Cấu trúc thư mục trong Linux được tổ chức theo dạng cây (tree), với thư mục gốc (/) là điểm bắt đầu, từ đó các thư mục và thư mục con phân nhánh ra.
+- Để xem các thư mục ở mức gốc, bạn có thể dùng lệnh ls / trong terminal, nó sẽ liệt kê tất cả các thư mục trực tiếp dưới /, bao gồm /home.
 ![altimage](../images/Filelonuxtable.png)
-
+![ksdmla](../images/Root.png)
 ### 1. / - Root
 - Đây là thư mục gốc, người dùng có quyền cao nhất trong hệ thống Linux.
 - Chỉ người dùng root mới có quyền ghi trong thư mục này.
@@ -79,7 +81,7 @@
 |/lib,/lib64| Chứa các thư viện (libraries) cần thiết cho các chương trình trong `/bin` ,`/sbin`. `/lib64` dành cho hệ thống 64-bit.|
 |/media| Điểm gắn(mount point) cho các thiết bị lưu trữ di động như USB, ổ CD/DVD. Thường được quản lý tự động bởi hệ thống.|
 |/mnt  | Cho phép gắn kết tạm thời các thiết bị hoặc hệ thống tập tin từ các thiết bị khác nhau, chẳng hạn như ổ cứng ngoài, ổ mạng NAS, v.v được gắn thủ công bởi quản trị viên.|
-|/opt | Chứa các phần mềm tuỳ chọn hoặc phần mềm không thuộc gói tiêu chuẩn, thường là các ứng dụng thương mại hoặc tự cài đặt.|
+|/opt | Additional software packages (some programs are installed here, not as common)|
 |/proc| Hệ thống tệp ảo, chứa thông tin về các tiến trình đang chạy và trạng thái hệ thống(thông tin kernel).|
 |/root| Thư mục cá nhân của người dùng `root` (quản trị viên), không nằm trong `/home`.|
 |/run| Hệ thống tệp tạm thời (tmpfs) chứa thông tin tráng thái runtime của hệ thống sau khi hệ thống khởi động, như PID của các dịch vụ hoặc socket.|

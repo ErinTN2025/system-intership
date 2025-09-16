@@ -1,4 +1,9 @@
 # Linux Command
+## Khái niệm về Shell
+- Shell là một chương trình giao diện dòng lệnh( command-line interface) cho phép người dùng tương tác với hệ điều hành bằng cách nhập các lệnh từ bàn phím. Nó là một phần mềm chạy ở cấp thấp, cho phép người dùng thực hiện các tác vụ như quản lý tệp, chạy chương trình, hoặc cấu hình hệ thống thông qua các lệnh văn bản. 
+- Shell nhận các lệnh từ người dùng, chuyển chúng đến hệ điều hành để thực thi và trả về kết quả. Nó hoạt động như một cầu nối giữa người dùng và hệ thống.
+### Khái niệm về Terminal Emulator
+- Terminal emulator (trình giả lập thiết bị đầu cuối) là một chương trình trong môi trường giao diện đồ họa (GUI) cho phép người dùng truy cập và sử dụng Shell.
 ## 1. Khái niệm
 - Linux Command(Lệnh Linux) là các lệnh được nhập vào Terminal( giao diện dòng lệnh - CLI) để tương tác với hệ thống Linux. Các lệnh này giúp người dùng quản lý tệp, thư mục, tiến trình, quyền truy cập, mạng, và nhiều chức năng khác của hệ điều hành.
 ## Các nhóm lệnh phổ biến trong Linux
@@ -31,11 +36,13 @@
 |`find`| Tìm kiếm tập tin hoặc thư mục và tất cả các file bên trong| `find /home - name "*.txt"/"abc.txt"` |
 |`locate`| Tìm kiếm tệp tin nhanh | `locate example.txt`|
 
+![altimage](../images/wildcardfile.png)
 ### 3. Lệnh xem nội dung tập tin 
 | Lệnh| Chức năng | Chi tiết |
 |------|----------|----------|
 | `cat`| Hiển thị nội dung tệp| `cat /etc/os-release`|
 |`tac`| Hiển thị nội dung tệp theo thứ tự ngược| `tac file.txt`|
+|`file`| Xem định dạng file | picture.jpg: JPEG image data, JFIF standard 1.01|
 |`less`| Xem nội dung tệp theo trang | `less /var/log/syslog`|
 |`more`| Xem nội dung tệp (giống less nhưng ít tính năng hơn)| `more file.txt`|
 |`head`| Hiển thị n dòng đầu tiên của tệp | `head -n 5 file.txt`|
