@@ -230,3 +230,20 @@
   - Tiêu biểu: Arch, Linux, Manjaro, OpenSUSE, Tumbleweed.
   - Luôn cập nhật phiên bản mới nhất, ít cần cài đặt lại.
   - Ứng dụng: Lập trình viên, người thích cập nhật công nghệ mới.
+
+## Hard Link & Soft Link
+### Khái niệm Hard Link
+- Là một liên kết trực tiếp đến inode(thực thể lưu trữ dữ liệu) của một file.
+- Khi tạo hard link, cả file gốc và hard link đều trỏ đến cùng inode, tức là cùng dữ liệu.
+- File chỉ bị xóa thật sự khỏi ổ đĩa khi tất cả các hard link trỏ đến inode đó đều bị xóa.
+### Khái niệm Soft Link(Symbolic Link/ Symlink)
+- Là một file đặc biệt chứa đường dẫn đến file gốc
+- Hoạt động giống như shortcut trong windows.
+- Nếu xóa file gốc, soft link sẽ bị "gãy" (broken link), không dùng được.
+
+![altimage](../images/hardsoftlink.png)
+### Tác dụng của symlink
+- Giúp hạn chế việc phải thao tác với những đường dẫn dài dòng, phức tạp. Chỉ cần một tên liên kết tượng trưng để trỏ đến.
+- Symlink còn giúp truy cập và lưu trữ file ở nhiều vị trí khác nhau mà không cần phải tạo nhiều bản sao.
+
+![altimgae](../images/linkonubuntu.png)

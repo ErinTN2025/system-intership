@@ -20,7 +20,7 @@
   - Nếu các bit phần host đồng thời bằng 0, ta có một địa chỉ mạng.
   - Nếu các bit phần host đồng thời bằng 1, ta có một địa chỉ broadcast
 
-- **1 địa chỉ IPv4 có 2 phần** là _phần mạng_ và _phần network_
+- **1 địa chỉ IPv4 có 2 phần** là _phần mạng(network)_ và _phần host_
   - 192.168 là phần network: thuốc lớp C
   - 0.1 là thiết bị cụ thể, 0 là số hiệu mạng con, 1 là thiết bị cụ thể trong mạng con đó.
   - 192.168.0 là phần mạng, tất cả các thiết bị chung mạng sẽ có cấu trúc như này
@@ -100,7 +100,7 @@ Các địa chỉ IPv1, IPv2 và IPv3 có tồn tại nhưng:
 - Broadcast có 2 loại: Direct và Local.
 Ví dụ khi máy có địa chỉ IP là 192.168.2.1 truyền tin đến 255.255.255.255 tất cả máy thuộc mạng 192.168.2.0 ( mạng máy gửi gói tin trong đó) sẽ nhận được gói broadcast này. Còn nếu nó gửi tới 192.168.1.255 thì tất cả máy trong mạng 192.168.1.0 sẽ nhận được (các máy trong 192.168.2.0 sẽ không nhận được gói broadcast này).
 
-**7./)2 Multicast (Phát sóng nhóm)**
+**7.2\) Multicast (Phát sóng nhóm)**
 
 - Multicast là hình thức gửi dữ liệu từ một thiết bị đến một nhóm các thiết bị nhất định (không phải tất cả).
 - Chỉ những thiết bị đăng ký (tham gia nhóm multicast) mới nhận được dữ liệu này.
