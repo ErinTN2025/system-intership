@@ -6,7 +6,7 @@
 ### 2. Kiến trúc thành phần Linux
 ![altimage](../images/1_7Rp8NQIF6LwUfIurYrevew.gif)
 #### 2.1 Kernel (Nhân)
-- Là lõi, quản lý tài nguyên phần cứng(CPU, RAM, ổ đĩa, thiết bị ngoại vi).
+- Là lõi, quản lý tài nguyên phần cứng(CPU, RAM, ổ đĩa, thiết bị ngoại vi) và phân phối chúng cho các tiến trình và ứng dụng.
 - Cung cấp giao diện giữa phần cứng và phần mềm.
 - Có các module như: 
   - Quản lý tiến trình(process management): Kernel là người điều phối CPU: Chia sẻ thời gian CPU cho các tiến trình. Quyết định mức độ ưu tiên ai chạy trước. Bảo vệ hệ thống khỏi tiến trình độc hại/ chiếm CPU. Tiến trình không biết mình đang bị quản lý thế nào, nó chỉ nghĩ CPU đang chạy cho riêng nó.
