@@ -5,6 +5,12 @@
 - Thuật ngữ **Linux** được sử dụng để chỉ Nhân Linux.
 ### 2. Kiến trúc thành phần Linux
 ![altimage](../images/1_7Rp8NQIF6LwUfIurYrevew.gif)
+#### 2.0 Hardware (Phần cứng)
+
+- **Không phải là một thành phần của hệ điều hành Linux**, nhưng là nền tảng để hệ điều hành hoạt động.
+- Gồm CPU, RAM, ổ cứng, card mạng, bo mạch chủ và các thiết bị ngoại vi khác.
+- Kernel của Linux sẽ giao tiếp với phần cứng thông qua trình điều khiển thiết bị (drivers).
+
 #### 2.1 Kernel (Nhân)
 - Là lõi, quản lý tài nguyên phần cứng(CPU, RAM, ổ đĩa, thiết bị ngoại vi) và phân phối chúng cho các tiến trình và ứng dụng.
 - Cung cấp giao diện giữa phần cứng và phần mềm.
