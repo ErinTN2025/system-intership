@@ -212,6 +212,11 @@
   - Telnet, SSH: Truy cập máy chủ từ xa
   - DHCP: Cấp phát IP động cho thiết bị
   - SNMP: Quản lý thiết bị mạng
+  - Ứng dụng (Application): chương trình người dùng trực tiếp sử dụng (ví dụ: trình duyệt web, Zoom, Zalo).
+
+  - Giao thức mạng (Protocol): các quy tắc trao đổi dữ liệu ở các tầng bên dưới (ví dụ: HTTP, FTP, TCP, IP).
+
+  - Giao diện giữa ứng dụng và giao thức mạng: chính là Application Programming Interface (API) hoặc Socket Interface. Nó là cầu nối để ứng dụng “gọi” và “dùng” các dịch vụ mạng mà không cần tự cài đặt toàn bộ giao thức.
 - **Minh họa hoạt động**
   - Người dùng Chrome -> Nhập https://example.com
   - Application Layer của trình duyệt dùng giao thức HTTPS để tạo yêu cầu Get

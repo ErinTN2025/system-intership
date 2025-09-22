@@ -2,6 +2,7 @@
 ## Linux là gì
 ### 1. Khái niệm
 - **Linux** là một hệ điều hành (Operating System - OS) mã nguồn mở (open-source), được phát triển dựa trên nhân(kernel) Linux do Linus Torvalds tạo ra năm 1991. Linux có nguồn gốc từ hệ điều hành Unix. Tương tự như Windows hay macOS, nhưng khác biệt ở chỗ hoàn toàn miễn phí và cho phép bất kỳ ai chỉnh sửa, phân phối lại.
+- Thuật ngữ **Linux** được sử dụng để chỉ Nhân Linux.
 ### 2. Kiến trúc thành phần Linux
 ![altimage](../images/1_7Rp8NQIF6LwUfIurYrevew.gif)
 #### 2.1 Kernel (Nhân)
@@ -62,7 +63,7 @@
 ## Cấu trúc file, thư mục trong Linux
 - Mọi thứ trong Linux đều là file. Chúng được phân cấp theo tiêu chuẩn FHS(Filesystem Hierarchy Standard)
 - Cấu trúc thư mục trong Linux được tổ chức theo dạng cây (tree), với thư mục gốc (/) là điểm bắt đầu, từ đó các thư mục và thư mục con phân nhánh ra.
-- Để xem các thư mục ở mức gốc, bạn có thể dùng lệnh ls / trong terminal, nó sẽ liệt kê tất cả các thư mục trực tiếp dưới /, bao gồm /home.
+- Để xem các thư mục ở mức gốc, bạn có thể dùng lệnh `ls /` trong terminal, nó sẽ liệt kê tất cả các thư mục trực tiếp dưới /, bao gồm /home.
 ![altimage](../images/Filelonuxtable.png)
 ![ksdmla](../images/Root.png)
 ### 1. / - Root
@@ -143,6 +144,9 @@
 - `~` (dấu ngã): Đại diện cho thư mục home của người dùng hiện tại.
 - `-`: Thư mục đã làm việc trước đó.
 - `/lost+found`: Dành cho file bị lỗi sau khi kiểm tra hệ thống(chỉ có trong phân vùng ext4)
+
+### Các dạng File
+![altimage](../images/Filetypes.png)
 
 ## Ưu điểm và hạn chế của hệ điều hành Linux
 ### Ưu điểm

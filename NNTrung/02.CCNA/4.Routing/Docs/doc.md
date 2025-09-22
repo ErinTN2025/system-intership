@@ -69,7 +69,7 @@ Routing Table bao gồm các mục:
     - Thuộc tính khác như chính sách định tuyến.
   - Router chia sẻ thông tin đường đi với các router láng giềng, thường trong cùng hoặc giữa các AS.
   - Khi nhận thông tin, Router cập nhập bảng định tuyến và chọn đường đi tốt nhất dựa trên số lượng AS, chính sách, hoặc các thuộc tính khác.
-  - Ưu điểm: Ngăn chặn vòng lặp định tuyến bằng cách kiểm tra AS path. Link hoạt, hỗ trợ chính sách định tuyến phức tại. Phù hợp cho định tuyến giữa các mạng lớn(như Internet). Ví dụ BGP
+  - Ưu điểm: Ngăn chặn vòng lặp định tuyến bằng cách kiểm tra AS path. Link hoạt, hỗ trợ chính sách định tuyến phức tạp. Phù hợp cho định tuyến giữa các mạng lớn(như Internet). Ví dụ BGP
 ## 4. Metric 
 - Metric là giá trị dùng để so sánh các đường đi, thường dựa trên:
   - Số lượng Hop( Số router phải đi qua)
