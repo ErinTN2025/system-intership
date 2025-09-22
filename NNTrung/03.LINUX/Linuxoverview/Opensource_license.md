@@ -110,3 +110,8 @@ Với MIT License bạn có thể sử dụng , sao chép , sửa đổi , hợp
 Mozilla Public License 2.0 (MPL) phát hành vào ngày 03-01-2012 bởi phần mềm tự do của Quỹ Mozilla. Giấy phép này là sự kết hợp giữa giữa giấy phép BSD có chỉnh sửa và giấy phép GNU. MPL cho phép người dùng hoạt động tự do và yêu cầu việc công bố mã nguồn của mọi thay đổi được đưa ra công chúng.
 
 ![altimage](../images/restrictiveness.png)
+
+## Tài liệu tham khảo
+- https://solutionshub.epam.com/blog/post/open-source-licenses-definition-types-and-comparison
+- https://lanit.com.vn/giay-phep-ma-nguon-mo-pho-bien.html#ftoc-heading-3
+- https://opensource.org/licenses?utm_source=chatgpt.com
