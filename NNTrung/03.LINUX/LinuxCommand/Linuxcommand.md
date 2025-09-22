@@ -93,4 +93,4 @@
 |`curl`| Lấy dữ liệu từ URL | `curl https://example.com`|
 |`wget`| Tải tệp từ URL | `wget https://example.com/file.zip`|
 |`scp`| Sao chép tệp qua SSH | `scp file.txt user@remote:/home/user/`|
-|`rsync`| Đồng bộ tệp giữa hai máy | `rsync -avz /source/user@remote:/destination/`|
+|`rsync`|Đồng bộ tệp giữa hai máy| `rsync -avz /source/user@remote:/destination/`|
