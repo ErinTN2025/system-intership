@@ -67,3 +67,5 @@
 ![altimage](../Images/hostonly.png)
 
 Host-only là một loại mạng ảo nơi các VM và máy Host( thông qua một virtual network adapter trên Host - VMnet1) nằm cùng một mạng riêng không lối ra Internet hoặc LAN bên ngoài theo mặc định. Nó tạo một mạng nội bộ (private virtual network) chỉ dành cho Host và các VM được gán vào mạng đó.
+
+Host only asd
