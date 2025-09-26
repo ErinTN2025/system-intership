@@ -68,4 +68,86 @@
 
 Host-only là một loại mạng ảo nơi các VM và máy Host( thông qua một virtual network adapter trên Host - VMnet1) nằm cùng một mạng riêng không lối ra Internet hoặc LAN bên ngoài theo mặc định. Nó tạo một mạng nội bộ (private virtual network) chỉ dành cho Host và các VM được gán vào mạng đó.
 
-Host only asd
+**Lấy IP tự động từ DHCP:**
+
+**Cách hoạt động:**
+- VM ware tạo một mạng ảo riêng biệt (VMnet1)
+  - VMnet1 là một mạng nội bộ chỉ có giữa máy host và các máy ảo host-only.
+  - Máy host có một Host Virtual Adapter để giao tiếp với mạng VMnet1.
+  - Không có kết nối với card mạng vật lý của máy host, nên máy ảo không thể ra Internet hoặc truy cập mạng LAN bên ngoài.
+- Luồng dữ liệu khi máy ảo giao tiếp:
+  - Khi máy ảo gửi gói tin, nó đi qua Virtual Ethernet Adapter hay Virtual NIC -> VMnet1 -> máy host hoặc máy ảo khác trong cùng VMnet1.
+  - Nếu máy host chạy một dịch vụ (VD: SSH, HTTP), máy ảo có thể kết nối đến dịch vụ đó thông qua IP của Host Virtual Adapter.
+
+## Sử dụng chế độ NAT để truy cập Internet
+### Các cách cấu hình địa chỉ IP cho Virtual Machine
+**Ubuntu Server**: Nhập lệnh `sudo dhcpcd` sau đó nhập `ip addr` để kiểm tra ip được cấp phát.
+
+![altimage](../Images/Iplinux.png)
+
+- `inet 192.168.1.100/24 scop global ens33`
+  - Đây là địa chỉ IPv4 chính (primary address) gán cho interface `ens33`.
+  - `scope global` nghĩa là địa chỉ này dùng được trong toàn mạng (LAN, Internet), không phải chỉ trong loopback hay link-local.
+- `inet 192.168.1.101/24 scope global secondary dynamic noprefixroute ens33`
+  - `secondary`: Nghĩa là đây là địa chỉ IP phụ (alias) trên cùng interface `ens33`. Một card mạng có thể có nhiều IP.
+  - `dynamic` : địa chỉ này được cấp bởi DHCP, không phải bạn gán tĩnh.
+  - `noprefixroute`: hệ thống không tự động tạo route cho subnet này. Route sẽ chỉ có cho IP chính, IP phụ không thêm route riêng.
+  - `scope global` : cũng có hiệu lực trong toàn mạng.
+
+**CentOS9**:
+- User không nằm trong nhóm có quyền sudo. Chỉ user `root` mới có toàn quyền.
+  - Đăng nhập lại bằng root: `su -`
+  - Có thể thêm user vào nhóm: `usermod -aG wheel aaaaaaa`
+  - Kiểm tra file sudoers: mở file `/etc/sudoers` -> `visudo` Đảm bảo dòng `%wheel ALL = (ALL) ` không bị comment -> Đăng xuất rồi đăng nhập lại `newgrp wheel`
+- **Công cụ dòng lệnh của NetworkManager**: Chuẩn CentOS 9
+  - `sudo nmcli device reapply ens33` hoặc `sudo nmcli device connect ens33`
+  - Kiểm tra giao diện interface nếu không có interface thông dụng `ens33`: `ip link` hoặc `nmcli device status` hoặc `nmcli connection show`:
+   
+  ![xzjs](../Images/nmclistatus.png)
+  
+  - Từ CentOS 8 trở đi, Red Hat bỏ hẳn cơ chế cũ (`/etc/sysconfig/network-scripts/`) vốn dùng trong CentOS 6/7.
+  - Thay vào đó, NetworkManager quản lý toàn bộ kết nối mạng. Cấu hình mạng lưu ở: `/etc/NetworkManager/system-connetions/`(file `.nmconnection`) cần phải tiếp cận qua công cụ nmcli, nmtui, cockpit.
+
+  ![altimage](../Images/connectNetworkcentos.png) 
+
+  ![jsdkas](../Images/ipcentos.png)
+
+  - **Lưu cấu hình DHCP (xin IP động sau mỗi lần boot)**
+    - `sudo nmcli connection modify ens160 ipv4.method auto` và `sudo nmcli connection up ens160`
+    - Mỗi lần khởi động, interface sẽ tự động xin IP từ DHCP server và lưu vào trong profile.
+
+    ![mklkm](../Images/sudoconnectionup.png)
+### Chọn chế độ card mạng trên VMware
+  ![altimage](../Images/pickupinternetmode.png) ![altimage](../Images/pickupinternetmode2.png)
+
+### Kiểm tra kết nối Internet khi ở chế độ NAT
+  ![altimage](../Images/pingNetwork.png)
+
+  ![altimage](../Images/pingcentos.png)
+
+### Kiểm tra kết nối Internet khi ở chế độ Bridged
+**Lưu ý**: Chế độ Replicate physical network connection state = đồng bộ trạng thái kết nối mạng vật lý của host vào VM.
+- Tuỳ chọn Replicate physical network connection state
+  - VM ware theo dõi trạng thái mạng của card vật lý host (được bridged). 
+  - Nếu rút cáp mạng / tắt Wi-Fi trên host -> VMware cũng ngắt kết nối mạng ảo tương ứng của VM.
+  - Khi host kết nối lại mạng -> VM cũng có thể "theo" lại trạng thái đó.
+  - Đồng bộ các thông số kết nối lớp thấp hơn( link state, tốc độ, duplex) để VM hoạt động sát thực tế hơn.
+
+  - Khi không có kết nối mạng
+
+  ![altimage](../Images/UbuntubridgedwR.png)
+  
+  - Khi có kết nối mạng
+
+  ![altimage](../Images/UbuntubridgedwR2.png)
+  ![scdxz](../Images/Bridgetubuntu.png)
+
+  - Địa chỉ IP của CentOS xin cấp phát lại 
+  ![mlkxzmc](../Images/BridgetCentOs.png)
+
+### Kiểm tra kết nối Internet khi ở chế độ Host-Only
+
+![altimage](../Images/hostonlyubuntu.png)
+
+Tương tự như 2 cái trên.
+
