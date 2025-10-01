@@ -56,3 +56,14 @@ Vì trong CentOS 9, User không có quyền dùng sudo nên phải về trạng 
 - `sudo nmcli connection modify ens160 ipv4.gateway 192.168.154.3`: Đặt Gateway
 - `sudo nmcli connection modify ens160 ipv4.method manual`: chuyển chế độ IP tĩnh
 - `sudo nmcli connection up ens160`: Áp dụng thay đổi.
+
+### Một số lỗi gặp phải khi fix CentOS 9
+- Đây là lỗi DNS/network → máy CentOS không phân giải được tên miền mirrors.centos.org.
+
+Khi chạy dnf install, dnf cần kết nối internet để tải metadata của repo. Nếu không ping/resolve được host thì sẽ báo lỗi này.
+- Nguyên nhân: Cấu hình IP/DNS sai hoặc không có DNS (thường khi đặt IP tĩnh mà quên thêm nameserver).
+- Khi dùng IP tĩnh với nmcli, nhớ phải khai bảo DNS nếu không sẽ lỗi.
+```plaintext
+nmcli con mod ens33 ipv4.dns "8.8.8.8 8.8.4.4"
+nmcli con up ens33
+```

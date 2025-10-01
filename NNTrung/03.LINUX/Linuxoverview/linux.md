@@ -151,8 +151,7 @@
 - `-`: Thư mục đã làm việc trước đó.
 - `/lost+found`: Dành cho file bị lỗi sau khi kiểm tra hệ thống(chỉ có trong phân vùng ext4)
 
-### Các dạng File
-![altimage](../images/Filetypes.png)
+
 
 ## Ưu điểm và hạn chế của hệ điều hành Linux
 ### Ưu điểm
