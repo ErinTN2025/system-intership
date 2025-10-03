@@ -14,7 +14,7 @@
 #### 2.1 Kernel (Nhân)
 - Là lõi, quản lý tài nguyên phần cứng(CPU, RAM, ổ đĩa, thiết bị ngoại vi) và phân phối chúng cho các tiến trình và ứng dụng.
 - Cung cấp giao diện giữa phần cứng và phần mềm.
-- Có các module như: 
+- Có các module như, thực thi các tiến trình:
   - Quản lý tiến trình(process management): Kernel là người điều phối CPU: Chia sẻ thời gian CPU cho các tiến trình. Quyết định mức độ ưu tiên ai chạy trước. Bảo vệ hệ thống khỏi tiến trình độc hại/ chiếm CPU. Tiến trình không biết mình đang bị quản lý thế nào, nó chỉ nghĩ CPU đang chạy cho riêng nó.
   - Quản lý bộ nhớ(memory management): Theo dõi vùng nhớ nào đang được sử dụng, vùng nào rảnh. Cấp phát và thu hồi bộ nhớ cho process. Bảo vệ không cho process này đọc/ ghi bộ nhớ của process khác. Thực hiện phân trang( paging), hoán đổi( swapping) để tối ưu RAM.
   - Quản lý gọi hệ thống file(system call): Đề cập đến khả năng của một lập trình viên yêu cầu viết một truy vấn hoặc yêu cầu hạt nhân thực hiện một tác vụ.
@@ -46,6 +46,7 @@
 
 **Init System(Hệ thống khởi tạo)**
 - Khi máy bật, sau kernel, Linux cần một init system để khởi động dịch vụ: `System V init`, `systemd` như `systemctl start nginx` để bật dịch vụ web.
+- Init system là tiến trình đầu tiên (PID 1) → khởi động và quản lý toàn bộ dịch vụ hệ thống. Nói đơn giản: init giống như “quản đốc”, mọi tiến trình khác trong Linux đều là con cháu của nó.
 
 **Daemons(Trình nền)**
 - Là các process chạy ngầm, thường bắt đầu cùng hệ thống: `sshd`: dịch vụ SSH, `cron`: lập lịch chạy lệnh, `httpd`: web server Apache.

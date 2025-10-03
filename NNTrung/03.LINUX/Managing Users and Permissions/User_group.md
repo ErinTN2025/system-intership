@@ -13,6 +13,8 @@ Mỗi User trong Linux được mô tả bởi một số thông tin được l�
 - **/etc/passwd**:
   - Chứa thông tin cơ bản về user, bao gồm: **Username**, **Password**, **UID**, **GID**, **GECOS**, **HomeDirectory**, **Shell**
   - Định dạng: `username:x:UID:GID:GECOS:home_directory:shell`
+
+  ![altmage](../images/passwdcolumns.png)
 - **/etc/shadow**:
   - Lưu thông tin mật khẩu được mã hóa và các thông tin liên quan như ngày hết hạn mật khẩu, số ngày tối thiểu/ trước khi thay đổi mật khẩu, v.v.
   - Chỉ root hoặc các tiến trình đặc quyền mới đọc được tệp này.
@@ -20,6 +22,7 @@ Mỗi User trong Linux được mô tả bởi một số thông tin được l�
   - Lưu thông tin về các nhóm mà user thuộc về.
   - Định dạng: `group_name:x:GID:user_list`.
 
+![altimage](../images/catetcgroup.png)
 ## Các loại user trong Linux
 - Trong linux, có 3 loại người dùng chính:
 ### a. Root User (Siêu người dùng)
@@ -90,7 +93,6 @@ Mỗi User trong Linux được mô tả bởi một số thông tin được l�
 | Truy cập vào user| `su username`|
 
 ![altimage](../images/changeuserubuntu.png)
-
 ### Phân quyền của một file trong thư mục
 Xem phân quyền của một file/thư mục:
 
@@ -109,6 +111,8 @@ Trong Permission, có chi tiết các quyền cho các loại User khác:
 ![alitimage](../images/permission.png)
 
 ![mvdcksjcd](../images/usergroupothers.png)
+
+![altimage](../images/userpermission.png)
 
   - **file type**: có ba loại là Tệp thông thường (-)/ Thư mục (d) / Liên kết (i).
   - **user**: quyền đối với người dùng (chủ sở hữu).
