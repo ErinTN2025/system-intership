@@ -46,6 +46,8 @@ Mỗi User trong Linux được mô tả bởi một số thông tin được l�
 - Có quyền hạn thấp nhất, thường được dùng trên hệ thống chia sẻ công khai.
 - Không thể cài đặt phần mềm hoặc thay đổi cài đặt hệ thống
 - Thư mục /home/guest có thể bị xóa khi đăng xuất.
+
+### `useradd` Command: Creating New User
 ## Group trong Linux
 - Một group là tập hợp các user có chung quyền truy cập đến các tài nguyên trong hệ thống(tệp, thư mục, thiết bị, v.v).
 - **GroupID**: Mỗi group được gán một GID( group ID) duy nhất.

@@ -63,7 +63,7 @@
 - Dùng để cài đặt, cập nhật, gỡ bỏ phần mềm
 - Mỗi distro có hệ thống riêng: APT(Debian/Ubuntu), YUM/DNF(RHEL/CentOS/Fedora), PACMAN(Arch Linux).
 
-**Boatloader**
+**Bootloader**
 - Là chương trình nhỏ được nạp ngay sau BIOS/UEFI khi máy khởi động.
 - Nhiệm vụ chính: tìm và nạp kernel của hệ điều hành vào RAM, sau đó trao quyền điều khiển cho kernel.
 
