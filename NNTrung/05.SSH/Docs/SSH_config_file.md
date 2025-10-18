@@ -161,7 +161,7 @@ Oct 10 12:35:01 ubuntu sshd[1234]: session opened for user trung by (uid=0)
 ### Các tùy chọn phiên làm việc
 - `PrintMotd no`: KHÔNG hiển thị Message of the Day
 - `PrintLastLog yes`: Hiển thị lần đăng nhập cuối (mặc định)
-- `TCPKeepAlive`: Giữ kết nối sống
+- `TCPKeepAlive yes`: Giữ kết nối sống
 
 ### CLient Management
 - `ClientAliveInterval`: Thời gian kiểm tra client còn sống
@@ -175,3 +175,49 @@ Oct 10 12:35:01 ubuntu sshd[1234]: session opened for user trung by (uid=0)
 - `Subsystem sftp`: Định nghĩa SFTP server
 
 ### Per-User Settings (Match Block)
+Ví dụ: 
+```plaintext
+Match User anoncvs
+# X11Forwarding no
+# AllowTcpForwarding no 
+```
+- Áp dụng cấu hình riêng cho specific users.
+- Restrict user "anoncvs" không được forward.
+
+## Cấu hình SSH Client (`/.ssh/config`)
+- Thư mục ~/.ssh/ đang tồn tại, nhưng chưa từng tạo SSH key hoặc chưa từng lưu cấu hình clien -> nên chưa hề có file config.
+- Máy đang giữ vai trò SSH server(vì có file `authorized_keys`)
+- File `config` này sẽ giúp cấu hình SSH client trên máy khách để kết nối nhanh hơn.
+### Khi nào cần tạo file này ?
+- Gán bí danh cho server (đỡ phải gõ IP dài).
+- Chỉ định key khác nhau cho từng server.
+- Kết nối qua jump host/ proxy
+- Tuỳ chỉnh hành vi (port, log level, forward agent,v.v.).
+### Cách tạo thủ công
+```plaintext
+mkdir -p ~/.ssh          # tạo thư mục nếu chưa có
+chmod 700 ~/.ssh         # giới hạn quyền truy cập
+nano ~/.ssh/config       # hoặc dùng vim/gedit để mở
+```
+Có thể viết vào file config các mẫu ví dụ như sau:
+
+```plaintext
+# Server học tập
+Host ubuntu-lab
+    HostName 192.168.1.10
+    User trung
+    Port 22
+    IdentityFile ~/.ssh/id_rsa
+    ServerAliveInterval 60
+
+# Server chính
+Host main-server
+    HostName server.example.com
+    User admin
+    IdentityFile ~/.ssh/id_ed25519
+    ForwardAgent yes
+```
+### Host 
+- Dùng để đặt tên "tắt" (alias) cho máy chủ SSH mà bạn hay kết nối tới.
+- Thay vì phải gõ IP và port dài dòng mỗi lần, bạn chỉ cần gõ tên bí danh đó. `Host <tên_bí_danh>`
+- `IdentityFile`: Xác định đường dẫn đến tệp chứa private key mà SSH sẽ sử dụng để xác thực bằng public key.
