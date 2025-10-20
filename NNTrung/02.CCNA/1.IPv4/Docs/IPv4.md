@@ -87,6 +87,14 @@ Các địa chỉ IPv1, IPv2 và IPv3 có tồn tại nhưng:
 - **IP Public**:  là địa chỉ IP được cung cấp bởi nhà cung cấp dịch vụ Internet (ISP) và được sử dụng để xác định thiết bị hoặc mạng của bạn trên Internet. Mỗi thiết bị kết nối trực tiếp với Internet đều có một địa chỉ IP công cộng duy nhất (trên toàn cầu).
 
 - **IP Private**: là địa chỉ IP được sử dụng trong các mạng nội bộ (LAN) như trong gia đình, công ty hoặc trường học. Các địa chỉ này không thể truy cập trực tiếp từ Internet và được dùng để giao tiếp giữa các thiết bị trong cùng một mạng nội bộ.
+- **Dải địa chỉ IP private được quy định (theo RFC 1918)**
+
+| **Lớp mạng** | **Dải địa chỉ Private**         | **Số lượng địa chỉ** | **Ví dụ sử dụng**                                  |
+| ------------ | ------------------------------- | -------------------- | -------------------------------------------------- |
+| **Class A**  | `10.0.0.0 – 10.255.255.255`     | ~16 triệu            | Mạng nội bộ quy mô lớn (tập đoàn, ISP nội bộ)      |
+| **Class B**  | `172.16.0.0 – 172.31.255.255`   | ~1 triệu             | Mạng trung bình (trường đại học, doanh nghiệp lớn) |
+| **Class C**  | `192.168.0.0 – 192.168.255.255` | ~65 nghìn            | Mạng nhỏ (nhà riêng, văn phòng, router Wi-Fi)      |
+
 
 ![altimage](../Images/Public-and-Private-IP-Addresses.jpg)
 ## 7. Multicast và Broadcast
