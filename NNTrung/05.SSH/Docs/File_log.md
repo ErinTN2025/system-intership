@@ -24,7 +24,7 @@ sudo journalctl -u ssh --no-pager
 sudo journalctl -u sshd
 ```
 - `journalctl`: công cụ dòng lệnh được sử dụng để truy vấn và hiển thị nhật ký được thu thập bởi systemd journal.
-- `-u ssh`: Tùy chọn -u (unit) được sử dụng để lọc nhật ký thoe một đơn vị systemd cụ thể. Trong trường hợp này, ssh thường là tên của đơn vị quản lý dịch vụ SSH server (thường là ssh.service). Lệnh này sẽ hiện thị chỉ những nhật ký liên quan đến dịch vụ SSH.
+- `-u ssh`: Tùy chọn -u (unit) được sử dụng để lọc nhật ký theo một đơn vị systemd cụ thể. Trong trường hợp này, ssh thường là tên của đơn vị quản lý dịch vụ SSH server (thường là ssh.service). Lệnh này sẽ hiện thị chỉ những nhật ký liên quan đến dịch vụ SSH.
 - `--no-pager`: Tùy chọn --no-pager yêu cầu journalctl hiển thị toàn bộ nhật ký trực tiếp ra terminal mà không cần sử dụng pager.
 
 ![altimage](../Images/journalctlssh.png)
