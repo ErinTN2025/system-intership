@@ -77,9 +77,10 @@
   - Hai bên so khớp và đồng ý một bộ thuật toán chung, thống nhất bộ thuật toán bảo mật sẽ dùng cho toàn phiên (session)
 
 **Giai đoạn 4,5 Key Exchange**
-  - **Host key (khóa dài hạn của server)** đã tồn tại trên server (ví dụ /etc/ssh/ssh_host_rsa_key). Dùng để server chứng minh mình là ai.
+  - **Host key (khóa dài hạn của server)** đã tồn tại trên server (ví dụ /etc/ssh/ssh_host_rsa_key). Dùng để server chứng minh mình là ai( Server gửi public key của mình cho client).
+    - Client so sánh với bản lưu trong `~/.ssh/known_hosts`: Nếu khớp tin tưởng server nếu khác: cảnh báo host key has changed
   - **Ephemeral key pair** được tạo tức thời cho quá trình KEX (ví dụ ECDH/DH ephemeral). 
-  - Cả SSH client và server dùng thuật toán trao đổi khóa (Key Exchange Algorithm – KEX) để tạo ra một khóa phiên (session key) và mã định danh phiên (session ID).
+  - Cả SSH client và server dùng thuật toán trao đổi khóa (Key Exchange Algorithm – KEX) để tự động sinh ra một khóa phiên (session key) và mã định danh phiên (session ID) chung.
     - Session key → dùng để mã hóa/giải mã dữ liệu trong suốt phiên làm việc.
     - Session ID → định danh phiên, đảm bảo khi xác thực người dùng (login), server biết bạn thuộc phiên nào.
   - Ngoài ra, client có thể đã có user key pair (ví dụ ~/.ssh/id_rsa) dùng để xác thực người dùng sau này.
