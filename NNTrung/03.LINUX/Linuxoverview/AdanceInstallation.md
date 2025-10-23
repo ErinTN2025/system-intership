@@ -126,6 +126,12 @@ Unmount filesystem safely
 ![altimage](../images/unmount.png)
 
 ## Logical Volume Manager (LVM)
+### Tại sao chúng ta cần LVM
+- Trong Linux, bình thường khi bạn cài đặt, bạn chia ổ đĩa vật lý (`/dev/sda`, `/dev/sdb`, …) thành các phân vùng (partitions) cố định: `/dev/sda1`, `/dev/sda2`, v.v.
+  - Khi chia như vậy, nếu sau này bạn muốn tăng kích thước partition, rất khó hoặc phải xoá rồi tạo lại.
+  - Logical Volume Management (LVM) ra đời để giải quyết vấn đề này.
+- Mục đích của LVM: 
+  - Giúp bạn quản lý không gian lưu trữ linh hoạt — có thể mở rộng, thu nhỏ, gộp, tách, di chuyển dữ liệu mà không cần format lại ổ.
 ### 1. Khái niệm
 - LVM (Logical Volume Manager) là hệ thống quản lý ổ đĩa logic trong Linux. Nó cho phép bạn:
   - Gộp nhiều ổ đĩa vật lý lại thành một không gian lưu trữ duy nhất.
@@ -133,7 +139,8 @@ Unmount filesystem safely
   - Thay đổi kích thước, di chuyển, snapshot dễ dàng mà không cần format lại.
   - LVM giúp bạn “ảo hóa” ổ đĩa — giống như quản lý ổ đĩa bằng phần mềm thay vì cứng nhắc như bảng phân vùng truyền thống.
 
-### 2. Cấu trúc LVM (3 tầng chính)
+### 2. Cấu trúc LVM (3 tầng chính)  
+
 Physical Volumes (PVs): Raw disk partitions or entire disks that LVM can use as building blocks.
 - Là ổ đĩa vật lý hoặc phân vùng mà bạn “đăng ký” với LVM.
 
@@ -141,8 +148,8 @@ Volume Groups (VGs): A collection of one or more PVs that act as a single pool o
 - Là nhóm chứa nhiều PV.
 
 Logical Volumes (LVs): Flexible, resizable "partitions" that are created from the VG. These are what the operating system interacts with.
-- Là phân vùng logic mà bạn tạo bên trong Volume Group.
-- Bạn có thể xem nó như “ổ đĩa ảo” mà Linux có thể mount (như /, /home, /var, …)
+- Là phân vùng logic được tạo ra từ VG (volume group).
+- Nó hoạt động giống như 1 partition bình thường mà bạn có thể format, mount, resize.
 
 ![altimage](../images/LVM3layers.png)
 
@@ -165,3 +172,8 @@ Logical Volumes (LVs): Flexible, resizable "partitions" that are created from th
 
 ### Linux Software Installation Methods
 ![altimagh](../images/InstallMethods.png)
+
+### LAB Part 2
+**Manual partitioning: separate `/`, `/home`, and `/var partitions`.**
+
+**Phân tích trạng thái hiện tại**

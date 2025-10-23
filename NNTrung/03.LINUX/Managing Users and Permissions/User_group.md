@@ -105,7 +105,7 @@ Xem phân quyền của một file/thư mục:
   - **Group**: nhóm mà owner thuộc vào
   - **Date Created**: ngày tạo file
   - **Name**: Tên file
-### Các dạng File
+### Quản lý file trong Ubuntu
 ![altimage](../images/Filetypes.png)
 
 Trong Permission, có chi tiết các quyền cho các loại User khác:
@@ -151,3 +151,4 @@ Trong Permission, có chi tiết các quyền cho các loại User khác:
   - `w`= tạo, xoá, đổi tên file trong thư mục
   - `x`= cho phép cd vào thư mục, truy cập inode của các file nếu biết tên
   - Ví dụ: nếu một thư mục có --x (chỉ x, không r), bạn có thể cd vào và truy cập file nếu biết tên chính xác nhưng không thể ls để xem danh sách.
+

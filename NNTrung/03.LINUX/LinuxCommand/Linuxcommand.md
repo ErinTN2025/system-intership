@@ -36,6 +36,19 @@
 |`find`| Tìm kiếm tập tin hoặc thư mục và tất cả các file bên trong| `find /home - name "*.txt"/"abc.txt"` |
 |`locate`| Tìm kiếm tệp tin nhanh | `locate example.txt`|
 
+#### 2.1 Bổ sung chi tiết
+- `ls -a`: Hiển thị tất cả các file, kể cả file ẩn.
+- `ls -R`: Liệt kê đệ quy (recursive) tất cả thư mục con. Nó không chỉ liệt kê thư mục hiện tại, mà còn mọi thư mục bên trong (và các thư mục con trong đó).
+- `ls -l`: Hiển thị chi tiết (long listing).
+  - Dạng này hiển thị thông tin chi tiết về từng file/thư mục:
+    - Quyền truy cập (permissions)
+    - Số liên kết (links)
+    - Chủ sở hữu (owner)
+    - Nhóm (group)
+    - Kích thước file (size)
+    - Thời gian sửa đổi (timestamp)
+- `ls -t`: Sắp xếp theo thời gian chỉnh sửa gần nhất
+Tên file
 ![altimage](../images/wildcardfile.png)
 ### 3. Lệnh xem nội dung tập tin 
 | Lệnh| Chức năng | Chi tiết |

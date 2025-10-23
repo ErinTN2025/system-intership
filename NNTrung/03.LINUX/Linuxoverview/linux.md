@@ -25,7 +25,7 @@
 - Các loại Shell phổ biến nhất:
   - Sh (the Bourne shell)
   - csh (C shell)
-  - bash (Bourne-again shell)
+  - bash (Bourne-again shell): On most Linux distributions.
   - tsh (TENEX C shell)
   - ash (Almquist shell)
   - zsh (Z shell)
@@ -69,6 +69,19 @@
 
 ## Cấu trúc file, thư mục trong Linux
 - Mọi thứ trong Linux đều là file. Chúng được phân cấp theo tiêu chuẩn FHS(Filesystem Hierarchy Standard)
+- Linux represents system resources — including hardware and communication channels — as files.
+- All hardware devices are represented under the directory: 📂 `/dev` → stands for “device files”
+- For example:
+
+| Device                  | File in `/dev`                | Description              |
+| ----------------------- | ----------------------------- | ------------------------ |
+| Hard drive              | `/dev/sda`, `/dev/nvme0n1`    | Represents storage disks |
+| USB device              | `/dev/ttyUSB0`                | Serial USB device        |
+| Sound card              | `/dev/snd/`                   | Audio devices            |
+| CD-ROM                  | `/dev/sr0`                    | Optical drive            |
+| Keyboard/Mouse          | `/dev/input/`                 | Input devices            |
+| Random number generator | `/dev/random`, `/dev/urandom` | Kernel entropy sources   |
+
 - Cấu trúc thư mục trong Linux được tổ chức theo dạng cây (tree), với thư mục gốc (/) là điểm bắt đầu, từ đó các thư mục và thư mục con phân nhánh ra.
 - Để xem các thư mục ở mức gốc, bạn có thể dùng lệnh `ls /` trong terminal, nó sẽ liệt kê tất cả các thư mục trực tiếp dưới /, bao gồm /home.
 ![altimage](../images/Filelonuxtable.png)
@@ -152,8 +165,32 @@
 - `-`: Thư mục đã làm việc trước đó.
 - `/lost+found`: Dành cho file bị lỗi sau khi kiểm tra hệ thống(chỉ có trong phân vùng ext4)
 
+### Inode
+- Khi bạn tạo 1 file trong Linux, hệ thống sẽ lưu 2 phần riêng biệt:
 
+| Phần                         | Lưu gì                                                                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 🧱 **Dữ liệu (data blocks)** | Nội dung thực sự của file (ví dụ: chữ, hình, mã nguồn, …)                                                                       |
+| 📇 **inode**                 | Thông tin *về* file (metadata) — ai là chủ sở hữu, quyền truy cập, thời gian tạo/sửa, vị trí dữ liệu nằm ở đâu trên ổ đĩa, v.v. |
 
+- In Linux file systems, the primary function of an inode is to store metadata (information about a file) — not the file’s name or its data, but details about the file.
+- Một Inode chứa rất nhiều thông tin quan trọng:
+
+| Thông tin                                | Ví dụ                                       |
+| ---------------------------------------- | ------------------------------------------- |
+| Loại file                                | file thường, thư mục, link, v.v.            |
+| Quyền (permissions)                      | `rwxr-xr--`                                 |
+| Số liên kết (hard link count)            | 1, 2, …                                     |
+| Chủ sở hữu (UID)                         | user: `trungg`                              |
+| Nhóm (GID)                               | group: `trungg`                             |
+| Kích thước file                          | 2048 bytes                                  |
+| Thời gian tạo / sửa / truy cập           | `ctime`, `mtime`, `atime`                   |
+| Các con trỏ (pointers) đến block dữ liệu | Chỉ nơi lưu nội dung thật của file trên đĩa |
+
+- Xem số Inode: `ls -i`
+- inode = “thẻ căn cước” của file trong Linux
+- Lưu thông tin (metadata) và vị trí dữ liệu trên đĩa
+- Không lưu tên file — tên nằm trong thư mục (directory)
 ## Ưu điểm và hạn chế của hệ điều hành Linux
 ### Ưu điểm
 #### 1. Mã nguồn mở và miễn phí
