@@ -169,7 +169,24 @@ Logical Volumes (LVs): Flexible, resizable "partitions" that are created from th
 
   - **Load/Unload**: `modprobe[module]` loads modules with dependencies, `rmmod` removes them.
   - **Hardware Detection**: `lspci` and `lsusb` identify connected PCI and USB devices.
+- **Load a specific module**
+```plaintext
+sudo rmmod module_name
+```
+- **Chck hardware messages**
+```plaintext
+dmesg | tail - 20
+```
 
+- **View PCI devices**
+```plaintext
+lspci -v
+```
+![alitmgae](../images/lspci-v.png)
+- **USB device information**
+```plaintext
+lsusb -v
+```
 ### Linux Software Installation Methods
 ![altimagh](../images/InstallMethods.png)
 
@@ -177,3 +194,154 @@ Logical Volumes (LVs): Flexible, resizable "partitions" that are created from th
 **Manual partitioning: separate `/`, `/home`, and `/var partitions`.**
 
 **Phân tích trạng thái hiện tại**
+| Thiết bị       | Dung lượng | Ghi chú                                                                         |
+| -------------- | ---------- | ------------------------------------------------------------------------------- |
+| `/dev/sda`     | 40 GB      | Ổ đĩa chính                                                                     |
+| ├─ `/dev/sda1` | 1 MB       | BIOS boot (trống)                                                               |
+| ├─ `/dev/sda2` | 2 GB       | Mount `/boot` (ext4, không thuộc LVM)                                           |
+| └─ `/dev/sda3` | 38 GB      | Dạng LVM, Volume Group `ubuntu-vg`, chứa Logical Volume `ubuntu-lv` (mount `/`) |
+| `/dev/sdb1`    | 20 GB      | Ổ mới thêm, chưa dùng                                                           |
+| `/dev/sr0`     | CD-ROM     | Không liên quan                                                                 |
+
+![altimae](../images/lsblk.png)
+
+#### Kiểm tra các thông tin LVM hiện tại
+```plaintext
+sudo pvs
+sudo vgs
+sudo lvs
+```
+- Kết quả sẽ có dạng:
+```plaintext
+PV         VG         Fmt  Attr PSize  PFree
+/dev/sda3  ubuntu-vg  lvm2 a--  38.00g 0
+
+VG         #PV #LV #SN Attr   VSize  VFree
+ubuntu-vg   1   1   0 wz--n- 38.00g 0
+
+LV         VG         Attr       LSize  Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+ubuntu-lv  ubuntu-vg  -wi-ao---- 19.00g
+```
+
+#### Thêm `/dev/sdb1` vào Volume Group
+Khởi tạo một partition hoặc disk thành Physical Volume cho LVM: `sudo pvcreate /dev/sdb1`
+
+![jasdj](../images/physicalvolume1.png)
+
+`sudo pvdisplay` - Hiển thị thông tin chi tiết về tất cả các Physical Volumes trong hệ thống LVM.
+
+![altimage](../images/pvdisplay.png)
+
+**Create Volume Group**
+```plaintext
+sudo vgcreate my_vg /dev/sdb1 /dev/sdc1
+```
+**Add physical volume vào 1 group có sẵn**
+```plaintext
+sudo vgextend ubuntu-vg /dev/sdb1
+```
+![altimage](../images/extendvg.png)
+**Xác minh**
+```plaintext
+sudo vgs
+```
+![altimahe](../images/vgsafterextend.png)
+**Tạo Logical Volume mới cho `/home`và `/var`**
+```plaintext
+sudo lvcreate -L 10G -n lv_home ubuntu-vg
+sudo lvcreate -L 10G -n lv_var ubuntu-vg
+```
+![altimage](../images/sudolvcreate.png)
+**Xác minh lại**
+```plaintext
+sudo lvs
+```
+**Định dạng filesystem**
+```plaintext
+sudo mkfs.ext4 /dev/ubuntu-vg/lv_home
+sudo mkfs.ext4 /dev/ubuntu-vg/lv_var
+```
+![altimage](../images/dinhdangfilesystem.png)
+
+**Mount thử để kiểm tra**
+```plaintext
+sudo mkdir /mnt/home
+sudo mkdir /mnt/var
+sudo mount /dev/ubuntu-vg/lv_home /mnt/home
+sudo mount /dev/ubuntu-vg/lv_var /mnt/var
+```
+![altimahe](../images/testmount.png)
+
+**Di chuyển dữ liệu thật sang `/home` và `/var`**
+```plaintext
+sudo rsync -aXS /home/ /mnt/home/
+sudo rsync -aXS /var/ /mnt/var/
+```
+**Truy cập `/etc/fstat`**
+```plaintext
+sudo nano /etc/fstab
+```
+  - **Cấu trúc file**
+```plaintext
+<filesystem>  <mount_point>  <type>  <options>  <dump>  <pass>
+```
+
+| Trường                   | Ý nghĩa                                                             |
+| ------------------------ | ------------------------------------------------------------------- |
+| `/dev/ubuntu-vg/lv_home` | Thiết bị hoặc logical volume chứa phân vùng `/home`                 |
+| `/home`                  | Điểm mount (thư mục đích)                                           |
+| `ext4`                   | Loại filesystem                                                     |
+| `defaults`               | Tùy chọn mount mặc định (rw, suid, exec, auto, nouser, async)       |
+| `0`                      | Không dùng cho dump backup                                          |
+| `2`                      | Thứ tự kiểm tra (fsck); root `/` là `1`, các filesystem khác là `2` |
+
+Thêm 2 dòng sau:
+```plaintext
+/dev/ubuntu-vg/lv_home /home ext4 defaults 0 2
+/dev/ubuntu-vg/lv_var  /var  ext4 defaults 0 2
+```
+
+Lưu lại file
+```plaintext
+Ctrl + O  →  Enter  →  Ctrl + X
+```
+![altimage](../images/fbstatsaukhisua.png)
+
+Unmount bản cũ rồi mount lại:
+```plaintext
+sudo umount /mnt/home
+sudo umount /mnt/var
+sudo mount -a
+```
+![altimage](../images/mountthanhcong.png)
+
+**Xóa logical volume thừa**
+```plaintext
+sudo lvremove /dev/ubuntu-vg/lv_root
+```
+(Do ở trên tạo thừa logical volume)
+![altimage](../images/xoalvthua.png)
+
+**Xóa Volume Group**
+```plaintext
+sudo vgremove ubuntu-vg1
+```
+**Xóa physical Volume nếu muốn tái sử dụng**
+```plaintext
+sudo pvremove /dev/sdb1
+```
+
+**Extend Logical Volume**
+```plaintext
+sudo lvextend -L +5G /dev/my_vg/data_lv
+sudo resize2fs /dev/my_vg/data_lv
+```
+
+![altimhar](../images/lvextendresize2fs.png)
+
+**LV Snapshot & Restore**
+```plaintext
+sudo lvcreate -s -n web_lv_snap -L 1G /dev/my_vg/web_lv
+# (Simulate data loss)
+sudo lvconvert --merge /dev/my_vg/web_lv_snap
+```
