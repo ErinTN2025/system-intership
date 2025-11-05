@@ -59,12 +59,13 @@ bootloader using `grub-install` and `update-grub`.
 - **Post-Install Validation**: Run system updates, enable essential services, configure firewall, and verify hardware detection.
 
 ### Linux Storage Systems Overview
+- **Swap** là vùng bộ nhớ ảo (virtual memory) mà hệ điều hành Linux sử dụng trên ổ đĩa khi RAM vật lý (RAM thật) bị thiếu hoặc đầy.
 - **Disk Management Tools**:
   - `lsblk`(List Block Devices) displays block devices in tree format
     - Hiển thị danh sách thiết bị lưu trữ dạng khối như HDD, SSD, USB 
     - Nó cho bạn thấy cấu trúc dạng cây của tất cả ổ đĩa và phân vùng.
   - While `fdisk` and `parted` create and modify partitions.
-    - “Phân vùng” = chia ổ đĩa thành các phần riêng biệt, mỗi phần có thể dùng cho hệ điều hành, dữ liệu, hoán đổi (swap), v.v.
+    - “Phân vùng” = chia ổ đĩa thành các phần riêng biệt, mỗi phần có thể dùng cho hệ điều hành, dữ liệu, hoán đổi, v.v.
     - Công cụ `fdisk` (dòng lệnh) hoặc `parted` (tương tự, có thể hỗ trợ GPT tốt hơn) giúp bạn: Tạo phân vùng mới, Xóa phân vùng cũ, Xem bảng phân vùng hiện có.
     - Ví dụ trong menu tương tác: `sudo fdisk /dev/sdb`
     - `n`: Tạo phân vùng mới, `p`: xem bảng phân vùng, `d`: xóa phân vùng. `w`: lưu thay đổi
