@@ -14,6 +14,11 @@
 ![ssad](../Images/DHCPoperates.png)
 ### 2.1 Trạng thái khởi tạo
 - Client ở INIT (hoặc INIT-REBOOT nếu vừa khởi động lại và nhớ lease cũ).
+- Client dùng UDP 68; Server dùng UDP 67
+- Gói ban đầu đi broadcast vì client chưa có IP.
+- Trường địa chỉ MAC/IP đặc biệt:
+  - Src IP: 0.0.0.0 (client) -> Dst IP: 255.255.255.255 (broadcast) ở bước đầu.
+  - Dựa trên MAC client (chaddr) để định danh.
 ### 2.2 Discovery(client -> broadcast)
 - DHCP client gửi một gói tin broadcast (DHCPDISCOVER) tới toàn mạng để tìm kiếm DHCP server.
 - Gói tin này được gửi tới địa chỉ 255.255.255.255:67, nguồn UDP 68 vì client chưa có địa chỉ IP.
@@ -36,25 +41,33 @@
 - DHCP server gửi gói tin DHCPACK để xác nhận rằng địa chỉ IP đã được cấp phát cho client: ACK chứa yiaddr + toàn bộ options cấu hình(mask, gateway, DNS, lease...).
 - Client sau đó chuyển sang trạng thái BOUND và cấu hình giao diện:
   - Đặt IP, Mask, Gateway, DNS...
-  - Gửi ARP probe/gratuitous ARP để kiểm tra trùng IP (nếu thấy trùng sẽ gửi DHCP DECLINE để từ chối và xin lại).
-- Nếu có vấn đề(sai mạng, lease hết hạn/ không hợp lệ), server gửi DHCP NAK -> client quay về INIT và lặp lại.
+  - Gửi ARP probe/gratuitous ARP để kiểm tra trùng IP (nếu thấy trùng sẽ gửi **DHCP DECLINE** để từ chối và xin lại).
+- Nếu có vấn đề(sai mạng, lease hết hạn/ không hợp lệ), server gửi **DHCP NAK** -> client quay về INIT và lặp lại.
 
 ![altimage](../Images/DHCPchange.png)
 
-### 2.6 Các vai trò & cổng
-- Client dùng UDP 68; Server dùng UDP 67
-- Gói ban đầu đi broadcast vì client chưa có IP.
-- Trường địa chỉ MAC/IP đặc biệt:
-  - Src IP: 0.0.0.0 (client) -> Dst IP: 255.255.255.255 (broadcast) ở bước đầu.
-  - Dựa trên MAC client (chaddr) để định danh.
+### 2.5.1 DHCP Negative Acknowledge (DHCP NAK)
+- **Mục đích**: Thông điệp này được gửi bởi DHCP server để thông báo cho client rằng yêu cầu của nó không được chấp nhận. Điều này có thể xảy ra nếu địa chỉ IP mà client yêu cầu không còn hợp lệ (ví dụ: đã được cấp phát cho máy khác) hoặc nếu có lỗi trong quá trình gia hạn. Client sẽ yêu cầu lại IP mới.
+- **Nguồn**: DHCP server (địa chỉ của server)
+- **Đích**: Địa chỉ unicast đến DHCP client
 
-### 2.7 Gia hạn thuê IP (Lease Renewal)
+### 2.6 DHCP Release - Giải phóng IP
+- Thông điệp này được gửi bởi DHCP client để thông báo cho server biết rằng nó không còn sử dụng địa chỉ IP đã được cấp phát nữa. Điều này thường xảy ra khi client tắt máy hoặc ngắt kết nối mạng.
+- **nguồn**: DHCP client(địa chỉ IP đã được cấp phát).
+- **Đích**: Địa chỉ unicast đến DHCP server.
+
+### 2.7 DHCP INFORM: 
+- Các thiết bị không sử dụng DHCP để lấy địa chỉ IP vẫn có thể sử dụng khả năng cấu hình khác của nó. Một client có thể gửi một bản tin DHCP INFORM để yêu cầu bất kì máy chủ có sẵn nào gửi cho nó các thông số để mạng hoạt động.  DHCP server đáp ứng với các thông số yêu cầu – được điền trong phần tùy chọn của DHCP trong bản tin DHCP ACK.
+  - Nguồn: DHCP client (địa chỉ IP đã được cấu hình).
+  - Đích: Địa chỉ unicast đến DHCP server.
+
+### 2.9 Gia hạn thuê IP (Lease Renewal)
 - Mỗi lease có 2 mốc:
   - T1(50%): Client gửi DHCP REQUEST (unicast) trực tiếp đến server đã cấp(Option 54).
   - T2(87.5%): Nếu T1 thất bại, client broadcast REQUEST để bất kỳ server nào cùng scope có thể gia hạn.
 - Nếu hết hạn mà không gia hạn được, client mất IP và quay về INIT (Discover lại).
 
-### 2.8 DHCP Relay (qua Router)
+### 2.10 DHCP Relay (qua Router)
 ![altimage](../Images/DHCP%20Relay.png)
 
 - Khi clien và server khác VLAN/subnet, có nhiều mạng khacs tương ứng với nhiều router khác thì cần phải dùng DHCP Relay Agent vì Clients sử dụng địa chỉ broadcast để quảng bá yêu cầu cấp phát IP, khi gói tin gửi bằng broadcast đến Router thì sẽ bị loại bỏ, do vậy phải có cách để cho các router trung gian chấp nhận những gói tin broadcast này và gửi đến DHCP server cách này chính là DHCP Relay Agent.
@@ -67,6 +80,7 @@
   - Relay chỉ biết MAC của client, không biết chắc client đã cấu hình được IP để nhận unicast.
   - Do đó, gói OFFER/ACK từ server thường được relay "thả" vào VLAN đó dưới dạn broadcast(255.255.255.255 hoặc broadcast của subnet), để đảm bảo mọi client đều nghe thấy, trong đó client đích sẽ xử lý gói dành cho nó.
   - Nếu client trong DISCOVER/REQUEST đã bật flag = unicast (thường là khi nó đã có IP hợp lệ, ví dụ giai đoạn gia hạn lease), thì server/relay có thể gửi unicast trực tiếp về địa chỉ IP đó.
+  
 ### 2.9 Một số thông điệp khác của DHCP
 - DHCP NAK: Từ chối/gỡ lease vì không hợp lệ (sai mạng, scope đổi…).
 - DHCP DECLINE: Client phát hiện trùng IP (ARP thấy có thiết bị dùng IP) → từ chối IP đó; server đánh dấu IP bị nghi ngờ và không cấp trong một thời gian.

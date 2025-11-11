@@ -99,7 +99,7 @@ sudo systemctl restart NetworkManager
 
 Kiểm tra ip
 
-### 5. Kiểm tra cấp phát trên DHCP server
+### 5. Kiểm tra cấp phát trên DHCP server (DHCP Logs)
 Sử dụng lệnh:
 ```plaintext
 cat /var/lib/dhcp/dhcpd.leases
@@ -116,3 +116,32 @@ cat /var/lib/dhcp/dhcpd.leases
 - `rewind binding state free`: Khi thực hiện "rewind" (quay lui cấu hình trước khi server restart), IP này cũng sẽ trở lại trạng thái free.
 - `00:0c:29:d1:31:37`: Địa chỉ MAC address của client được cấp phát IP.
 - `uid "\001\000\014)\32117"`: UID của client (Unique Identifier), thường được DHCP client tạo ra để phân biệt trong các môi trường không có MAC cố định (VD: DHCP relay, VPN...).
+
+#### Xem log DHCP server
+```plaintext
+sudo journalctl -u isc-dhcp-server
+```
+
+![altimage](../Images/dhcplogs.png)
+
+#### Xem log DHCP Clients
+- Trên Ubuntu
+```plaintext
+sudo journalctl -u systemd-networkd | grep DHCP
+```
+
+![altimage](../Images/filelogclient.png)
+
+- Trên CentOS 9
+```plaintext
+sudo journalctl -u NetworkManager | grep -i dhcp
+sudo journalctl -fu NetworkManager | grep -i dhcp (realtime)
+```
+![altimage](../Images/logcentos.png)
+
+Nếu là Server:
+```plaintext
+sudo journalctl -u named
+sudo journalctl -fu named
+```
+

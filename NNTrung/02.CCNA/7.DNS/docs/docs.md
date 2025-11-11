@@ -127,3 +127,23 @@ Kiểm tra lại là thành công nhận.
 ![altimage](../image/checkdns.png)
 
 - Nếu hiện ra IP như hình là OK
+
+### Lỗi trên xuất hiện do bạn chưa check lại DHCP
+Sửa file cấu hình DHCP
+```plaintex
+sudo nano /etc/dhcp/dhcpd.conf
+```
+Sửa cấu hình:
+```plaintext
+option domain-name "nhom2.local";
+  ...
+subnet 192.168.172.0 netmask 255.255.255.0 {
+  ...
+  option domain-name-servers 192.168.172.10;
+}
+
+Khởi động lại DHCP
+```plaintext
+sudo systemctl restart isc-dhcp-server
+sudo systemctl status isc-dhcp-server
+```
