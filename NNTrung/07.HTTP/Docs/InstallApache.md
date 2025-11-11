@@ -72,3 +72,18 @@ sudo systemctl restart httpd
 - Đổi port cho Apache: `sudo nano /etc/httpd/conf/httpd.conf`
 - Sửa dòng: `Listen 80` -> `Listen 8080`
 - Restart: `sudo systemctl restart httpd`
+
+- **Cho phép cổng Firewall**
+```plaintext
+sudo firewall-cmd --list-all
+sudo firewall-cmd --add-port=8080/tcp --permanent
+sudo firewall-cmd --reload
+```
+![altimage](../Images/firewallopen.png)
+
+- **SELinux đang chặn Apache listen port 8080**
+```plaintext
+sudo cat /var/log/audit/audit.log | grep httpd
+sudo semanage port -a -t http_port_t -p tcp 8080
+```
+Nếu chưa có cài đặt `semange`: `sudo dnf install policycoreutils-python-utils -y`
