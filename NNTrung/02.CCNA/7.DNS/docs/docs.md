@@ -2,7 +2,7 @@
 ### Mục tiêu
 - Triển khai DNS server nội bộ với domain: trung.local
 - Máy chủ DNS có IP: `192.168.172.10`
-- Có thể phân giải tên `www.example.local` thành `192.168.172.112`
+- Có thể phân giải tên `www.nhom2.com` thành `192.168.172.112`
 - Hỗ trợ cả phân giải thuận (A record) và phân giải ngược (PTR record)
 
 ### Khởi động dịch vụ DNS
@@ -21,12 +21,12 @@ sudo nano /etc/bind/named.conf.local
 ```
 sửa file như sau:
 
-![altimahe](../image/khaibaozone.png)
+![altimahe](../image/Screenshot_1.png)
 
 ### Tạo Zone file cho tên miền
 ```plaintext
-sudo cp /etc/bind/db.local /etc/bind/db.nhom2.local
-sudo.nano /etc/bind/db.nhom2.local
+sudo cp /etc/bind/db.local /etc/bind/db.nhom2.com
+sudo.nano /etc/bind/db.nhom2.com
 ```
 Sửa theo nội dung:
 
@@ -37,7 +37,7 @@ Sửa theo nội dung:
 sudo nano /etc/hosts
 ```
 
-Thêm dòng: **192.168.172.10 ns1.nhom2.local ns1**
+Thêm dòng: **192.168.172.10 ns.nhom2.com ns**
 
 ![alitmaghwe](../image/suafilehost.png)
 ### Tạo file phân giải ngược
@@ -83,8 +83,8 @@ Cấu trúc:
 | 192.168.1.30 | `30 IN PTR mail.example.local.` | IP 192.168.1.30 → `mail.example.local.`                       |
 ### Bảo mật và phân quyền file
 ```plaintext
-sudo chown root:named /var/named/doantan.local.db
-sudo chown root:named /var/named/192.168.3.rev
+sudo chown root:named /etc/bind/db.nhom2.com
+sudo chown root:named /etc/bind/db.192
 sudo restorecon -v /var/named/*
 sudo systemctl restart named
 ```
@@ -104,6 +104,26 @@ dig www.nhom2.com
 ```
 - `dig` (và hệ thống) sẽ hỏi DNS server mặc định trên máy client (ghi trong `/etc/resolv.conf).
 - Nếu trong file `/etc/resolv.conf` không có dòng nameserver `192.168.172.10`, thì client sẽ hỏi một DNS khác (VD: 8.8.8.8 hoặc DNS router), mà DNS đó không biết zone nội bộ `nhom2.com` → nên trả về “not found”.
-- Cách sửa tạm thời: 
+#### Cách sửa tạm thời: 
   - Chạy: `sudo nano /etc/resolv.conf`
   - Sửa: `nameserver 192.168.172.10`
+
+#### Cách chỉnh sửa chuẩn nhất:
+  - Chạy : `sudo nano /etc/netplan/50-cloud-init.yaml`
+  - Sửa: 
+```plaintext
+  nameservers:
+    - 192.168.172.10
+```
+![altimage](../image/suacloudinit.png)
+
+`sudo netplan apply`
+
+Kiểm tra lại là thành công nhận.
+
+### Kiểm tra DNS
+- Trên máy chủ:
+
+![altimage](../image/checkdns.png)
+
+- Nếu hiện ra IP như hình là OK
