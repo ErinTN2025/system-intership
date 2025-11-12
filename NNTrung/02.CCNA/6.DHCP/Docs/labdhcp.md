@@ -144,4 +144,5 @@ Nếu là Server:
 sudo journalctl -u named
 sudo journalctl -fu named
 ```
-
+### 6. Sửa các lỗi gặp phải
+- Nếu trong quá trình bị lỗi: `sudo dhcpd -t ` để sửa lỗi và kiểm tra.
