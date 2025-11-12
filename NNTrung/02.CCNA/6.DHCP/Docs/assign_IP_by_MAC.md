@@ -42,7 +42,7 @@ sudo systemctl restart isc-dhcp-server
 sudo systemctl status isc-dhcp-server
 ```
 ### Xin cấp phát lại IP trên máy client
-**Ubuntu** + **CentOS 9**
+**Ubuntu** 
 ```ruby
 # Giải phóng IP cũ
 sudo dhcpcd -k ens33
@@ -57,4 +57,12 @@ sudo dhcpcd -n ens33
 ipconfig /release
 # Yêu cầu cấp phát IP mới
 ipconfig /renew
+```
+
+**CentOS 9** 
+```ruby
+# Giải phóng IP cũ
+sudo dhclient -r ens33
+# Yêu cầu cấp phát IP mới
+sudo dhcpcd -v ens33
 ```
