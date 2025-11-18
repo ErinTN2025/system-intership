@@ -137,13 +137,6 @@ sudo nano /etc/apache2/sites-available/mywebsite2.conf
     CustomLog ${APACHE_LOG_DIR}/mywebsite2_access.log combined
 </VirtualHost>
 ```
-#### 4* Sửa Port vào file cấu hình Port của Apache
-```plaintext
-sudo nano /etc/apache2/ports.conf
-```
-- Thay bằng Port khác:
-
-![altimgae](../Images/themportubuntu.png)
 
 #### 5. Kích hoạt VirtualHost
 - **Chạy lệnh cấu hình**
