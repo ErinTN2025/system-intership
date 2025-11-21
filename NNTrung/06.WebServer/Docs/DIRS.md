@@ -420,3 +420,91 @@ sudo tail -f /var/log/apache2/access.log      # Theo dõi access log
 sudo tail -f /var/log/apache2/error.log       # Theo dõi error log
 sudo less /var/log/apache2/error.log          # Đọc error log
 ```
+
+# DIRS TREE NGINX
+
+## I. TRÊN CentOS 9 / RHEL / Rocky / AlmaLinux
+
+Nginx được cài từ package nginx (repo EPEL hoặc AppStream).
+
+```bash
+Cấu trúc thư mục:
+/etc/nginx/                         # Thư mục cấu hình chính của Nginx  
+├── nginx.conf                      # File config chính (global)  
+├── conf.d/                         # Nơi chứa các site (Virtual Host)  
+│   ├── default.conf                # Site mặc định (HTTP)  
+│   ├── example.conf                # (Tự tạo) site khác  
+│  
+├── modules/                        # Cấu hình load module (.so)  
+│  
+├── mime.types                      # Khai báo kiểu MIME cho file tĩnh  
+└── fastcgi_params, scgi_params...  # Các file cấu hình CGI, Proxy  
+
+Thư mục dữ liệu & log:  
+/usr/share/nginx/html/              # Web root mặc định (index.html)  
+├── index.html                      # Trang chào mặc định  
+│  
+/var/log/nginx/                     # Log lỗi và truy cập  
+├── access.log  
+└── error.log  
+  
+Service & PID:
+/run/nginx.pid                      # File lưu PID của process  
+/usr/lib/systemd/system/nginx.service  # File khởi động Nginx  
+```
+
+Tạo website mới:  
+
+→ Chỉ cần tạo file trong /etc/nginx/conf.d/ như:
+
+```bash
+sudo nano /etc/nginx/conf.d/mywebsite.conf
+```
+
+-> rồi chỉnh root `/usr/share/nginx/html/mywebsite`;
+
+## II. TRÊN Ubuntu / Debian
+
+Nginx ở Ubuntu có cấu trúc “rõ ràng hơn” cho quản lý nhiều site.
+
+```bash
+Cấu trúc thư mục:
+/etc/nginx/                         # Thư mục cấu hình chính  
+├── nginx.conf                      # File config global  
+├── sites-available/                # Chứa các site có thể bật (available)  
+│   ├── default  
+│   └── mywebsite.conf  
+│  
+├── sites-enabled/                  # Liên kết (symlink) tới site đang bật  
+│   ├── default -> ../sites-available/default  
+│   └── mywebsite.conf -> ../sites-available/mywebsite.conf  
+│  
+├── snippets/                       # Chứa các đoạn config tái sử dụng  
+├── conf.d/                         # Cấu hình global phụ  
+└── mime.types  
+  
+Thư mục dữ liệu & log:
+/var/www/html/                      # Web root mặc định  
+├── index.nginx-debian.html  
+│  
+/var/log/nginx/                     # Log truy cập và lỗi  
+├── access.log  
+└── error.log
+```  
+
+## III. SO SÁNH NGINX TRÊN CENTOS9 & UBUNTU
+
+| Thành phần          | CentOS 9                        | Ubuntu                                     |
+| ------------------- | ------------------------------- | ------------------------------------------ |
+| File config chính   | `/etc/nginx/nginx.conf`         | `/etc/nginx/nginx.conf`                    |
+| Thư mục site        | `/etc/nginx/conf.d/`            | `/etc/nginx/sites-available/` + `/etc/nginx/sites-enabled/` |
+| Web root mặc định   | `/usr/share/nginx/html/`        | `/var/www/html/`                           |
+| Log                 | `/var/log/nginx/`               | `/var/log/nginx/`                          |
+| Lệnh reload         | `sudo systemctl reload nginx`   | `sudo systemctl reload nginx`              |
+| Cấu hình nhiều site | Tạo file `.conf` trong `conf.d` | Dùng `a2ensite` kiểu riêng (manual symlink)|
+
+## IV. TỔNG KẾT
+
+**CentOS**: đơn giản, mọi VirtualHost nằm hết trong `/etc/nginx/conf.d/`.
+
+**Ubuntu**: chia 2 tầng (available/enabled) để bật/tắt site dễ dàng.

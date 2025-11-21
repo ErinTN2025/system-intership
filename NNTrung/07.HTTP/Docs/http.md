@@ -41,6 +41,8 @@ Giao thức HTTP, viết tắt của HyperText Transfer Protocol, là giao thứ
 - Loads: Client loads the content of the response.
 - **Connection Closing**: The connection is then closed, although in modern HTTP/1.1 and later, connections can be kept open (persistent connections) to improve performance.                               
 
+#### 3.2 Bắt đầu giao tiếp
+
 ![altimage](../Images/httpstructure.png)
 
 HTTP (HyperText Transfer Protocol) là một giao thức truyền thông hoạt động theo mô hình Client – Server và cơ chế Yêu cầu – Phản hồi (Request – Response).
@@ -57,6 +59,10 @@ Quá trình này diễn ra thông qua việc trao đổi các thông điệp đ�
 
 ![altimahe](../Images/ServerSideSystems.png)
 
+#### 3.3 Các thành phần chính của HTTP
+
+![altimage](../Images/httpcontents.png)
+
 | **Khái niệm (Concept)**                              | **Mô tả chi tiết (Description)**                                                                                                                                                                                                                                                                                                                                                                      |
 | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **HTTP Request Headers**<br>(Tiêu đề yêu cầu HTTP)   | Là phần **thông tin dạng cặp khóa – giá trị (key-value pairs)** được gửi kèm trong mỗi **yêu cầu HTTP**. Các header này chứa dữ liệu bổ sung như: loại trình duyệt của client (`User-Agent`), loại dữ liệu mong muốn (`Accept`), thông tin xác thực (`Authorization`), hoặc địa chỉ máy chủ (`Host`).<br> Giúp server hiểu cách xử lý và phản hồi phù hợp với yêu cầu của client.                   |
@@ -64,8 +70,22 @@ Quá trình này diễn ra thông qua việc trao đổi các thông điệp đ�
 | **HTTP Response**<br>(Phản hồi HTTP)                 | Là **kết quả mà server gửi lại** sau khi xử lý yêu cầu của client. Mỗi phản hồi gồm 3 phần chính:<br>1️⃣ **Mã trạng thái (Status Code)** – cho biết kết quả xử lý.<br>2️⃣ **Header phản hồi (Response Headers)** – cung cấp thông tin về dữ liệu trả về.<br>3️⃣ **Body phản hồi (Response Body)** – chứa nội dung dữ liệu thực tế.                                                                    |
 | **HTTP Status Codes**<br>(Mã trạng thái HTTP)        | Là **mã gồm 3 chữ số** thể hiện kết quả xử lý yêu cầu. Các mã này được chia thành 5 nhóm:<br>• **1xx – Informational:** Thông tin tạm thời.<br>• **2xx – Success:** Thành công (ví dụ: `200 OK`).<br>• **3xx – Redirection:** Chuyển hướng.<br>• **4xx – Client Error:** Lỗi phía client (ví dụ: `404 Not Found`).<br>• **5xx – Server Error:** Lỗi phía server (ví dụ: `500 Internal Server Error`).<br>• (https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status) |
 | **HTTP Response Headers**<br>(Tiêu đề phản hồi HTTP) | Là **thông tin bổ sung** đi kèm phản hồi, giúp client **hiểu rõ cách xử lý dữ liệu**. Ví dụ:<br>• `Content-Type`: Loại dữ liệu trả về (HTML, JSON, XML…).<br>• `Content-Language`: Ngôn ngữ của nội dung.<br>• `Cache-Control`: Quy tắc bộ nhớ đệm.<br>👉 Các header này định hướng cho trình duyệt hoặc ứng dụng hiểu đúng nội dung phản hồi.                                                        |
-| **HTTP Response Body**<br>(Thân phản hồi HTTP)       | Là **phần dữ liệu chính mà server gửi lại cho client**, tùy thuộc vào yêu cầu ban đầu. Ví dụ:<br>• Trang HTML khi người dùng truy cập website.<br>• Dữ liệu JSON khi gọi API.<br>• Hình ảnh, video hoặc file tải về khi được yêu cầu.                                                                                                                                                                 |
-
+| **HTTP Response Body**<br>(Thân phản hồi HTTP)       | Là **phần dữ liệu chính mà server gửi lại cho client**, tùy thuộc vào yêu cầu ban đầu. Ví dụ:<br>• Trang HTML khi người dùng truy cập website.<br>• Dữ liệu JSON khi gọi API.<br>• Hình ảnh, video hoặc file tải về khi được yêu cầu.                                                                                                                  
+- **1xx (Thông tin)**: Yêu cầu đang được tiếp tục xử lý.
+  - 100 Continue: Máy chủ chấp nhận yêu cầu sơ bộ.
+- **2xx (Thành công)**: Yêu cầu đã được xử lý thành công.
+  - 200 OK: Yêu cầu thành công.
+  - 201 Created: Tài nguyên đã được tạo thành công.
+- **3xx (Chuyển hướng)**: Yêu cầu cần chuyển hướng tới URL khác.
+  - 301 Moved Permanently: URL đã chuyển vĩnh viễn.
+  - 302 Found: Chuyển hướng tạm thời.
+- **4xx (Lỗi client)**: Có lỗi từ phía người dùng.
+  - 400 Bad Request: Yêu cầu không hợp lệ.
+  - 401 Unauthorized: Không có quyền truy cập.
+  - 404 Not Found: Không tìm thấy tài nguyên.
+- **5xx (Lỗi server)**: Có lỗi từ phía máy chủ.
+  - 500 Internal Server Error: Lỗi máy chủ.
+  - 502 Bad Gateway: Máy chủ phản hồi không hợp lệ.                                               
 
 ### 4. Địa chỉ tài nguyên (URL - Uniform Resource Locator)
 URL (Uniform Resource Locator) hay còn gọi là địa chỉ web, là một chuỗi ký tự dùng để định vị một tài nguyên trên Internet. Nó giống như địa chỉ nhà của bạn trên thế giới ảo. Mỗi trang web, mỗi hình ảnh, mỗi video đều có một URL riêng biệt giúp trình duyệt tìm kiếm và hiển thị chúng.
@@ -80,8 +100,10 @@ Một URL tiêu chuẩn bao gồm:
 
 - **Protocol**: Thường là phương thức HTTP (hoặc HTTPs - phương thức bảo mật nâng cấp của HTTP). Các phương thức đáng chú ý khác: FTP (File Transfer Protocal), SMTP (Simple Mail Transfer Protocol) ...
 - **Domain**: Tên dùng để định danh một hoặc nhiều địa chỉ IP, nơi mà tài nguyên đang được lưu trữ.
+- **Port**: Cổng giao tiếp (HTTP sử dụng cổng mặc định là 80, HTTPS dùng 443).
 - **Path**: Chỉ định vị trí tài nguyên trên máy chủ. Nó sử dụng chung logic như vị trí tài nguyên được sử dụng trên thiết bị (máy chủ server)
-- **Parameters**: Các dữ liệu thêm được sử dụng để xác định hoặc sàng lọc tài nguyên trên server.
+- **Query Parameters**: Các dữ liệu thêm được sử dụng để xác định hoặc sàng lọc tài nguyên trên server.
+- **Fragment**: chỉ định vị trí cụ thể trên trang.
 
 ### 5. Phương thức HTTP (HTTP Methods)
 HTTP hỗ trợ nhiều phương thức yêu cầu khác nhau, mỗi phương thức có mục đích riêng trong việc xử lý tài nguyên trên máy chủ:
@@ -96,28 +118,29 @@ HTTP hỗ trợ nhiều phương thức yêu cầu khác nhau, mỗi phương th
   - `CONNECT`: Sử dụng để thiết lập kênh tới Server qua HTTP Proxy, thường sử dụng cho kết nối SSL/TLS 
 
 ### 6. HTTP Requests
-Trong HTTP, mỗi yêu cầu (request) phải có một địa chỉ URL. Thêm nữa, request cần một phương thức. 4 phương thức chính thường được sử dụng là:
-- GET
-- PUT
-- POST
-- DELETE
-
-Những phương thức trên tương ứng với các thao tác sau:
-- read
-- update
-- create
-- delete
-
-Tất cả các thông điệp HTTP có một hoặc nhiều headers, theo nữa là một nội dung tin nhắn tùy chọn. Body chứa nội dung trong request gửi đi hoặc dữ liệu trả về trong response trả về.
-
-Phần đầu tiên của mỗi HTTP request chứa 3 items:
+**Request Line**
 ```plaintext
 GET/adds/search-result?item=vw+beetle HTTP/1.1
 ```
 Khi một URL chứa một ký tự "?", nghĩa là nó chứa một câu truy vấn. Điều đó nghĩa là nó gửi các tham số cho việc yêu cầu tài nguyên cần thiết.
-  - Phần đầu tiên là một phương thức, giúp phân biệt phương thức HTTP nào được sử dụng. Phương thức hay được dùng nhất là GET. GET lấy thông tin của một resource từ web server và GET không có message body.
+  - Phần đầu tiên là một phương thức HTTP.
   - Phần thứ 2 là một requested URL
   - Phần thứ 3 là một phiên bản HTTP được sử dụng. Phiên bản 1.1 là phiên bản phổ biến nhất cho các trình duyệt, tuy nhiên 2.0 đang trở nên dần phổ biến.
+
+**Request Headers**: Các thông tin bổ sung
+  - Host: Tên miền của máy chủ (vd: example.com).
+  - User-Agent: Thông tin về trình duyệt, hệ điều hành của client (vd: Mozilla/5.0).
+  - Accept: Các loại dữ liệu mà client có thể xử lý (HTML, JSON, XML,...) (vd: text/html).
+  - Content-Type: Loại dữ liệu gửi đi (ví dụ: JSON, XML).
+
+**Request Body (tuỳ chọn)**: Dữ liệu gửi lên (thường gặp trong POST, PUT).
+VD: 
+```ruby
+GET /index.html HTTP/1.1
+Host: example.com
+User-Agent: Mozilla/5.0
+Accept: text/html
+```
 
 Một vài thứ quan trọng khác của HTTP request:
 - **Referer header**: cho biết URL nguồn từ đâu.
@@ -158,7 +181,10 @@ Age: 7
 - Phần đầu tiên là phiên bản HTTP được sử dụng
 - phần thứ 2 là mã code thể hiện trạng thái của request
 - Phần thứ 3 là diễn giải bằng text của mã code phần 2
-- Phần thứ 4 là Headers
+- Phần thứ 4 là Response Headers
+  - Content-Type: Loại dữ liệu
+  - Content-Length: Kích thước nội dung phản hồi (tính bằng byte).
+  - Date: Thời gian phản hồi.
 - Phần thứ 5 là Body: html, css, ...
 
 Một vài thứ quan trọng khác của HTTP reponse:
@@ -295,3 +321,112 @@ Khi Proxy Server chuyển tiếp yêu cầu web của người dùng, nó có th
 | Suffix Proxy | Proxy máy chủ Suffix về cơ bản sẽ thêm tên Proxy vào URL. Loại Proxy này không đảm bảo tính ẩn danh cấp cao. Nó được sử dụng để bỏ qua các bộ lọc web. |
 | Rotating Proxies | Đây là một loại Proxy web thay đổi địa chỉ IP thường xuyên. Điều này có nghĩa là mỗi lần người dùng thực hiện một yêu cầu thông qua Proxy, một địa chỉ IP khác được sử dụng sẽ khiến các trang web khó theo dõi hoạt động trực tuyến của người dùng hơn.|
 | DNS Proxy | DNS Proxy hoạt động như một trung gian giữa thiết bị của bạn và máy chủ Hệ thống tên miền (DNS). Nó chuyển tiếp các yêu cầu và phản hồi DNS của người dùng, có khả năng mang lại một số lợi thế so với việc truy vấn trực tiếp máy chủ DNS. |
+
+# HTTPs
+### 1. Khái niệm HTTPs
+![altimage](../Images/https.png)
+
+Giao thức HTTPS (HyperText Transfer Protocol Secure) là phiên bản bảo mật của giao thức HTTP, thiết kế để bảo vệ dữ liệu khi truyền qua internet bằng cách mã hóa thông tin. HTTPS thêm một lớp bảo mật bằng cách kết hợp HTTP với công nghệ mã hóa SSL (Secure Sockets Layer) và TLS (Transport Layer Security).
+
+### 2. Cơ chế hoạt động HTTPs
+HTTPS hoạt động bằng cách mã hóa dữ liệu truyền tải giữa client (trình duyệt) và server (máy chủ web), sử dụng giao thức TLS (Transport Layer Security) hoặc SSL (Secure Sockets Layer).
+
+![altimage](../Images/httpscochehoatdong.png)
+
+`Bước 1`: **Client Hello**
+
+Khi người dùng truy cập một trang web sử dụng HTTPS, trình duyệt (client) gửi một yêu cầu tới máy chủ (server). Yêu cầu bao gồm:
+  - Phiên bản TLS cao nhất mà client hỗ trợ (ví dụ TLS 1.2 hoặc TLS 1.3)
+  - Danh sách các cipher suites mà client chấp nhận (ví dụ: TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384)
+  - Client Random: một chuỗi 32 byte ngẫu nhiên (28 byte random + 4 byte timestamp)
+  - Các extensions quan trọng: 
+    - SNI (Server Name Indication – để biết client muốn kết nối tới domain nào khi server host nhiều domain), 
+    - Supported Groups (các đường cong elliptic curve),
+    - **Key Share**: client gửi luôn public key tạm thời của mình (thường là X25519 public key – 32 byte)
+    - Signature Algorithms, ALPN (Application-Layer Protocol Negotiation), v.v.
+→ Đây là tin nhắn đầu tiên, chưa được mã hoá.
+
+```ruby
+Client Hello:
+    TLS Version: TLS 1.3
+    Cipher Suites: AES_256_GCM, CHACHA20_POLY1305
+    Random Number: 12345abc
+```
+
+`Bước 2`: **Server Hello**
+
+Khi nhận được tin "hello" từ client, server sẽ gửi lại tin nhắn "server hello", tin nhắn này bao gồm:
+
+Server chọn xong mọi thứ và trả lời chỉ trong 1 tin nhắn:
+  - Xác nhận dùng TLS 1.3
+  - Chọn 1 cipher suite cuối cùng (ví dụ TLS_AES_256_GCM_SHA384)
+  - Server Random (32 byte ngẫu nhiên)
+  - Key Share: server gửi luôn public key tạm thời của mình (X25519 public key 32 byte)
+  - Các extension khác nếu cần
+```ruby
+Server Hello:
+    TLS Version: TLS 1.3
+    Chosen Cipher Suite: AES_256_GCM
+    Random Number: xyz789
+    Certificate: example.com (Đã được xác thực)
+```
+→ Ngay tại bước này, cả client và server đã có đủ 2 public key tạm thời → cả hai bên tự tính ngay được một bí mật chung gọi là ECDHE shared secret (32 byte) bằng thuật toán Diffie-Hellman trên đường cong elliptic.
+Không ai nghe lén biết được bí mật này, dù có private key dài hạn của server.
+
+Từ đây trở đi, mọi tin nhắn đều đã được mã hoá bằng key tạm (Handshake Traffic Keys) sinh ra từ ECDHE shared secret:
+
+Server gửi tiếp (gộp chung trong 1–2 gói TCP):
+  - Encrypted Extensions
+  - Certificate (chứng chỉ của server – thường ECDSA P-256 hoặc RSA 2048/3072)
+  - Certificate Verify (chữ ký chứng minh server có private key tương ứng với chứng chỉ)
+  - Finished (một cái hash + MAC của toàn bộ handshake tới lúc này)
+
+`Bước 3`: **Client xác thực chứng chỉ của server**
+
+Client thực hiện các kiểm tra sau với certificate nhận được:
+
+- Giải mã các tin nhắn trên bằng Handshake Traffic Keys
+- Kiểm tra chứng chỉ server (chain → root CA tin cậy, hostname đúng, chưa hết hạn, chưa revoke)
+- Kiểm tra revocation (CRL hoặc OCSP – tùy cấu hình).
+- KKiểm tra chữ ký Certificate Verify
+- Kiểm tra tin Finished của server có đúng không
+- Gửi lại tin Finished của mình (cũng đã được mã hoá)
+
+→ Khi cả hai bên đều nhận và kiểm tra xong tin Finished của nhau → handshake hoàn tất chỉ trong 1 Round-Trip (1-RTT).
+
+Nếu chứng chỉ không hợp lệ, trình duyệt sẽ cảnh báo: "Kết nối không an toàn" (Your connection is not private).
+
+`Bước 4`: **Tạo session key thật sự (Application Traffic Keys)**
+Sau khi Finished thành công:
+
+Cả hai bên dùng HKDF để “nâng cấp” lần cuối từ Handshake Secret → tạo ra Master Secret → sinh ra bộ khóa thật sự dùng cho toàn bộ phiên:
+
+- Client Application Traffic Key (AES-256-GCM hoặc ChaCha20)
+- Server Application Traffic Key
+- IV, v.v.
+
+→ Đây mới chính là session key mà mọi người hay nói tới (dùng mã hoá toàn bộ dữ liệu HTTP/2, HTTP/3, WebSocket từ lúc tải web trở đi).
+
+`Bước 5`: **Bắt đầu truyền dữ liệu thật**
+
+Từ giây tiếp theo:
+- Mọi request/response HTTP đều được mã hoá bằng Application Traffic Keys ở trên.
+- Kênh đã hoàn toàn an toàn: xác thực server, Perfect Forward Secrecy, mã hoá từ sớm, chống replay, v.v.
+
+Ví dụ:
+```ruby
+GET /account HTTP/1.1
+Host: example.com
+Cookie: session_id=abcd1234
+```
+# III. DIFFERENT BETWEN HTTP AND HTTPS
+
+| Tiêu chí | HTTP | HTTPS |
+|-----------|-------------|---------|
+| Bảo mật | Không mã hóa – Dữ liệu truyền tải có thể bị đánh cắp hoặc thay đổi. | Mã hóa – Dữ liệu được bảo vệ khỏi nghe lén, sửa đổi hoặc giả mạo. |
+| Chứng chỉ SSL/TLS | Không sử dụng chứng chỉ bảo mật. | Có sử dụng chứng chỉ SSL/TLS để xác thực và mã hóa. |
+| Cổng (Port) | 80 (Mặc định) | 443 (Mặc định) |
+| Xác thực máy chủ | Không có xác thực, dễ bị tấn công giả mạo. | Có xác thực, đảm bảo kết nối với máy chủ đáng tin cậy. |
+| Tốc độ | Nhanh hơn do không có quá trình mã hóa. | Chậm hơn một chút vì cần mã hóa dữ liệu. |
+| An toàn dữ liệu | Dễ bị tấn công: - Man-in-the-Middle (MITM) - Eavesdropping (nghe lén). | An toàn hơn: Dữ liệu được mã hóa end-to-end. |
+| Ứng dụng | Phù hợp với các trang công khai, không cần bảo mật (ví dụ: blog, diễn đàn mở). | Bắt buộc với các trang cần bảo mật như: - Giao dịch ngân hàng. - Đăng nhập tài khoản. - Thương mại điện tử. |

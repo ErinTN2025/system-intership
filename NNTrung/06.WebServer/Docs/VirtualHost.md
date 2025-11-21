@@ -1,6 +1,6 @@
 # I. Tìm hiểu về Virtual Host
-### 1. Khái niệm
 
+### 1. Khái niệm
 Virtual Host (Máy chủ Ảo) là một phương thức cấu hình trên máy chủ web (như Apache, Nginx) cho phép một máy chủ vật lý hoặc máy chủ ảo duy nhất có thể chạy và quản lý nhiều website hoặc tên miền khác nhau một cách độc lập.
 
 Khi một yêu cầu truy cập đến máy chủ, máy chủ sẽ dùng tên miền để xác định và chuyển hướng đến đúng trang web cụ thể. Đây là giải pháp hiệu quả về chi phí và tài nguyên để quản lý nhiều website. 
@@ -76,6 +76,7 @@ User-Agent: ...
 | **VPS (Máy chủ riêng ảo)** | Một môi trường máy chủ ảo được tạo ra bằng cách phân chia một máy chủ vật lý thành nhiều máy chủ ảo độc lập. | Có tài nguyên riêng biệt, hệ điều hành riêng và quyền quản trị cao nhất (*root/administrator*). | Một Server vật lý có thể chứa nhiều VPS. VPS là một lựa chọn phổ biến để người dùng có toàn quyền cấu hình Virtual Hosts. |
 | **Virtual Host** | Một cấu hình phần mềm trên web server cho phép một Server hoặc một VPS phục vụ nhiều website/tên miền khác nhau. | Không phải là một máy chủ vật lý hay VPS riêng biệt. Là một thiết lập logic trên web server. | Được cấu hình bên trong một web server chạy trên một Server vật lý hoặc một VPS. Mỗi VPS/Server có thể cấu hình nhiều Virtual Hosts. |
 # II. Cấu hình Virtual Host trong Apache (Cấu hình nhiều website trên 1 web server)
+## Apache2
 ## 1. Trên Ubuntu
 #### 1. Tạo thư mục cấu trúc
 - Cấu trúc thư mục sẽ lưu trữ dữ liệu của người dùng khi truy cập vào website. Bạn cần tạo thư mục gốc(`/var/www/directory`) cho mỗi tên miền, ví dụ: `mywebsite1.com` và `mywebsite2.com`:
@@ -260,3 +261,267 @@ Chạy Notepad dưới quyền Administrator.
 #### 7. Test truy cập
 
 ![altimage](../Images/Screenshot%202025-11-14%20145528.png)
+
+## Nginx
+### 1. Trên CentOS 9
+
+`Bước 1`: Tạo thư mục và file cho từng website và phân quyền
+```bash
+sudo mkdir -p /var/www/mywebsite1
+sudo mkdir -p /var/www/mywebsite2
+sudo chown -R Aaaaaaa:root /var/www/mywebsite1
+sudo chown -R Aaaaaaa:root /var/www/mywebsite2
+sudo chmod -R 755 /var/www
+sudo touch /var/www/mywebsite1.com/index.html
+sudo touch /var/www/mywebsite2.com/index.html
+echo "<h1>welcome to mywebsite1.com</h1>" | sudo tee /var/www/mywebsite1.com/index.html
+echo "<h1>welcome to mywebsite2.com</h1>" | sudo tee /var/www/mywebsite2.com/index.html
+```
+
+- `echo "..." | sudo tee file.html`: Ghi nội dung vào file.
+
+- `chown -R $tien9a:$tien9a`: gán quyền sở hữu cho user `nginx`.
+- `chmod -R 755`: Cấp quyền đọc và ghi cho thư mục.
+
+`Bước 2`: Cấu hình VirtualHost trong Nginx
+
+Tạo file cấu hình cho từng website:
+
+```bash
+sudo nano /etc/nginx/conf.d/mywebsite1.conf
+```
+
+Thêm nội dung sau:
+
+```bash
+server {
+    listen 80;
+    server_name mywebsite1.com;
+    root /var/www/mywebsite1;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+```
+
+Tương tự tạo file cho mywebsite2.com:
+
+```bash
+sudo nano /etc/nginx/conf.d/mywebsite2.conf
+```
+
+Thêm nội dung sau:
+
+```bash
+server {
+    listen 80;
+    server_name mywebsite2.com;
+    root /var/www/mywebsite2;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+```
+
+- `Listen 80`: Lắng nghe trên cổng 80.
+- `server_name`: Tên miền của website.
+- `root`: Thư mục chứa website.
+- `index`: File mặc định sẽ được tải khi truy cập.
+- `location /`: Xử lý yêu cầu đến thư mục gốc.
+
+`Bước 3`: Kiểm tra và khởi động lại Nginx
+
+Kiểm tra cấu hình:
+
+```bash
+sudo nginx -t
+```
+
+
+
+Khởi động lại nginx:
+
+```bash
+sudo systemctl restart nginx
+```
+
+`Bước 4`: Cấu hình firewall
+
+Mở cổng HTTP (port 80):
+
+```bash
+sudo firewall-cmd --permanent --zone=public --add-service=http
+sudo firewall-cmd --reload
+```
+
+`Bước 5`: Cấu hình file `hosts` trên máy tính cá nhân (windows)
+
+Mở file `C:\Windows\System32\drivers\etc\hosts` bằng `Notepad` với quyền `Administrator`. Sau đó thêm vào cuối file:
+
+```bash
+192.168.60.131 mywebsite1.com
+192.168.60.131 mywebsite2.com
+```
+
+Lưu và đóng `Notepad`.
+
+`Bước 6`: Kiểm tra website trên trình duyệt.
+
+```bash
+http://mywebsite1.com
+http://mywebsite2.com
+```
+
+### 2. Trên Ubuntu
+
+`Bước 1` Cài đặt Nginx trên Ubuntu Server
+Kiểm tra trạng thái nginx
+
+```bash
+sudo systemctl status nginx
+```
+
+Nếu thấy `active` (running), nghĩa là nginx đang chạy
+
+Nếu `inactive`, hãy khởi chạy bằng lệnh dưới, sau đó kiểm tra trạng thái lần nữa:
+
+```bash
+sudo systemctl start nginx 
+```
+
+`Bước 2`: Xác định địa chỉ IP của máy ảo
+
+Chạy lệnh sau để lấy địa chỉ IP nội bộ của máy ảo:
+
+```bash
+ip a | grep inet
+```
+
+`Bước 3`: Tạo thư mục cho từng website
+
+Tạo thư mục chứa mã nguồn của `mywebsite1.com` và `mywebsite2.com`:
+
+```bash
+sudo mkdir -p /var/www/mywebsite1.com
+sudo mkdir -p /var/www/mywebsite2.com
+```
+
+Tạo file `index.html` cho từng website:
+
+```bash
+sudo touch /var/www/mywebsite1.com/index.html
+sudo touch /var/www/mywebsite2.com/index.html
+echo "<h1>mywebsite 1 page</h1>" | sudo tee /var/www/mywebsite1.com/index.html
+
+echo "<h1>mywebsite 2 page</h1>" | sudo tee /var/www/mywebsite2.com/index.html
+```
+
+Cấp quyền cho thư mục:
+
+```bash
+sudo chown -R www-data:www-data /var/www/mywebsite1.com
+sudo chown -R www-data:www-data /var/www/mywebsite2.com
+sudo chmod -R 755 /var/www
+```
+
+- `chown -R www-data:www-data`: Gán quyền sở hữu thư mục cho user www-data (user mặc định của Nginx).
+- `chmod -R 755 /var/www`: Cấp quyền đọc và thực thi cho mọi user, nhưng chỉ user sở hữu mới có quyền ghi.
+
+`Bước 4`: Cấu hình VirtualHost cho từng website
+
+Tạo file cấu hình cho `mywebsite1.com`:
+
+```bash
+sudo nano /etc/nginx/sites-available/mywebsite1.com
+```
+
+Thêm nội dung sau:
+
+```bash
+server {
+    listen 8081;
+    server_name mywebsite1.com www.mywebsite1.com;
+    root /var/www/mywebsite1.com;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+```
+
+Tạo file cấu hình cho `mywebsite2.com`:
+
+```bash
+sudo nano /etc/nginx/sites-available/mywebsite2.com
+```
+
+Thêm nội dung sau:
+
+```bash
+server {
+    listen 8081;
+    server_name mywebsite2.com www.mywebsite2.com;
+    root /var/www/mywebsite2.com;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+```
+
+`Bước 5`: Kích hoạt VirtualHost
+
+Tạo liên kết `sites-available` sang `sites-enabled`
+
+```bash
+sudo ln -s /etc/nginx/sites-available/mywebsite1.com /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/mywebsite2.com /etc/nginx/sites-enabled/
+```
+
+- `ln -s`: Tạo liên kết mềm (symlink).
+- `/etc/nginx/sites-enabled/`: Nginx chỉ load các file trong thư mục này, nên cần liên kết các file cấu hình từ `sites-available`.
+- Khi bị hacker tấn công, bạn cũng chỉ cần phải xóa file soft link trong sites-enable mà vẫn giữ nguyên file gốc ở sites-available
+
+`Bước 6`: Kiểm tra và restart Nginx
+
+Chạy lệnh kiểm tra cấu hình:
+
+```bash
+sudo nginx -t
+```
+
+- `nginx -t`: Kiểm tra cú pháp cấu hình.
+
+Nếu kết quả OK, khởi động lại Nginx:
+
+```bash
+sudo systemctl restart nginx
+```
+
+- `systemctl restart nginx`: Khởi động lại Nginx để áp dụng thay đổi.
+
+`Bước 7`: Cấu hình file `hosts` trên máy tính cá nhân (windows)
+
+Mở file `C:\Windows\System32\drivers\etc\hosts` bằng `Notepad` với quyền Administrator. Sau đó thêm vào cuối file:
+
+```bash
+192.168.60.133 mywebsite1.com
+192.168.60.133 mywebsite2.com
+```
+
+Lưu và đóng `Notepad`.
+
+`Bước 8`: Kiểm tra website trên trình duyệt.
+
+*Lưu ý*: Vì đã cấu hình virtualhost ở `Bước 4` với cổng 8081 nên khi truy cập, cần thêm `:8081` đằng sau URL:
+
+```plaintext
+http://mywebsite1.com:8081
+http://mywebsite2.com:8081
+```
