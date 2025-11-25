@@ -30,7 +30,7 @@ sudo openssl req -x509 -new -nodes -key /etc/ssl/myCA/myCA.key \
 ```bash
 sudo openssl genrsa -out /etc/ssl/mywebsite/mywebsite.key 2048
 sudo openssl req -new -key /etc/ssl/mywebsite/mywebsite.key \
- -out /etc/ssl/mywebsite1/mywebsite1.csr \
+ -out /etc/ssl/mywebsite/mywebsite.csr \
  -subj "/C=VN/ST=HN/L=Hanoi/O=mywebsite/OU=DevOps/CN=mywebsite.com"
 ```
 ### 5. CA ký Certificate(CRT) cho từng website
@@ -50,9 +50,9 @@ sudo nano /etc/apache2/sites-available/mywebsite-ssl.conf
 ```
 ```bash
 <VirtualHost *:443>
-    ServerName mywebsite1.com
-    ServerAlias www.mywebsite1.com
-    DocumentRoot /var/www/mywebsite1.com
+    ServerName mywebsite.com
+    ServerAlias www.mywebsite.com
+    DocumentRoot /var/www/mywebsite.com
 
     SSLEngine on
     SSLCertificateFile /etc/ssl/mywebsite1/mywebsite1.crt
