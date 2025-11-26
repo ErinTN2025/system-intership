@@ -152,3 +152,19 @@ Trong Permission, có chi tiết các quyền cho các loại User khác:
   - `x`= cho phép cd vào thư mục, truy cập inode của các file nếu biết tên
   - Ví dụ: nếu một thư mục có --x (chỉ x, không r), bạn có thể cd vào và truy cập file nếu biết tên chính xác nhưng không thể ls để xem danh sách.
 
+**Lệnh cấp quyền sudo cho User**:
+```plaintext
+sudo usermod -aG sudo username
+```
+**Kiểm tra lại**
+```plaintext
+groups username
+```
+- Cách chỉnh trực tiếp trong file sudoers (cách nâng cao):
+```plaintext
+sudo visudo
+```
+Thêm dòng
+```bash
+username ALL=(ALL:ALL) ALL
+```
