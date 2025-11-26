@@ -40,6 +40,9 @@ sudo openssl x509 -req -in /etc/ssl/mywebsite/mywebsite.csr \
  -CAcreateserial -out /etc/ssl/mywebsite/mywebsite.crt \
  -days 365 -sha256
 ```
+
+![altimage](../Images/Screenshot_2.png)
+
 Kết quả mỗi website sẽ có:
   - key → private key
   - crt → cert được CA ký
@@ -74,7 +77,18 @@ sudo update-ca-certificates
 ```
 Lưu ý: Không copy file .key sang client. Và chỉ làm cách này khi ta đang tạo cert trực tiếp cho từng website, nhưng không có CA, nên client sẽ luôn báo ERR_CERT_AUTHORITY_INVALID => Nếu mục đích internal / test thì để browser tin tưởng, cần tạo một self-signed CA, sau đó ký certificate cho từng site.
 
+```plaintext
+sudo cp /etc/ssl/myCA/mywebsite.crt /usr/local/share/ca-certificates/mywebsite.crt
+sudo update-ca-certificates
+```
+
 Nếu dùng nhiều website, nên tạo 1 self-signed CA → ký certificate cho tất cả website → chỉ cần import 1 CA vào client (Không copy file .key sang client)
+
+**Lưu ý**: 
+
+![altimage](../Images/luuycheck.png)
+
+Kiếm tra CA store của hệ thống phải có file kiểm tra nếu không thì máy nó vĩnh viễn không tin và không thể làm được.
 ### 8. Bật cả 2 Site HTTPS
 ```plaintext
 sudo a2ensite mywebsite1-ssl.conf
@@ -111,6 +125,8 @@ sudo systemctl restart apache2
 ### 11. Truy cập thử
 
 Trang web vẫn hiện Not Secure do ở phía backend (cụ thể WordPress) site URL vẫn để là http thay vì của https
+
+![altimage](../Images/Screenshot_3.png)
 
 ## NHIỀU SITE SẼ DÙNG CHUNG 1 FILE .CRT (SAN certificate)
 ### 1. Tạo private key chung cho nhiều site
