@@ -61,8 +61,6 @@ Quy trình này diễn ra rất nhanh (chỉ trong vài phần nghìn giây), ch
 
 ### 7. Các loại WebSever phổ biến
 
-![WebServer](./images/WebServer_2.png)
-
 - **Apache HTTP server**: Apache là web server được sử dụng rộng rãi nhất thế giới. Apache được phát triển và duy trì bởi một cộng đồng mã nguồn mở dưới sự bảo trợ của Apache Software Foundation. Apache được phát hành với giấy phép Apache License là được sử dụng tự do, miễn phí.
 
 - **Nginx**: là một web server nhẹ, không chiếm nhiều tài nguyên của hệ thống. Nginx còn là một reserse proxy mã nguồn mở. Nginx khá là ổn định, cấu hình đơn giản và hiệu suất cao.
