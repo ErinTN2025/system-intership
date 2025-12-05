@@ -138,3 +138,38 @@ sudo systemctl reload apache2
 - Nhập các thông tin cần thiết rồi click Install WordPress.
 
 ![alitmage](../Images/guiafterlogin.png)
+
+## 8) Phân quyền WordPress
+- Phân quyền thư mục `wordpress` cho` user apache` để `user` này được phép tạo các thư mục và lưu trữ các tệp tin tải lên.
+```bash
+sudo chown -R www-data:www-data /var/www/html/wordpress
+# file 644, thư mục 755 (tùy chỉnh nếu cần)
+sudo find /var/www/html/wordpress/ -type d -exec chmod 755 {} \;
+sudo find /var/www/html/wordpress/ -type f -exec chmod 644 {} \;
+```
+
+**Lưu ý**:
+`www-data` không phải user của bạn, cũng không phải root.
+
+Nó là user mặc định của Apache/Nginx dùng để chạy web server.
+
+Trên Ubuntu, khi cài Apache hoặc Nginx, hệ thống tự tạo user:
+
+User: `www-data`
+
+Group: `www-data`
+
+Đây là user chuyên để chạy website, không dùng để đăng nhập. Khi Apache phục vụ trang web, nó chạy dưới tài khoản:
+
+WordPress cần Apache ghi file (upload hình, cài plugin, cài theme)
+
+Apache chạy dưới user www-data
+
+Nếu WordPress thuộc sở hữu của trung, Apache không có quyền ghi, dẫn tới lỗi:
+- ❌ “Unable to create directory”
+- ❌ “Uploads folder is not writable”
+- ❌ “Plugin installation failed – permission denied”
+
+![altimage](../Images/uploaddone.png)
+
+Như vậy là bạn đã có thể tiến hành upload ảnh và đăng bài viết lên trang wordpress của mình.
