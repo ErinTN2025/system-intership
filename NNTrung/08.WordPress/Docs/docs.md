@@ -79,7 +79,8 @@ Apache → `.htaccess rewrite`
 
 Nginx → `try_files $uri /index.php?$args`
 
-Để đảm bảo mọi URL đẹp (pretty permalink) đều trỏ về index.php (trừ file thực như .jpg, .css, .js).
+Web server (Apache hoặc Nginx) định tuyến yêu cầu đến file `index.php` trong thư mục gốc của WordPress.
+  - Đây là **entry point** (điểm vào) cho mọi request trong WordPress.
 #### 5.2 Bootstrap WordPress — nạp toàn bộ hệ thống
 File index.php chỉ chứa 1 dòng:
 ```php
@@ -107,15 +108,16 @@ Nạp `wp-settings.php`
 Giai đoạn này cũng khởi tạo kết nối database thông qua lớp `wpdb` và load các option có cờ `autoload = 'on'` hoặc `'auto'` vào biến `$alloptions`. Đây là bước có ảnh hưởng lớn tới tốc độ khởi tạo của mỗi request.
 
 #### 5.3 WordPress phân tích URL → tạo WP_Query
-Khi hệ thống đã sẵn sàng, WordPress bắt đầu xác định: trang nào cần hiển thị bằng cách phân tích URL. Quá trình này diễn ra trong lớp `WP_Query`:
+Khi hệ thống đã sẵn sàng, WordPress bắt đầu xác định: trang nào cần hiển thị bằng cách phân tích URL. 
+  - WordPress tạo ra một đối tượng `WP_Query` để truy vấn cơ sở dữ liệu.
   - WordPress so khớp URL với bảng rewrite rules.
   - Map URL vào loại nội dung( post, page, archive, taxonomy,...)
-  - Tạo đối tượng $wp_query tương ứng với loại nội dung: trang chủ, bài viết, chuyên mục, tìm kiếm, 404, v.v…
+  - Tạo đối tượng `$wp_query` tương ứng với loại nội dung: trang chủ, bài viết, chuyên mục, tìm kiếm, 404, v.v…
   - VD: Tạo đối tượng **WP_Query** xác định:
     - Đây là single custom post type `product`
     - Lấy bài có slug `ao-thun`
     - Lấy meta, categories, thumbnail,…
-  - Thực hiện truy vấn SQL qua lớp `wpdb` để lấy dữ liệu post, meta, term, và comment.
+  - Thực hiện truy vấn database qua lớp `wpdb` để lấy dữ liệu post, meta, term, và comment.
 Luồng hooks quan trọng:
 - `parse_request`
 - `pre_get_posts`
@@ -128,3 +130,17 @@ Khi đã có dữ liệu, WordPress xác định file template tương ứng đ�
 - Đối với một bài viết: `single-{post-type}.php` → `single.php` → `index.php`
 - Đối với trang: `page-{slug}.php` → `page.php` → `index.php`
 - Đối với category: `category-{slug}.php` → `category.php` → `archive.php` → `index.php`
+
+Hàm chịu trách nhiệm chọn template là `get_query_template()`. Sau đó WordPress nạp template và truyền dữ liệu post vào trong vòng lặp `have_posts()`.
+
+WordPress không load theo kiểu “tìm nhiều file rồi merge”.
+ Nó chỉ chọn file đầu tiên phù hợp và load đúng 1 file đó làm template chính.
+
+Sau khi chọn template, WordPress load file theme (header.php, footer.php, sidebar.php) thông qua các hàm get_header(), get_footer(), get_sidebar() bên trong template chính.
+
+#### 5.5 Output: gửi dữ liệu ra trình duyệt
+- Kết quả được "gắn" dữ liệu từ CSDL vào các template HTML.
+- Sau khi HTML được sinh ra, WordPress gửi nội dung này về trình duyệt thông qua output buffer của PHP. Nếu có plugin cache như `WP Super Cache` hoặc` LiteSpeed Cache`, response có thể được lưu lại để phục vụ cho request sau mà không cần khởi tạo toàn bộ quá trình trên.
+- Browser nhận HTML → bắt đầu tải CSS/JS → hiển thị giao diện.
+
+#### 5.6 Hệ thống HOOKS - linh hồn mở rộng của WordPress
