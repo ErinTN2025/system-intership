@@ -30,6 +30,22 @@ sudo apt install php -y
 sudo apt install mysql-server -y
 sudo mysql_secure_installation
 ```
+- Tuy nhiên nếu chỉ cài đặt như vậy sẽ vẫn có lỗi:
+- Lỗi này 100% do bạn chưa cài extension `php8.4-mysql` / `php-mysql` (trong đó có mysqli), nên WordPress không kết nối được MySQL.
+
+Dù PHP-FPM đã chạy đúng, nhưng PHP chưa có module MySQL → WordPress báo lỗi này.
+- Chạy thêm các lệnh sau để hoàn tất cài đặt:
+```bash
+sudo apt install php8.4-mysql -y
+```
+- Restart PHP-FPM:
+```bash
+sudo systemctl restart php8.4-fpm
+```
+- Kiểm tra xem đã có mysqli đã chạy chưa :
+```bash
+php -m | grep mysql
+```
 Đăng nhập vào tài khoản `root` của database:
 ```bash
 mysql -u root -p
@@ -189,12 +205,13 @@ Như vậy là bạn đã có thể tiến hành upload ảnh và đăng bài vi
 
 # Cài đặt WordPress với LEMP
 ## 1) Cài đặt PHP 
+```bash
 sudo apt update
 sudo apt install software-properties-common -y
 sudo add-apt-repository ppa:ondrej/php -y
 sudo apt update
 sudo apt install php -y
-
+```
 ## 2) Cài đặt nginx
 ```bash
 Sudo apt install nginx -Y
@@ -210,7 +227,42 @@ sudo chown -R www-data:www-data /var/www/html/wordpress2
 
 - `--strip-components=1`: thay vì giải nén ra thư mục wordpress chứa các tệp tin wordpress bên trong thì sẽ giải nén trực tiếp các tệp tin ra ngoài mà không cần thư mục wordpress.
 
+File cấu hình wordpress:` /var/www/html/wordpress2/wordpress/wp-config.php`
+- Di chuyển tới thư mục `/var/www/html/wordpress2/wordpress`
+- File cấu hình wordpress là `wp-config.php`. Tuy nhiên tại đây chỉ có file `wp-config-sample.php`.
+
+![altimage](../Images/Wordpressconfig.png)
+
+Tiến hành copy lại file cấu hình như sau:
+```bash
+cp wp-config-sample.php wp-config.php
+```
+- Chỉnh sửa file cấu hình `wp-config.php`. Chỉnh lại tên database, username, password đã đặt ở trên. (db_name: `db_wp`, username: `admin`, pass: `admin`) và lưu lại.
+
+![alitmage](../Images/sucess0.png)
+
 ## 4) Tạo database và user cho WordPress
+- Cài MySQL (hoặc MariaDB)
+```bash
+sudo apt install mysql-server -y
+sudo mysql_secure_installation
+```
+- Tuy nhiên nếu chỉ cài đặt như vậy sẽ vẫn có lỗi:
+- Lỗi này 100% do bạn chưa cài extension `php8.4-mysql` / `php-mysql` (trong đó có mysqli), nên WordPress không kết nối được MySQL.
+
+Dù PHP-FPM đã chạy đúng, nhưng PHP chưa có module MySQL → WordPress báo lỗi này.
+- Chạy thêm các lệnh sau để hoàn tất cài đặt:
+```bash
+sudo apt install php8.4-mysql -y
+```
+- Restart PHP-FPM:
+```bash
+sudo systemctl restart php8.4-fpm
+```
+- Kiểm tra xem đã có mysqli đã chạy chưa :
+```bash
+php -m | grep mysql
+```
 ```bash
 sudo mysql -r root -p
 ```
@@ -231,7 +283,7 @@ server {
     listen 8080;
     server_name localhost;
 
-    root /var/www/lempsite;
+    root /var/www/html/wordpress2;
     index index.php index.html;
 
     location / {
@@ -240,7 +292,7 @@ server {
 
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+        fastcgi_pass unix:/run/php/php8.4-fpm.sock;
     }
 
     location ~ /\.ht {
@@ -258,3 +310,17 @@ sudo nginx -t
 
 sudo systemctl reload nginx
 ```
+## 7) Kích hoạt thành công
+
+![altimage](../Images/sucess1.png)
+
+## 8) Khi chạy lúc đầu nếu bị lỗi 502 Bad Gateway
+- 99% lỗi nằm ở fastcgi_pass, tức là Nginx không kết nối được tới PHP-FPM.
+- Với config `fastcgi_pass unix:/run/php/php8.4-fpm.sock;`
+- Check PHP-FPM có đang chạy không: `ls /run/php/`
+```bash
+systemctl status php8.4-fpm
+```
+- Nếu not Found: `sudo apt install php8.4-fpm -y`
+
+![alitmage](../Images/sucess3.png)
