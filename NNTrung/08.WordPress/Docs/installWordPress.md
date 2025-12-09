@@ -1,4 +1,4 @@
-# Cài đặt WordPress trên Ubuntu
+# Cài đặt WordPress trên Ubuntu với LAMP Stack
 ## 1) Chuẩn bị & kiểm tra hệ thống
 Cập nhật apt:
 ```bash
@@ -15,6 +15,15 @@ sudo systemctl start apache2
 sudo systemctl enable apache2
 sudo systemctl status apache2
 ```
+## 2.1) Cài đặt PHP
+```bash
+sudo apt update
+sudo apt install software-properties-common -y
+sudo add-apt-repository ppa:ondrej/php -y
+sudo apt install php -y
+```
+
+![altiamge](../Images/phpdownload.png)
 
 ## 3) Cài MySQL (hoặc MariaDB)
 ```bash
@@ -97,7 +106,11 @@ sudo mv wordpress /var/www/html/wordpress
 ## 5) Cấu hình WordPress
 File cấu hình wordpress:` /var/www/html/wp-config.php`
 - Di chuyển tới thư mục `/var/www/html/wordpress`
-- File cấu hình wordpress là `wp-config.php`. Tuy nhiên tại đây chỉ có file `wp-config-sample.php`. Tiến hành copy lại file cấu hình như sau:
+- File cấu hình wordpress là `wp-config.php`. Tuy nhiên tại đây chỉ có file `wp-config-sample.php`.
+
+![altimage](../Images/Wordpressconfig.png)
+
+Tiến hành copy lại file cấu hình như sau:
 ```bash
 cp wp-config-sample.php wp-config.php
 ```
@@ -173,3 +186,75 @@ Nếu WordPress thuộc sở hữu của trung, Apache không có quyền ghi, d
 ![altimage](../Images/uploaddone.png)
 
 Như vậy là bạn đã có thể tiến hành upload ảnh và đăng bài viết lên trang wordpress của mình.
+
+# Cài đặt WordPress với LEMP
+## 1) Cài đặt PHP 
+sudo apt update
+sudo apt install software-properties-common -y
+sudo add-apt-repository ppa:ondrej/php -y
+sudo apt update
+sudo apt install php -y
+
+## 2) Cài đặt nginx
+```bash
+Sudo apt install nginx -Y
+```
+## 3) Tải và cấu hình WordPress
+```bash
+cd /tmp
+sudo wget https://wordpress.org/latest.tar.gz
+sudo tar -xzvf latest.tar.gz --strip-components=1
+sudo mv wordpress /var/www/html/wordpress2
+sudo chown -R www-data:www-data /var/www/html/wordpress2
+```
+
+- `--strip-components=1`: thay vì giải nén ra thư mục wordpress chứa các tệp tin wordpress bên trong thì sẽ giải nén trực tiếp các tệp tin ra ngoài mà không cần thư mục wordpress.
+
+## 4) Tạo database và user cho WordPress
+```bash
+sudo mysql -r root -p
+```
+```mysql
+CREATE DATABASE db_wp;
+CREATE USER admin2@localhost IDENTIFIED BY 'admin';
+GRANT ALL PRIVILEGES ON db_wp.* TO admin2@localhost;
+FLUSH PRIVILEGES;
+exit
+```
+## 5) Tạo file cấu hình cho Web site mới
+```bash
+sudo nano /etc/nginx/sites-available/wordpress2
+```
+- Thay đổi cổng khác với cổng Apache2
+```bash
+server {
+    listen 8080;
+    server_name localhost;
+
+    root /var/www/lempsite;
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
+```
+
+## 6) Kích hoạt site và restart Nginx
+# Tạo một liên kết tượng trưng -> kích hoạt cấu hình website
+```bash
+sudo ln -s /etc/nginx/sites-available/lempsite /etc/nginx/sites-enabled/
+
+sudo nginx -t
+
+sudo systemctl reload nginx
+```

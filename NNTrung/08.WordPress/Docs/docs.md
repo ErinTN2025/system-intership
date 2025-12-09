@@ -144,3 +144,48 @@ Sau khi chọn template, WordPress load file theme (header.php, footer.php, side
 - Browser nhận HTML → bắt đầu tải CSS/JS → hiển thị giao diện.
 
 #### 5.6 Hệ thống HOOKS - linh hồn mở rộng của WordPress
+
+### 6. Giao diện sử dụng WordPress (Đã cài đặt trên Ubuntu)
+
+- **Dashboard**: Là bảng điều khiển trang web dành cho quản trị viên. Đó chính là màn hình đầu tiên mà người dùng nhìn thấy khi đăng nhập vào khu vực quản trị WordPress. **Dashboard** là nơi giúp người tạo lập và kiểm soát hầu hết các chức năng trên trên website của mình.
+
+![WordPress](../images/WordPress_6.png)
+
+- **Themes WordPress (WordPress template)**: Là giao diện của website hoặc blog sử dụng WordPress. Có rất nhiều themes wordpress, bao gồm miễn phí và trả phí.
+
+![WordPress](../images/WordPress_7.png)
+
+- **WordPress Plugin**: Đây là các thành phần mở rộng của WordPress, được chia sẻ trên kho Plugin của WordPress. Những Plugin này do chính những người trong nhóm sáng lập WordPress viết ra hoặc cũng có thể do người dùng tự viết và chia sẻ. Plugin này cũng có 2 dạng: 1 dạng miễn phí và 1 dạng phải trả phí.
+
+![WordPress](../images/WordPress_8.png)
+
+- **Posts**: Là nơi tạo và quản lý các nội dung theo dạng blog, thường được sắp xếp theo thời gian và có thể gắn thẻ (tags) và danh mục (categories)
+
+  - All posts: Quản lý tất cả các bài viết.
+  - Add new: Đăng bài viết mới.
+  - Categories: Quản lý tất cả các danh mục.
+  - Tags: Quản lý tất cả các Post Tag.
+
+![WordPress](../images/WordPress_9.png)
+
+**Trang (Pages)**: nơi tạo và quản lý các nội dung tĩnh, ít thay đổi như trang giới thiệu, trang liên hệ, trang dịch vụ, v.v.
+
+![WordPress](../images/WordPress_10.png)
+
+**Thư viện Media (Media Library)**: nơi tải lên và quản lý các tệp đa phương tiện như hình ảnh, video, âm thanh để sử dụng trong bài viết và trang web
+
+![WordPress](../images/WordPress_11.png)
+
+- **Comments**: Trang quản lý các ý kiến bình luận trên website của bạn. Bạn có thể xoá hoặc cấm bất kỳ người nào sử dụng chức năng này trên web của bạn.
+
+- **Feedback**: Là trang quản lý những hồi âm, liên hệ của khách hàng gửi cho bạn.
+
+- **Users**: Trang quản lý người dùng đã đăng ký sử dụng tại website của bạn. Bạn có thể thêm, xoá hoặc phân quyền cho bất kỳ người dùng nào tại trang này.
+
+- **Users**: Trang quản lý người dùng đã đăng ký sử dụng tại website của bạn. Bạn có thể thêm, xoá hoặc phân quyền cho bất kỳ người dùng nào tại trang này.
+
+- **Tools**: Trang quản lý xuất/nhập dữ liệu. Bạn có thể xuất ra file để làm file backup cho website phòng trường hợp website của bạn bị hack, bị mất dữ liệu trong tương lai, từ đó bạn có thể sử dụng công cụ import để khôi phục lại dữ liệu đã export.
+
+- **Settings**: Trang chỉnh sửa các thông số chung cho website như url của web, timezone, Date Format, cấu trúc đường dẫn,…. Thông thường việc quản lý và chỉnh sửa thông số của các Plugin cũng được thực hiện tại đây.
+
+**Tìm hiểu thêm tại `https://vietnix.vn/cach-su-dung-wordpress/#dashboard-bang-dieu-khien`**
