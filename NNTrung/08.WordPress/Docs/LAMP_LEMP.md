@@ -80,3 +80,13 @@ Nginx (đọc là engine x) là một phần mềm mã nguồn mở cho web serv
 | **Hỗ trợ caching**                         | Không tối ưu bằng Nginx                                          | Rất mạnh: microcache, fastcgi cache                              |
 | **Giấy phép**                              | Apache License 2.0                                               | BSD-2-Clause                                                     |
 | **Tổng quan**                              | Dễ, linh hoạt, tốt cho người mới                                 | Mạnh, nhanh, tối ưu các hệ thống lớn                             |
+
+#### 6. WordPress với LAMP
+- `.htaccess` là file cấu hình Apache ở mức thư mục. Nó cho phép bạn ghi đè (override) một số thiết lập webserver chỉ cho thư mục đó và các thư mục con, mà không cần sửa file cấu hình chính của Apache.
+- Apache sẽ đọc file .htaccess mỗi lần có request tới thư mục chứa nó (và các thư mục con).
+- Để Apache cho phép .htaccess làm việc, VirtualHost phải bật AllowOverride (thường AllowOverride All hoặc chỉ những phần cần thiết).
+- **Mục đích chính**: 
+  - Rewrite URL — tạo “đường dẫn đẹp” (WordPress, Laravel…). Ví dụ WordPress dùng` .htaccess `để chuyển từ `/?p=123` sang `/hello-world/`
+  - Redirects — chuyển hướng (301, 302): Chẳng hạn chuyển `http://old.com` → `http://new.com` hoặc thêm `www / xóa www`.
+  - Bảo mật (chặn truy cập, chặn IP, chặn file ẩn)
+  - Xử lý lỗi tuỳ chỉnh (custom error pages)

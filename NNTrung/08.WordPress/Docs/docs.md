@@ -1,9 +1,203 @@
 # WORDPRESS
+### Web tĩnh – Web động & Sự ra đời của WordPress
+
+![altimage](../Images/static-dynamicweb.png)
+
+WordPress ban đầu chỉ là phần mềm tối ưu cho nền tảng blog –  sau đó phát triển thêm tính năng – trở thành loại CMS – Content Management System – Tức là Hệ Thống Quản trị Nội dung – Cho phép tạo ra những Website phức tạp chứ không chỉ là dạng Blog thông thường.
+
+CMS – chiếm hơn 50% số Websites toàn cầu (trong đó có 30% của WordPress)
+
+Rất nhiều CMS khác viết bằng PHP như Joomla, Drupal, Magento… mỗi loại có ưu nhược điểm khác nhau:
+
+- Drupal hỗ trợ các hệ thống CMS mạnh & phức tạp – thường là các hệ thống xuất bản nội dung lớn như Entertainment Weekly, Taboola..
+- Magento hỗ trợ Các trang thương mại điện tử mạnh…
+- Joomla là CMS trước đây được đánh giá mạnh hơn WordPress, nhưng hiện nay đã phát triển chậm lại và  không còn phổ biến.
+
+WordPress bùng nổ vì tính linh động và dễ dùng và được phát triển & hỗ trợ liên tục bởi một cộng đồng khổng lồ.
+
+Mặt khác chi phí phát triển & vận hành Website WordPress rất tốt so với bất kỳ CMS nào khác.
+
+Đến năm 2019 WordPress đã chiếm hơn 30% số lượng Websites trên toàn cầu và vẫn tiếp tục tăng, và hiện tại 2020 tiếp tục tăng trưởng đến 35% thị phần
+
+![altimage](../Images/wordpresscompare.png)
+
 ### 1. Khái niệm
 
 ![altimage](../Images/WordPressOverview.png)
 
 **WordPress** là một hệ quản trị nội dung (CMS — Content Management System) mã nguồn mở, viết bằng PHP và dùng cơ sở dữ liệu MySQL/MariaDB để xuất bản các blog, trang web được viết bằng ngôn ngữ lập trình PHP và cơ sở dữ liệu MySQL một cách miễn phí, dễ sử dụng và phổ biến nhất trên thế giới.
+
+**WordPress** không chỉ là vài file PHP — nó là một hệ sinh thái gồm nhiều tầng: server, webserver, PHP runtime, database, mã nguồn WordPress, theme, plugin, API bên ngoài…
+
+![altimage](../Images/Wordpress01.png)
+
+#### 1.1) Server / Hosting (Hạ tầng vật lý hoặc cloud)
+WordPress cần một môi trường chạy:
+
+Bao gồm:
+- Máy chủ vật lý hoặc Cloud (AWS, Google Cloud, DigitalOcean…)
+- Hệ điều hành: phổ biến nhất là Linux (Ubuntu, Debian, CentOS)
+- Tài nguyên cần có: 
+  - CPU
+  - RAM
+  - Ổ SSD
+  - Băng thông mạng
+
+Các loại server phổ biến
+- **Shared Hosting** → rẻ, dễ dùng nhưng hạn chế
+- **VPS** → mạnh, tùy chỉnh được (đa số doanh nghiệp dùng)
+- **Dedicated Server** → dành cho web rất lớn
+- **Docker / Kubernetes** → dành cho hệ thống cực lớn
+
+#### 1.2) Webserver (Apache hoặc Nginx hoặc LiteSpeed)
+Đây là tầng tiếp theo — tiếp nhận request HTTP từ người dùng, sau đó chuyển request đến PHP để xử lý.
+
+**Tùy chọn phổ biến**
+- **Apache** (hỗ trợ .htaccess)
+- **Nginx** (hiệu năng cao, không dùng .htaccess)
+- **LiteSpeed** (rất nhanh nhưng tính phí)
+
+**Nhiệm vụ**
+- Xử lý request
+- Cache file tĩnh (CSS, JS, ảnh)
+- Reverse proxy
+- Áp dụng rewrite rule (để WordPress tạo permalink đẹp)
+
+#### 1.3) PHP (Interpreted runtime environment)
+WordPress được viết bằng PHP, nên phải có:
+
+**Thành phần của PHP stack**
+- PHP-FPM (FastCGI Process Manager) — xử lý các file .php
+- Extensions cần thiết:
+  - mysqli (kết nối MySQL)
+  - curl
+  - json
+  - mbstring
+  - gd hoặc imagick
+  - openssl
+
+**Tại sao PHP quan trọng?**
+
+Vì chính PHP là nơi WordPress:
+- đọc file theme
+- chạy plugin
+- thực thi logic
+- truy vấn database
+- render HTML gửi cho client
+
+#### 1.4) Database (MySQL / MariaDB / Percona)
+
+WordPress luôn cần database, chủ yếu là:
+- MySQL
+- MariaDB
+- hoặc Percona Server
+
+Trong database WordPress lưu:
+- nội dung bài viết
+- page
+- thông tin user
+- cài đặt theme/plugin
+- setting của site
+- menu
+- taxonomy (category, tag)
+- metadata của mọi thứ (postmeta, usermeta…)
+
+#### 1.5) WordPress Core ( Mã nguồn WordPress )
+Đây là bộ não của toàn bộ hệ thống.
+
+Phần Core được giữ độc lập với phần Front-End – Tức giao diện hiển thị và xử lý bên ngoài Websites mà người dùng nhìn thấy ( Phần này gọi là Theme hay Template).
+
+WordPress Core hay Nhân WordPress – là tất cả các files ngoài Theme, Plugins và các file khác được người dùng thêm vào.
+
+**Gồm 3 thư mục chính**:
+```bash
+/wp-admin/   → giao diện quản trị
+/wp-includes/ → core functions, classes
+/wp-content/  → theme, plugin, uploads (thứ duy nhất bạn tác động)
+```
+**Core xử lý:**
+- router (chọn template)
+- xử lý permalink
+- phân quyền user
+- chạy plugin system
+- chạy hook + filter
+- load theme và các file template
+- query bài viết
+
+#### 1.6) Theme (Giao diện WordPress)
+Theme là tầng giao diện, nhận dữ liệu từ core và hiện ra thành HTML.
+
+Nhiệm vụ của theme
+- định dạng layout
+- chọn template (single, page, archive, category…)
+- style bằng CSS
+- xử lý logic nhỏ (như hiển thị widget, menu)
+
+**Theme không chứa nội dung**: Chỉ hiển thị nội dung lấy từ database.
+
+#### 1.7) Plugin (Chức năng mở rộng)
+Plugin cắm vào core bằng hook + filter, giúp WordPress có thêm tính năng. Có thể Tự viết plugin riêng nếu có yêu cầu đặc biệt
+
+Plugins – hay ở nhiều CMS khác gọi là extension/ modules: là phần mở rộng có thể cài thêm vào WordPress để bổ sung hoặc mở rộng tính năng mà WordPress core hay theme không hỗ trợ.
+
+Có thể nói Plugins là vũ khí trang bị để hỗ trợ thêm chức năng cho theme, và đa số các plugin có thể hoạt động tốt với nhiều theme khác nhau, miễn là trong theme không có tính năng nào xung đột với tính năng của plugin.
+
+Ví dụ plugin phổ biến
+- Yoast SEO (seo)
+- WooCommerce (shop)
+- Contact Form 7 (form)
+- Elementor (drag-and-drop)
+
+Chức năng plugin
+- thêm bảng mới vào database
+- bổ sung API
+- can thiệp vào quá trình render HTML
+- thêm menu trong admin
+- thêm REST API endpoint
+
+#### 1.8) REST API / External Services
+WordPress hỗ trợ REST API để kết nối với dịch vụ ngoài:
+- ứng dụng mobile
+- web app
+- CRM / ERP
+- gateway thanh toán
+- CDN
+- Cloudflare, email service
+
+WordPress REST API là core feature (từ phiên bản 4.7).
+
+#### 1.9) Storage (Uploads + CDN)
+
+Tất cả file như: ảnh, PDF, video, backup, được lưu ở:
+```bash
+/wp-content/uploads/
+```
+
+Hoặc chuyển sang:
+- CDN (Cloudflare R2, AWS S3)
+- Object storage
+
+#### 1.10) Cache Layer
+Để WordPress chạy nhanh, phải có cache:
+
+Các loại cache tầng khác nhau
+- **Cache webserver**: FastCGI cache, Nginx cache
+- **Plugin cache**: WP Super Cache, W3 Total Cache
+- **Object Cache**: Redis / Memcached
+- **Browser Cache**
+- **CDN Cache**
+
+Cache là lý do WordPress có thể xử lý hàng triệu traffic.
+
+#### 1.11) Security Layer
+- Ví dụ: tường lửa (WAF), 
+chặn brute-force, 
+bảo vệ XMLRPC, 
+quét malware, 
+hạn chế upload, 
+SSL / HTTPS.
+#### 1.12) Backup Layer
+backup database, backup file, snapshot server, replication → master/slave
 ### 2. Ưu và nhược điểm của WordPress
 #### 2.1 Ưu điểm
 - **Miễn phí**: WordPress là mã nguồn mở, tải xuống và sử dụng miễn phí.
@@ -189,3 +383,160 @@ Sau khi chọn template, WordPress load file theme (header.php, footer.php, side
 - **Settings**: Trang chỉnh sửa các thông số chung cho website như url của web, timezone, Date Format, cấu trúc đường dẫn,…. Thông thường việc quản lý và chỉnh sửa thông số của các Plugin cũng được thực hiện tại đây.
 
 **Tìm hiểu thêm tại `https://vietnix.vn/cach-su-dung-wordpress/#dashboard-bang-dieu-khien`**
+
+### 7. Thư mục file WordPress
+
+![altimage](../Images/wordpressdiroverview.png)
+
+#### 7.1) CORE APPLICATION
+
+**Nơi chứa toàn bộ logic chính của WordPress**
+
+`wp-includes`
+
+→ *Đây là toàn bộ "bộ não" WordPress*
+
+Chứa:
+
+* WP_Query (truy vấn database)
+* WPDB (kết nối MySQL)
+* Media API
+* Rewrite API
+* REST API
+* Hooks (actions/filters)
+* Cron system
+* Ajax API
+* Template loader
+* L10n/i18n (dịch ngôn ngữ)
+* Sanitization / Formatting API
+
+**TÓM LẠI**: *bất cứ thứ gì liên quan đến bản chất WordPress đều nằm trong wp-includes.*
+
+#### 7.2) ADMIN INTERFACE (Dashboard)
+
+**Giao diện quản trị `wp-admin`**
+- tất cả các trang Dashboard (Posts, Media, Pages…)
+- CSS/JS của admin
+- xử lý form
+- xử lý update plugin/theme
+
+#### 7.3) THEME SYSTEM (Frontend Renderer)
+
+```bash
+wp-content/themes/`
+```
+Chứa:
+
+* giao diện người dùng
+* template PHP
+* CSS/JS frontend
+* functions.php (hook vào core)
+
+#### 7.4) PLUGIN SYSTEM (Extend Features)
+```bash
+wp-content/plugins/
+```
+
+Chứa:
+
+* plugin mở rộng
+* custom post type
+* custom API
+* WooCommerce, SEO plugin, Security plugin…
+
+```bash
+wp-content/mu-plugins/
+```
+Must-use plugins (autoload)
+
+#### 7.5) CONTENT STORAGE (User Data, Uploads)
+
+```bash
+wp-content/uploads/
+```
+
+Chứa toàn bộ:
+
+* hình ảnh
+* media
+* file user upload
+* file PDF, docs
+* thumbnail các size
+
+→ Đây chính là **data của người dùng**, không thuộc WordPress core.
+
+#### 7.6) BOOTSTRAP & CONFIGURATION
+
+**Các file root ở ngoài cùng**
+
+ **6.1 File bootstrap chính**
+
+| File                   | Vai trò                          |
+| ---------------------- | -------------------------------- |
+| **index.php**          | Entry point của mọi request      |
+| **wp-blog-header.php** | Load query + theme               |
+| **wp-load.php**        | Load wp-config & wp-settings     |
+| **wp-settings.php**    | Khởi động toàn bộ WordPress Core |
+
+✔ Thuộc phần: **Bootstrap Layer**
+
+---
+
+ **6.2 File cấu hình**
+
+| File                     | Vai trò                           |
+| ------------------------ | --------------------------------- |
+| **wp-config.php**        | DB, keys, salts, debug, constants |
+| **wp-config-sample.php** | File mẫu                          |
+
+✔ Thuộc phần: **Configuration Layer**
+
+---
+
+ **6.3 Cron & Background Tasks**
+
+| File            | Vai trò                                 |
+| --------------- | --------------------------------------- |
+| **wp-cron.php** | Giả lập cronjob, xử lý scheduled events |
+
+✔ Thuộc phần: **System Task Layer**
+
+---
+
+ **6.4 Login, Signup, Security**
+
+| File                     | Vai trò                                  |
+| ------------------------ | ---------------------------------------- |
+| **wp-login.php**         | Form đăng nhập                           |
+| **wp-signup.php**        | Multisite đăng ký                        |
+| **wp-activate.php**      | Multisite kích hoạt                      |
+| **xmlrpc.php**           | API XML-RPC (mobile app, remote posting) |
+| **wp-comments-post.php** | Xử lý gửi comment                        |
+
+---
+
+ **6.5 Các file metadata / info**
+
+| File            | Vai trò             |
+| --------------- | ------------------- |
+| **license.txt** | GPLv2 license       |
+| **readme.html** | Thông tin phiên bản |
+
+---
+
+
+| Thành phần hệ thống        | Folder / File tương ứng                                     |
+| -------------------------- | ----------------------------------------------------------- |
+| **Core System (logic)**    | wp-includes                                                 |
+| **Admin System**           | wp-admin                                                    |
+| **Theme Layer (frontend)** | wp-content/themes                                           |
+| **Plugin Layer (extend)**  | wp-content/plugins, mu-plugins                              |
+| **Assets Storage**         | wp-content/uploads                                          |
+| **Bootstrap**              | index.php, wp-blog-header.php, wp-load.php, wp-settings.php |
+| **Configuration**          | wp-config.php                                               |
+| **Authentication**         | wp-login.php, wp-signup.php, wp-activate.php                |
+| **API / Integration**      | xmlrpc.php, wp-comments-post.php                            |
+| **Cron system**            | wp-cron.php                                                 |
+| **Documentation**          | readme.html, license.txt                                    |
+
+
