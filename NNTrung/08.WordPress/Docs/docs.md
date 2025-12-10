@@ -351,7 +351,7 @@ Sau khi chọn template, WordPress load file theme (header.php, footer.php, side
 
 - **WordPress Plugin**: Đây là các thành phần mở rộng của WordPress, được chia sẻ trên kho Plugin của WordPress. Những Plugin này do chính những người trong nhóm sáng lập WordPress viết ra hoặc cũng có thể do người dùng tự viết và chia sẻ. Plugin này cũng có 2 dạng: 1 dạng miễn phí và 1 dạng phải trả phí.
 
-![WordPress](../images/WordPress_8.png)
+![WordPress](../images/WordPress_7.png)
 
 - **Posts**: Là nơi tạo và quản lý các nội dung theo dạng blog, thường được sắp xếp theo thời gian và có thể gắn thẻ (tags) và danh mục (categories)
 
@@ -360,7 +360,7 @@ Sau khi chọn template, WordPress load file theme (header.php, footer.php, side
   - Categories: Quản lý tất cả các danh mục.
   - Tags: Quản lý tất cả các Post Tag.
 
-![WordPress](../images/WordPress_9.png)
+![WordPress](../images/WordPress_8.png)
 
 **Trang (Pages)**: nơi tạo và quản lý các nội dung tĩnh, ít thay đổi như trang giới thiệu, trang liên hệ, trang dịch vụ, v.v.
 
