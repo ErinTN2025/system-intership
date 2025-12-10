@@ -115,7 +115,27 @@ CA sẽ cấp file chứng chỉ SSL (.crt), bạn cài đặt vào webserver.
 - Sau đó, bạn nhận được chứng chỉ SSL(`.crt`) để cài đặt trên webserver.
 
 ## SSL/TLS Certificate - Chứng chỉ SSL/TLS
+### SSL/TLS
+- SSL (Secure Sockets Layer) là giao thức ban đầu do Netscape phát triển (SSL 1.0 nội bộ, 2.0, 3.0).
+
+- TLS (Transport Layer Security) là phiên bản chuẩn hóa, kế thừa SSL. TLS 1.0 tương đương về mục tiêu với SSLv3 nhưng sửa nhiều vấn đề; sau đó có TLS 1.1, 1.2, 1.3.
+
+- Ngày nay khi nói “SSL” người ta thường thực sự ám chỉ TLS — vì SSLv2/3 đã lỗi thời và không an toàn.
+ 
+**Mục tiêu chính của SSL/TLS**
+  - Mã hóa (Confidentiality) — dữ liệu giữa client và server không đọc được bởi kẻ nghe trộm.
+  - Toàn vẹn dữ liệu (Integrity) — phát hiện thay đổi dữ liệu (MAC/HMAC, AEAD).
+  - Xác thực (Authentication) — đảm bảo server (và tùy trường hợp, client) là đúng như tuyên bố (thông qua chứng chỉ X.509).
+  - (Tùy) Perfect Forward Secrecy (PFS) — nếu private key server bị lộ sau này, giao tiếp trước đó vẫn an toàn nhờ ephemeral keys.
+
+  **Thành phần chính của TLS**
+  - Handshake Protocol: thiết lập thông số bảo mật (phiên bản, cipher suite, chế độ PFS), tạo/trao khóa.
+  - Record Protocol: đóng gói, nén (hiếm dùng), mã hóa, và gửi dữ liệu ứng dụng (HTTP, SMTP, v.v.).
+  - Certificate (X.509): chứa public key, thông tin chủ sở hữu, CA ký.
+  - Cipher suite: tổ hợp thuật toán (key exchange, authentication, bulk encryption, MAC/AEAD). Ví dụ: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256.
 ### 1. SSL/TLS Certificate là gì?
+`SSL/TLS certificate (chứng chỉ SSL/TLS)` chứa public key + thông tin danh tính + chữ ký số của CA, dùng để xác thực server và giúp thiết lập kết nối TLS an toàn.
+
 `SSL/TLS Certificate( Chứng chỉ SSL/TLS)` là một tệp dữ liệu số được sử dụng để mã hóa dữ liệu giữa trình duyệt(client) và webserver( server), giúp đảm bảo bảo mật và tính toàn vẹn của dữ liệu.
 `SSL (Secure Sockets Layer)` và `TLS (Transport Layer Security)` đều là giao thức mã hóa, nhưng TLS là phiên bản nâng cấp của SSL. Hiện nay, TLS( đặc biệt là TLS 1.2 và TLS 1.3) được sử dụng thay thế SSL.
 
@@ -123,15 +143,11 @@ SSL/TLS là giao thức bảo mật truyền tải dữ liệu qua Internet. Tro
 
 ![altimage](../Images/TLSSSLhoatdong.png)
 
-1️⃣ Client Hello: Máy khách gửi thông tin về các phương thức mã hóa mà nó hỗ trợ đến máy chủ.
-
-2️⃣ Server Hello: Máy chủ phản hồi với phương thức mã hóa mà nó chọn từ danh sách của máy khách và gửi chứng chỉ SSL của mình.
-
-3️⃣ Key Exchange: Máy khách và máy chủ trao đổi khóa công khai, giúp bắt đầu quá trình mã hóa và giải mã dữ liệu.
-
-4️⃣ Session Key Creation: Cả hai bên tạo ra một khóa phiên (session key) dùng để mã hóa dữ liệu trong suốt phiên giao dịch.
-
-5️⃣ Finish: Cả máy khách và máy chủ xác nhận rằng kết nối đã được bảo mật và sẵn sàng để trao đổi dữ liệu.
+- Client Hello: Máy khách gửi thông tin về các phương thức mã hóa mà nó hỗ trợ đến máy chủ.
+- Server Hello: Máy chủ phản hồi với phương thức mã hóa mà nó chọn từ danh sách của máy khách và gửi chứng chỉ SSL của mình.
+- Key Exchange: Máy khách và máy chủ trao đổi khóa công khai, giúp bắt đầu quá trình mã hóa và giải mã dữ liệu.
+- Session Key Creation: Cả hai bên tạo ra một khóa phiên (session key) dùng để mã hóa dữ liệu trong suốt phiên giao dịch.
+- Finish: Cả máy khách và máy chủ xác nhận rằng kết nối đã được bảo mật và sẵn sàng để trao đổi dữ liệu.
 
 
 ![altimage](../Images/SSLtlsoperate.png)
@@ -145,6 +161,18 @@ SSL/TLS là giao thức bảo mật truyền tải dữ liệu qua Internet. Tro
 | Máy chủ (Servers)| Máy chủ gửi Chứng chỉ SSL/TLS của mình cho trình duyệt để xác minh danh tính.| Xác nhận danh tính trang web và thiết lập các khóa mã hóa.|
 
 ### 2. Cấu trúc của một chứng chỉ SSL/TLS
+
+Nó là một chứng chỉ số `X.509` được **CA (Certificate Authority)** ký.
+
+Chứng chỉ này chứa:
+- Public key của server
+- Thông tin chủ sở hữu (tên domain, tổ chức…)
+- Thời hạn
+- Thuật toán dùng để ký
+- Chữ ký của CA — phần quan trọng nhất, để browser tin được
+
+File thường có dạng `.crt`, `.cer`, `.pem`.
+
 Ví dụ: 
 
 ![altimage](../Images/SSLCertificate.png)
