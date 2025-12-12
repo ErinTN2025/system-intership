@@ -204,7 +204,18 @@ Có các loại headers khác nhau và chúng được nhóm thành 4 loại l�
 
   ![altimage](../Images/httpheader.png)
 
-  ### HTTP Session
+### HTTP Session
+**HTTP Session** là cách để server nhớ được người dùng trong suốt quá trình họ tương tác với website - mặc dù HTTP vốn là giao thứ "stateless". Đơn giản Session giúp server nhận ra bạn vẫn là bạn qua các request liên tiếp.
+
+**Mục đích chính của HTTP Session**
+  - Giữ trạng thái người dùng (State Management)
+
+  HTTP bình thường: 
+    - Mỗi lần bạn gửi một request (GET/POST) lên server
+    - Server trả về response và quên sạch bạn là ai, không nhớ gì cả.
+    - Server không thể nhớ bạn đã đăng nhập, không thể biết ai đang thao tác, không biết giỏ hàng của ai…
+    - Session sinh ra để khắc phục điều này.
+
   ![altimage](../Images/session.png)
 
 | **Bước**    | **Hành động** |   
@@ -217,41 +228,56 @@ Có các loại headers khác nhau và chúng được nhóm thành 4 loại l�
 | **Server → Browser:** Trả về phản hồi                           | Sau khi xác thực thành công session, server gửi lại **phản hồi (response)** chứa nội dung yêu cầu (ví dụ: thông tin hồ sơ người dùng). | 
 
 ### HTTP Cookie
-Cookie HTTP là một phần dữ liệu mà máy chủ gửi đến trình duyệt web. Sau đó, trình duyệt web lưu trữ cookie HTTP trên máy tính của người dùng và gửi nó trở lại cùng một máy chủ trong các yêu cầu sau này, nó được sử dụng để xác định khách hàng và hoạt động như một cách để duy trì thông tin.
+**Cookie** là một đoạn dữ liệu nhỏ được server gửi xuống và lưu trong trình duyệt của bạn.
+
+Mỗi lần bạn gửi request lên server, trình duyệt sẽ tự động gửi cookie kèm theo.
 
 Cookie HTTP còn được gọi là web cookie hoặc browser cookie. Và nó thường được gọi là cookie.
 
 ![altimage](../Images/httpcookies.png)
 
-Như ta biết HTTP request chỉ là stateless, vì khi ta gửi hai yêu cầu HTTP tuần tự đến máy chủ, không có liên kết nào giữa chúng. Nói cách khác, máy chủ không thể biết liệu hai yêu cầu có phải từ cùng một trình duyệt web hay không.
+Cookie không phải là session, nhưng nó là thứ dùng để nhớ thông tin phía client.
 
-Do đó, Cookie được sử dụng để cho biết liệu hai yêu cầu có đến từ cùng một trình duyệt web hay không. Cookie phục vụ các mục đích sau:
-- Quản lý Session - cookie cho phép bạn quản lý và duy trì bất kỳ lịch sử browsing nào mà máy chủ(client) cần ghi nhớ. chẳng hạn như thông tin đăng nhập, giỏ hàng, v.v.
-- Cá nhân hóa - cookie cho phép bạn lưu trữ thông tin người dùng, chủ đề và cài đặt cụ thể cho người dùng.
-- Cookie xác thực - được sử dụng để lưu trữ thông tin liên quan đến trạng thái của người dùng hiện đang đăng nhập vào máy chủ. Loại cookie này lưu trữ thông tin về tài khoản của người dùng, được sử dụng để tiếp tục phiên làm việc. Nếu không có cookie này, người dùng sẽ phải xác thực lại mỗi khi thực hiện yêu cầu HTTP.
-- Theo dõi - cookie giúp ghi lại và phân tích các hành vi của người dùng trong quảng cáo.
+**Mục đích chính của Cookie**
 
-### Cache
-**Cache**: là bộ nhớ đệm dùng để lưu bản sao của tài nguyên/ phản hồi (HTML, CSS, JS, hình ảnh, JSON...) nhằm tăng tốc độ tải và giảm tải cho server. Cache có thể nằm ở trình duyệt, proxy, CDN hoặc server trung gian.
+- **Ghi nhớ người dùng( nhưng không dùng cho đăng nhập quan trọng)**
+  - Nhớ bạn đã chọn dark mode hay light mode
+  - Nhớ ngôn ngữ bạn đang dùng “vi” / “en”
+  - Nhớ bạn đang chọn 20 sản phẩm hiển thị mỗi trang
 
-Khác với Cookie
+Các thông tin này không quá quan trọng, nên lưu trực tiếp trong cookie là OK.
+- **Dùng để lưu Session ID**
+  - Session ID này giúp server nhận ra bạn.
+  -  Dữ liệu thật của bạn nằm ở server, không nằm trong cookie.
 
-**Cookie**: là một đoạn dữ liệu nhỏ (key=value) do server gửi cho trình duyệt và trình duyệt lưu lại; cookie được gửi kèm trong các request tiếp theo để giữ trạng thái, ví dụ session đăng nhập, cấu hình người dùng, theo dõi.
+Cookie chỉ làm nhiệm vụ giữ mã ID.
 
-Mục đích chính:
-- Cache: tối ưu hiệu năng — giảm thời gian tải, giảm băng thông, giảm tải server.
-- Cookie: duy trì trạng thái ứng dụng/ người dùng giữa các request (ví dụ: giữ login, giỏ hàng, tracking id).
+- **Theo dõi hành vi người dùng (Analytics / Marketing)**
+  - Các website lớn dùng cookie để:
+    - Biết bạn đã xem sản phẩm nào
+    - Gợi ý quảng cáo phù hợp
+    - Theo dõi lượt truy cập
+    - Ghi nhớ giỏ hàng đơn giản (không quan trọng)
 
-Nơi lưu trữ:
+**Lưu ý**: Cookie KHÔNG phải dùng để lưu:
+  - Mật khẩu
+  - Token quan trọng
+  - Thông tin cá nhân nhạy cảm
 
-**Cache:**
-- Trình duyệt (browser cache)
-- CDN (Content Delivery Network)
-- Proxy cache (ví dụ: Varnish)
-- Cache server/edge
-**Cookie:**
+Vì cookie nằm phía client → bị xem, sửa, đánh cắp được.
 
-Lưu trong trình duyệt (store của browser) — được gửi kèm trong header Cookie khi request phù hợp phạm vi.
+Cookie nằm trong trình duyệt của bạn, từng domain một.
+
+Một số thuộc tính quan trọng của Cookie:
+| Thuộc tính            | Ý nghĩa                              |
+| --------------------- | ------------------------------------ |
+| **expires / max-age** | Cookie tồn tại bao lâu               |
+| **httpOnly**          | Không cho JavaScript đọc → chống XSS |
+| **secure**            | Chỉ gửi qua HTTPS                    |
+| **sameSite**          | Chống CSRF                           |
+| **path**              | Cookie dùng cho đường dẫn nào        |
+| **domain**            | Cookie áp dụng cho domain nào        |
+
 #### Chi tiết về Cookie
 
 | Thông tin|	Giải thích|
@@ -311,6 +337,47 @@ Với dòng đầu tiên có cookie `LSID`, ta có thể thấy rằng:
 | ---------- | ------------------------------------------------------ |
 | `Domain`   | Domain của trang hiện tại (ví dụ đang ở `example.com`) |
 | `Path`     | Đường dẫn của URL hiện tại (ví dụ `/account/login`)    |
+
+### Cache
+**Cache**: là bộ nhớ đệm dùng để lưu bản sao của tài nguyên/ phản hồi (HTML, CSS, JS, hình ảnh, JSON...) nhằm tăng tốc độ tải và giảm tải cho server. Cache có thể nằm ở trình duyệt, proxy, CDN hoặc server trung gian.
+
+Mục đích chính:
+- Cache: tối ưu hiệu năng — giảm thời gian tải, giảm băng thông, Giảm số lần phải tải lại dữ liệu từ server, Tăng tốc độ website, Giảm tải cho server
+
+Nơi lưu trữ:
+
+**Cache:**
+- Trình duyệt (browser cache)
+- CDN (Content Delivery Network)
+- Proxy cache (ví dụ: Varnish)
+- Cache server/edge
+
+Khi server trả về một response, nó có thể gửi kèm header:
+```plaintext
+Cache-Control: max-age=3600
+```
+Trình duyệt được phép dùng dữ liệu này trong 3600 giây (1 giờ) mà không hỏi lại server.
+
+**Các loại cache chính trong HTTP**
+  - Browser Cache(cache trong trình duyệt)
+    - Lưu file tĩnh: HTML, CSS, JavaScript
+    - Ảnh ,...
+  - CDN Cache(cache ngoài server)
+    - CDN như cloudflare lưu lại các file tĩnh ở các datacenter gần người dùng: Người VN lấy file từ Sing, ...
+  - Memory cache/ Server Cache
+    - Cache trong backend như Redis, Memcached,...
+    - Dùng cho Cache query database, kết quả tính toán, API response.
+    - Thay vì truy vấn DB 100 lần, lấy từ server cache trong 0.001s
+
+**Một vài Cache header quan trọng nhất**
+| Header                | Ý nghĩa                           |
+| --------------------- | --------------------------------- |
+| **Cache-Control**     | Quy định cho phép cache hay không |
+| **Expires**           | Thời điểm hết hạn cache           |
+| **Etag**              | Mã để so sánh phiên bản dữ liệu   |
+| **Last-Modified**     | Thời điểm dữ liệu được sửa        |
+| **If-None-Match**     | Dùng Etag để check cache          |
+| **If-Modified-Since** | Check theo Last-Modified          |
 
 ### Proxy
 
