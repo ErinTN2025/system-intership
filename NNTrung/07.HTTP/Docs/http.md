@@ -67,9 +67,9 @@ Quá trình này diễn ra thông qua việc trao đổi các thông điệp đ�
 | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **HTTP Request Headers**<br>(Tiêu đề yêu cầu HTTP)   | Là phần **thông tin dạng cặp khóa – giá trị (key-value pairs)** được gửi kèm trong mỗi **yêu cầu HTTP**. Các header này chứa dữ liệu bổ sung như: loại trình duyệt của client (`User-Agent`), loại dữ liệu mong muốn (`Accept`), thông tin xác thực (`Authorization`), hoặc địa chỉ máy chủ (`Host`).<br> Giúp server hiểu cách xử lý và phản hồi phù hợp với yêu cầu của client.                   |
 | **HTTP Request Body**<br>(Thân yêu cầu HTTP)         | Là phần **dữ liệu chính mà client gửi lên server** — thường chứa thông tin người dùng nhập từ biểu mẫu (form), dữ liệu xác thực, hoặc payload của API (ví dụ: JSON, XML, file upload).<br> Thường xuất hiện trong các phương thức **POST**, **PUT** hoặc **PATCH**.                                                                                                                                 |
-| **HTTP Response**<br>(Phản hồi HTTP)                 | Là **kết quả mà server gửi lại** sau khi xử lý yêu cầu của client. Mỗi phản hồi gồm 3 phần chính:<br>1️⃣ **Mã trạng thái (Status Code)** – cho biết kết quả xử lý.<br>2️⃣ **Header phản hồi (Response Headers)** – cung cấp thông tin về dữ liệu trả về.<br>3️⃣ **Body phản hồi (Response Body)** – chứa nội dung dữ liệu thực tế.                                                                    |
+| **HTTP Response**<br>(Phản hồi HTTP)                 | Là **kết quả mà server gửi lại** sau khi xử lý yêu cầu của client. Mỗi phản hồi gồm 3 phần chính:<br> **Mã trạng thái (Status Code)** – cho biết kết quả xử lý.<br> **Header phản hồi (Response Headers)** – cung cấp thông tin về dữ liệu trả về.<br> **Body phản hồi (Response Body)** – chứa nội dung dữ liệu thực tế.                                                                    |
 | **HTTP Status Codes**<br>(Mã trạng thái HTTP)        | Là **mã gồm 3 chữ số** thể hiện kết quả xử lý yêu cầu. Các mã này được chia thành 5 nhóm:<br>• **1xx – Informational:** Thông tin tạm thời.<br>• **2xx – Success:** Thành công (ví dụ: `200 OK`).<br>• **3xx – Redirection:** Chuyển hướng.<br>• **4xx – Client Error:** Lỗi phía client (ví dụ: `404 Not Found`).<br>• **5xx – Server Error:** Lỗi phía server (ví dụ: `500 Internal Server Error`).<br>• (https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status) |
-| **HTTP Response Headers**<br>(Tiêu đề phản hồi HTTP) | Là **thông tin bổ sung** đi kèm phản hồi, giúp client **hiểu rõ cách xử lý dữ liệu**. Ví dụ:<br>• `Content-Type`: Loại dữ liệu trả về (HTML, JSON, XML…).<br>• `Content-Language`: Ngôn ngữ của nội dung.<br>• `Cache-Control`: Quy tắc bộ nhớ đệm.<br>👉 Các header này định hướng cho trình duyệt hoặc ứng dụng hiểu đúng nội dung phản hồi.                                                        |
+| **HTTP Response Headers**<br>(Tiêu đề phản hồi HTTP) | Là **thông tin bổ sung** đi kèm phản hồi, giúp client **hiểu rõ cách xử lý dữ liệu**. Ví dụ:<br>• `Content-Type`: Loại dữ liệu trả về (HTML, JSON, XML…).<br>• `Content-Language`: Ngôn ngữ của nội dung.<br>• `Cache-Control`: Quy tắc bộ nhớ đệm.<br> Các header này định hướng cho trình duyệt hoặc ứng dụng hiểu đúng nội dung phản hồi.                                                        |
 | **HTTP Response Body**<br>(Thân phản hồi HTTP)       | Là **phần dữ liệu chính mà server gửi lại cho client**, tùy thuộc vào yêu cầu ban đầu. Ví dụ:<br>• Trang HTML khi người dùng truy cập website.<br>• Dữ liệu JSON khi gọi API.<br>• Hình ảnh, video hoặc file tải về khi được yêu cầu.                                                                                                                  
 - **1xx (Thông tin)**: Yêu cầu đang được tiếp tục xử lý.
   - 100 Continue: Máy chủ chấp nhận yêu cầu sơ bộ.
@@ -231,6 +231,27 @@ Do đó, Cookie được sử dụng để cho biết liệu hai yêu cầu có 
 - Cookie xác thực - được sử dụng để lưu trữ thông tin liên quan đến trạng thái của người dùng hiện đang đăng nhập vào máy chủ. Loại cookie này lưu trữ thông tin về tài khoản của người dùng, được sử dụng để tiếp tục phiên làm việc. Nếu không có cookie này, người dùng sẽ phải xác thực lại mỗi khi thực hiện yêu cầu HTTP.
 - Theo dõi - cookie giúp ghi lại và phân tích các hành vi của người dùng trong quảng cáo.
 
+### Cache
+**Cache**: là bộ nhớ đệm dùng để lưu bản sao của tài nguyên/ phản hồi (HTML, CSS, JS, hình ảnh, JSON...) nhằm tăng tốc độ tải và giảm tải cho server. Cache có thể nằm ở trình duyệt, proxy, CDN hoặc server trung gian.
+
+Khác với Cookie
+
+**Cookie**: là một đoạn dữ liệu nhỏ (key=value) do server gửi cho trình duyệt và trình duyệt lưu lại; cookie được gửi kèm trong các request tiếp theo để giữ trạng thái, ví dụ session đăng nhập, cấu hình người dùng, theo dõi.
+
+Mục đích chính:
+- Cache: tối ưu hiệu năng — giảm thời gian tải, giảm băng thông, giảm tải server.
+- Cookie: duy trì trạng thái ứng dụng/ người dùng giữa các request (ví dụ: giữ login, giỏ hàng, tracking id).
+
+Nơi lưu trữ:
+
+**Cache:**
+- Trình duyệt (browser cache)
+- CDN (Content Delivery Network)
+- Proxy cache (ví dụ: Varnish)
+- Cache server/edge
+**Cookie:**
+
+Lưu trong trình duyệt (store của browser) — được gửi kèm trong header Cookie khi request phù hợp phạm vi.
 #### Chi tiết về Cookie
 
 | Thông tin|	Giải thích|
