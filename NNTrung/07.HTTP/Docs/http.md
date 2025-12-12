@@ -317,31 +317,53 @@ Với dòng đầu tiên có cookie `LSID`, ta có thể thấy rằng:
 ![altimage](../Images/proxygeneral.png)
 
 
-Proxy là một máy chủ trung gian kết nối giữa người dùng và Internet. Khi người dùng truy cập một trang web thông qua Proxy, yêu cầu này sẽ được gửi đến Proxy server trước, sau đó Proxy server sẽ gửi yêu cầu đến trang web đích và nhận kết quả trả về.  Proxy có chức năng tương tự như một bức tường lửa (firewall) hay một hệ thống lọc truy cập trang web nhằm quản lý và đảm bảo tính bảo mật khi sử dụng.
+Proxy là một máy chủ trung gian kết nối giữa người dùng và Internet. 
+Khi bạn truy cập `google.com`:
+  - Bạn gửi request đến Proxy
+  - Proxy gửi request đến Google thay bạn
+  - Google trả lại kết quả cho Proxy
+  - Proxy trả lại kết quả cho bạn
 
 ![altimage](../Images/Proxy.png)
 
-Proxy Server về cơ bản là một máy tính trên Internet với địa chỉ IP của riêng nó mà máy tính của bạn biết. Khi gửi một yêu cầu web, nó sẽ đến Proxy Server đầu tiên. Sau đó, Proxy Server sẽ thực hiện yêu cầu web và thu thập phản hồi từ máy chủ web và chuyển tiếp dữ liệu trang web để người dùng nhìn thấy các trang web trong trình duyệt.
+**Proxy dùng để làm gì**
 
-Khi Proxy Server chuyển tiếp yêu cầu web của người dùng, nó có thể thay đổi dữ liệu đó mà vẫn lấy thông tin theo đúng yêu cầu. Máy chủ Proxy có thể thay đổi địa chỉ IP để máy chủ web không thể nắm rõ được chính xác vị trí của người dùng, cùng với đó việc mã hóa dữ liệu cũng giúp nâng cao hơn độ bảo mật trong quá trình vận chuyển. Và cuối cùng Proxy Server có thể giúp chặn các truy cập vào các trang web cụ thể dựa trên địa chỉ IP.
+Proxy Server về cơ bản là một máy tính trên Internet với địa chỉ IP của riêng nó mà máy tính của bạn biết. 
+
+- **Giấu IP người dùng**: Google chỉ thấy IP của Proxy, không thấy IP của bạn.
+- **Vượt chặn/VPN**: Nếu mạng bạn chặn Facebook → bạn dùng Proxy → truy cập OK.
+- **Lọc nội dung**: Proxy có thể chặn: web đen, web game, web chứa virus.
+- **Cache (tiết kiệm băng thông)**: Nếu triệu người tải 1 file -> Proxy chỉ tải 1 lần, còn lại lấy từ cache.
+
+- **Proxy bảo vệ CLIENT, che giấu CLIENT**
 
 ![altimage](../Images/proxy2.png)
 
+**Reverse Proxy**: Reverse proxy là máy chủ đứng giữa Internet và server của bạn, nhưng nó bảo vệ server, không phải bảo vệ user. Client → Reverse Proxy → Backend server (PHP, Node.js…)
+
+Người dùng tưởng đang gửi request đến server thật,
+nhưng thực ra họ đang nói chuyện với Reverse Proxy.
+
+**Reverse Proxy dùng để**: 
+  - Giấu IP Backend: người dùng chỉ thấy IP của Webservice không bao giờ thấy IP thật của backend. 
+  - **Load Balancing(chia tải)**: Phân phối request sang nhiều server giúp website tránh sập khi traffic cao: Client → Reverse Proxy → {Server1, Server2, Server3}.  
+  - **SSL Termination**: Reverse Proxy xử lý HTTPS, backend chỉ dùng http nội bộ giúp giảm tải backend. 
+  - **Cache response (tăng tốc cực mạnh)**: Nginx reverse proxy có thể cache HTML/API → giảm tải backend.
+  - **Reverse Proxy**: hoạt động như tường lửa ứng dụng WAF: chặn DDoS, SQL Injection,requests bất thường,..|
 #### Phân loại máy chủ Proxy
 | Loại | Đặc điểm |
 |-------|----------|
-| Máy chủ Proxy Web | Khi một người dùng gửi yêu cầu truy cập một trang web, yêu cầu đó được gửi đến Proxy server thay vì trực tiếp đến máy chủ của trang web. Proxy server này sau đó gửi yêu cầu đó đến máy chủ của trang web và nhận phản hồi từ máy chủ. Cuối cùng, Proxy server chuyển phản hồi đó đến người dùng.|
-| Máy chủ nguồn mở  | Máy chủ này giúp ẩn danh mọi thông tin cá nhân của người dùng. Nó được sử dụng để định tuyến lưu lượng truy cập qua các mạng khác nhau nhằm gây khó khăn trong việc theo dõi địa chỉ của người dùng, đồng thời ngăn chặn sự tấn công trái phép từ tin tặc. |
-| Máy chủ ẩn danh 12 cấp | Loại Proxy này sử dụng mã hóa để ẩn tất cả các thông tin liên lạc ở nhiều cấp độ. Dữ liệu được mã hóa sau đó được chuyển tiếp qua các bộ định tuyến mạng có mặt ở các vị trí khác nhau. |
-| Forward Proxy | Là loại Proxy phổ biến nhất, Forward Proxy hoạt động như trung gian giữa người dùng và internet. Khi người dùng gửi yêu cầu đến một trang web, yêu cầu này sẽ được gửi đến Proxy trước, sau đó Proxy sẽ chuyển tiếp yêu cầu đến trang web và nhận phản hồi, trả về cho người dùng. |
-| Reverse Proxy server  | Reverse Proxy server hoạt động ngược lại với Forward Proxy. Reverse Proxy được đặt trước máy chủ web và nhận các yêu cầu từ internet. Proxy sau đó sẽ chuyển tiếp yêu cầu đến máy chủ web phù hợp và trả về phản hồi cho người dùng.|
-| Anonymous Proxy | Loại Proxy Server không tiết lộ địa chỉ IP của người dùng cho các trang web mà họ truy cập. Nhờ đó dễ dàng bảo vệ danh tính của người dùng và ngăn chặn việc theo dõi hoạt động trực tuyến của họ. Anonymity Proxy cũng ngăn chặn các trang web sử dụng vị trí địa lý của người dùng để cung cấp nội dung tiếp thị cụ thể.|
-| High Anonymity Proxy | Đây là loại Proxy định kỳ thay đổi địa chỉ IP xuất hiện trên máy chủ web, gây khó khăn cho việc theo dõi lưu lượng truy cập của người dùng. Trong các loại Proxy, Proxy ẩn danh cao được đánh giá là một trong những cách an toàn và hiệu quả nhất để truy cập web.|
-| Transparent Proxy | Đây là một loại Proxy server hoạt động như một cổng trung gian giữa người dùng và internet mà không làm thay đổi hoặc mã hóa dữ liệu. Nó giúp kiểm soát và giám sát lưu lượng mạng mà không làm ảnh hưởng đến quá trình tương tác với website của người dùng. |
-| Common Gateway Interface Proxy (CGI Proxy) | Loại Proxy này dựa trên CGI, một giao thức cho phép máy chủ web thực thi các chương trình trên máy chủ để đáp ứng yêu cầu của người dùng. Tập lệnh CGI hoạt động như một Proxy, thay mặt bạn tìm nạp các trang web.|
-| Suffix Proxy | Proxy máy chủ Suffix về cơ bản sẽ thêm tên Proxy vào URL. Loại Proxy này không đảm bảo tính ẩn danh cấp cao. Nó được sử dụng để bỏ qua các bộ lọc web. |
-| Rotating Proxies | Đây là một loại Proxy web thay đổi địa chỉ IP thường xuyên. Điều này có nghĩa là mỗi lần người dùng thực hiện một yêu cầu thông qua Proxy, một địa chỉ IP khác được sử dụng sẽ khiến các trang web khó theo dõi hoạt động trực tuyến của người dùng hơn.|
-| DNS Proxy | DNS Proxy hoạt động như một trung gian giữa thiết bị của bạn và máy chủ Hệ thống tên miền (DNS). Nó chuyển tiếp các yêu cầu và phản hồi DNS của người dùng, có khả năng mang lại một số lợi thế so với việc truy vấn trực tiếp máy chủ DNS. |
+| **Web Proxy**                                                | Proxy web truyền thống – người dùng gửi HTTP/HTTPS request → Proxy gửi giúp → nhận response rồi trả lại. Dùng để cache web, tăng tốc, lọc nội dung, hoặc ẩn IP.                                                                        |
+| **Forward Proxy**                                            | Proxy đứng **phía trước client**, đại diện cho **client** đi ra Internet. Đây là loại proxy mà người dùng sử dụng để ẩn danh, đổi IP, vượt chặn web… Tất cả proxy ẩn danh, transparent, rotating… đều là "biến thể" của forward proxy. |
+| **Reverse Proxy** *(bạn chưa liệt kê nhưng nên có)*          | Proxy đứng **phía trước server**, nhận request từ Internet → forward vào backend. Nginx & HAProxy hay dùng kiểu này để load balancing, bảo mật server, cache.                                                                          |
+| **Anonymous Proxy**                                          | Forward proxy **ẩn IP thật** của client nhưng vẫn tiết lộ nó là một proxy. (Website biết “bạn dùng proxy”, nhưng không biết IP thật bạn).                                                                                              |
+| **High Anonymous Proxy (Elite Proxy)**                       | Không tiết lộ IP thật **và** không tiết lộ “tôi đang dùng proxy”. Website nghĩ bạn chính là IP của proxy → ẩn danh cao nhất.                                                                                                           |
+| **Transparent Proxy**                                        | Proxy **không ẩn IP**, không thay đổi header. Người dùng không cần cấu hình, thường do công ty, ISP dùng để giám sát / lọc web.                                                                                                        |
+| **Rotating Proxy**                                           | Proxy thay đổi IP cho mỗi request hoặc mỗi thời gian ngắn. Rất hay dùng để scrape web, tránh rate limit, tránh bị block.                                                                                                               |
+| **DNS Proxy**                                                | Proxy đứng giữa client và DNS server. Thường dùng để chặn web, lọc nội dung, hoặc tăng tốc DNS. Không liên quan đến IP ẩn danh.                                                                                                        |
+| **CGI Proxy**                                                | Loại proxy chạy qua CGI script (ví dụ Glype, PHProxy). Người dùng truy cập một website trung gian → website đó fetch trang web khác giúp. Cách cũ, ít dùng.                                                                            |
+| **Suffix Proxy**                                             | Proxy thêm hậu tố vào URL (ví dụ `example.com.proxy.com`). Loại này rất cũ, bảo mật kém, chỉ dùng bypass filter đơn giản.  |
+
 
 # HTTPs
 ### 1. Khái niệm HTTPs
