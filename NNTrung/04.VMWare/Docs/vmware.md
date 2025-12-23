@@ -9,6 +9,23 @@
 
   ![altimage](../Images/switchvirtual.png)
 
+## Phần cứng máy ảo (Hardware Options)
+
+![altimage](../Images/hardwareoptions.png)
+
+| Thiết bị |	Giải thích chi tiết |
+|----------|----------------------|
+| Memory (Bộ nhớ RAM)	8 GB | Lượng RAM được cấp phát cho máy ảo. Đây là bộ nhớ chính mà hệ điều hành khách (Guest OS) sẽ sử dụng.|
+| Processors (Bộ xử lý)	4 | Số lượng CPU ảo (nhân) được gán cho máy ảo, lấy từ CPU vật lý của máy thật.|
+| Hard Disk (SCSI) (Ổ cứng)	40 GB | Dung lượng ổ đĩa cứng ảo, được lưu dưới dạng file trên ổ đĩa thật. Giao thức SCSI thường dùng cho ổ đĩa hệ thống trong môi trường ảo hóa.|
+| CD/DVD 2 (SATA) |	Đang sử dụng file ISO từ đường dẫn D:\Downloads\ubunt... (có thể là file cài đặt Ubuntu). Đây là ổ quang ảo thứ hai.|
+| CD/DVD (SATA)	| Đang sử dụng file autoinst.iso - thường là file cấu hình tự động cài đặt (auto-installation). |
+| Floppy (Đĩa mềm) |	Đang sử dụng file autoinst.flp - thường là file cấu hình khởi động/auto-install qua ổ đĩa mềm ảo. |
+| Network Adapter (Card mạng)| NAT (Network Address Translation)   Máy ảo dùng chung địa chỉ IP với máy thật, có thể ra Internet nhưng mạng bên ngoài không thể kết nối trực tiếp vào máy ảo.|
+| USB Controller	Present | Hỗ trợ kết nối USB từ máy thật vào máy ảo.|
+| Sound Card (Card âm thanh) |	Auto detect - Tự động phát hiện và sử dụng card âm thanh của máy thật.|
+| Display (Màn hình) |	Auto detect - Tự động điều chỉnh độ phân giải và hỗ trợ đồ họa từ máy thật.|
+
 ## Phân biệt 3 chế độ network trong VMware: NAT, Bridget, Host-only
 🔑 **Tóm tắt nhanh:**
 | **Tính năng** | **NAT** | **Bridged**| **Host-Only**|
