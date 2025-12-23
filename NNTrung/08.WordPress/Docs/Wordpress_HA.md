@@ -1,6 +1,6 @@
 # Tìm hiểu về Wordpress HA
 ## 1. WordPress HA là gì?
-WordPress HA (High Availability) là kiến trúc triển khai WordPress đảm bảo khả năng sẵn sàng cao, nghĩa là website WordPress luôn hoạt động ổn định, giảm thiểu tối đa thời gian gián đoạn dịch vụ khi xảy ra lỗi phần cứng, lỗi mạng hoặc bảo trì.
+WordPress HA (High Availability) là kiến trúc triển khai WordPress đảm bảo khả năng sẵn sàng cao, nghĩa là website WordPress luôn hoạt động ổn định, giảm thiểu tối đa thời gian gián đoạn dịch vụ khi xảy ra lỗi phần cứng, lỗi mạng hoặc bảo trì thông qua các tính năng dự phòng, cân bằng tải và đồng bộ hóa dữ liệu.
 ## 2. Tại sao cần HA cho WordPress?
 - Website không bị downtime, đảm bảo trải nghiệm người dùng.
 - Hạn chế mất doanh thu (đối với website thương mại điện tử).
@@ -34,9 +34,23 @@ WordPress HA (High Availability) là kiến trúc triển khai WordPress đảm 
 
 - Giám sát dịch vụ, tự động chuyển hướng traffic khi server hỏng.
 
-# Lab về WordPress HA
+## 4. NFS là gì
+- **NFS(Network File System) - Hệ thống tệp qua mạng**: cho phép một máy tính(client) truy cập thư mục hoặc tệp nằm trên máy khác( Server) như thể chúng đang nằm trên ổ cứng cục bộ
+
+# Lab về NFS
 ### 1. Môi trường
 | **Máy ảo** | **OS** | **Vai trò** |
 |------------|--------|-------------|
-|Web-server1 | CentOS Stream 9 | Web  |
-|Web-server2 | Ubuntu 24.04 | 
+|Web-server1 | CentOS Stream 9 | Web + NFS Server |
+|Web-server2 | Ubuntu 24.04 | Web + NFS Client |
+|lb-server | Ubuntu 24.04 | Load Balancer |
+
+**Phần mềm sử dụng**
+| **Vai trò** | **Phần mềm** |
+|-------------|--------------|
+| Web Server | Nginx + PHP + WordPress |
+| Load Balancer | Nginx(Reverse Proxy + Load Balancer) |
+| Database | MariaDB hoặc MySQL( đặt trên web1) |
+| Shared Storage | NFS( chia sẻ thư mục WordPress từ web1 cho web2 ) |
+
+### 2. Cấu hình NFS Server trên web1 (CentOS 9)
