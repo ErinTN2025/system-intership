@@ -320,8 +320,10 @@ echo "192.168.70.124:/srv/wordpress /var/www/wordpress nfs defaults 0 0" | sudo 
 ## 4. Cài WordPress trên NFS server
 ```bash
 cd /srv/wordpress
-sudo wget https://wordpress.org/latest.zip 
-sudo unzip latest.zip --strip-components=1
+sudo curl -O https://wordpress.org/latest.tar.gz
+sudo tar -xzf latest.tar.gz -C /srv/wordpress --strip-components=1
+sudo rm -f latest.tar.gz
+ls -l /srv/wordpress
 sudo chown -R www-data:www-data wordpress
 ```
 ## 4. Cài đặt MariaDB trên web1 (DB dùng chung)
