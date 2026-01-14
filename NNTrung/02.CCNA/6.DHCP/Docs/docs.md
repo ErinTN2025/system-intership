@@ -61,13 +61,13 @@
   - Nguồn: DHCP client (địa chỉ IP đã được cấu hình).
   - Đích: Địa chỉ unicast đến DHCP server.
 
-### 2.9 Gia hạn thuê IP (Lease Renewal)
+### 2.8 Gia hạn thuê IP (Lease Renewal)
 - Mỗi lease có 2 mốc:
   - T1(50%): Client gửi DHCP REQUEST (unicast) trực tiếp đến server đã cấp(Option 54).
   - T2(87.5%): Nếu T1 thất bại, client broadcast REQUEST để bất kỳ server nào cùng scope có thể gia hạn.
 - Nếu hết hạn mà không gia hạn được, client mất IP và quay về INIT (Discover lại).
 
-### 2.10 DHCP Relay (qua Router)
+### 2.9 DHCP Relay (qua Router)
 ![altimage](../Images/DHCP%20Relay.png)
 
 - Khi clien và server khác VLAN/subnet, có nhiều mạng khacs tương ứng với nhiều router khác thì cần phải dùng DHCP Relay Agent vì Clients sử dụng địa chỉ broadcast để quảng bá yêu cầu cấp phát IP, khi gói tin gửi bằng broadcast đến Router thì sẽ bị loại bỏ, do vậy phải có cách để cho các router trung gian chấp nhận những gói tin broadcast này và gửi đến DHCP server cách này chính là DHCP Relay Agent.
@@ -81,22 +81,22 @@
   - Do đó, gói OFFER/ACK từ server thường được relay "thả" vào VLAN đó dưới dạn broadcast(255.255.255.255 hoặc broadcast của subnet), để đảm bảo mọi client đều nghe thấy, trong đó client đích sẽ xử lý gói dành cho nó.
   - Nếu client trong DISCOVER/REQUEST đã bật flag = unicast (thường là khi nó đã có IP hợp lệ, ví dụ giai đoạn gia hạn lease), thì server/relay có thể gửi unicast trực tiếp về địa chỉ IP đó.
   
-### 2.9 Một số thông điệp khác của DHCP
+### 2.10 Một số thông điệp khác của DHCP
 - DHCP NAK: Từ chối/gỡ lease vì không hợp lệ (sai mạng, scope đổi…).
 - DHCP DECLINE: Client phát hiện trùng IP (ARP thấy có thiết bị dùng IP) → từ chối IP đó; server đánh dấu IP bị nghi ngờ và không cấp trong một thời gian.
 - DHCP RELEASE: Client chủ động trả lại IP trước khi tắt.
 - DHCP INFORM: Client đã có IP tĩnh nhưng xin thêm options(DNS, domain...) từ DHCP.
 
-### 2.10 Khi có nhiều DHCP servers
+### 2.11 Khi có nhiều DHCP servers
 - Client sẽ nhận nhiều OFFER; thường chọn offer đến trước(không có chuẩn bắt buộc thứ tự khác).
 - Client gửi REQUEST chỉ định rõ Server Identifier -> các server khác tự thu hồi đề nghị.
 
-### 2.11 Bảo mật & vận hành
+### 2.12 Bảo mật & vận hành
 - DHCP Snooping (trên switch): chỉ cho phép gói DHCP hợp lệ tự cổng trusted( nối về server/relay); chặn DHCP giả mạo từ máy trạm.
 - IP Source Guard, Dynamic ARP Inspection: kết hợp với bảng DHCP snooping binding để ngăn giả mạo IP/MAC/ARP.
 - Ghi log: rất hữu ích để truy vết AI, MAC, port cấp phát.
 
-### 2.12 DHCP Binding
+### 2.13 DHCP Binding
 - Là bản ghi ánh xạ hiện tại giữa các thông tin mà DHCP biết về client, Đây là cơ chế giúp DHCP Server ghi lại các thông tin cấp phát, đảm bảo tính nhất quán và minh bạch trong quản lý mạng: 
   - Địa chỉ MAC của client
   - Địa chỉ IP đã cấp
