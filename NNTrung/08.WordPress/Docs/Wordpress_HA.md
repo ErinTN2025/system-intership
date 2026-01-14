@@ -222,7 +222,7 @@ rqm -qa | grep nfs
 ### 2.2 Tạo thư mục wordpress và phân quyền
 ```bash
 sudo mkdir -p /srv/wordpress
-sudo chown -R nodbody:nobody /srv/wordpress
+sudo chown -R nobody:nobody /srv/wordpress
 sudo chmod -R 755 /srv/wordpress
 ```
 ### 2.3 Cấu hình 
