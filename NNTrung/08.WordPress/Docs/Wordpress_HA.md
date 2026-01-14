@@ -319,7 +319,7 @@ echo "192.168.70.124:/srv/wordpress /var/www/wordpress nfs defaults 0 0" | sudo 
 ```
 ## 4. Cài WordPress trên NFS server
 ```bash
-cd /var/www/wordpress
+cd /srv/wordpress
 sudo wget https://wordpress.org/latest.zip 
 sudo unzip latest.zip --strip-components=1
 sudo chown -R www-data:www-data wordpress
