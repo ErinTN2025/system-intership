@@ -221,9 +221,9 @@ rqm -qa | grep nfs
 ```
 ### 2.2 Tạo thư mục wordpress và phân quyền
 ```bash
-sudo mkdir -p /var/www/wordpress
-sudo chown -R nodbody:nobody /var/www/wordpress
-sudo chmod -R 755 /var/www/wordpress
+sudo mkdir -p /srv/wordpress
+sudo chown -R nodbody:nobody /srv/wordpress
+sudo chmod -R 755 /srv/wordpress
 ```
 ### 2.3 Cấu hình 
 ```bash
@@ -302,7 +302,7 @@ which mount.nfs
 ### 3.3 Mount NFS vào WordPress uploads
 ```bash
 sudo mkdir -p /var/www/wordpress
-sudo mount 192.168.70.114: /var/www/wordpress /var/www/wordpress
+sudo mount 192.168.70.114: /srv/wordpress /var/www/wordpress
 ```
 Test
 ```bash
@@ -310,9 +310,9 @@ df -h | grep wordpress
 ```
 Để mount tự động khi khởi động
 ```bash
-echo "192.168.70.114:/var/www/wordpress /var/www/wordpress nfs defaults 0 0" | sudo tee -a /etc/fstab
+echo "192.168.70.114:/srv/wordpress /var/www/wordpress nfs defaults 0 0" | sudo tee -a /etc/fstab
 ```
-## 4. Cài WordPress trên bất kỳ 1 trong 2 web
+## 4. Cài WordPress trên NFS server
 ```bash
 cd /var/www/wordpress
 sudo wget https://wordpress.org/latest.zip 
