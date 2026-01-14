@@ -227,7 +227,7 @@ sudo chmod -R 755 /srv/wordpress
 ```
 ### 2.3 Cấu hình 
 ```bash
-echo "/var/www/wordpress 192.168.70.0/24(rw,sync,no_subtree_check,no_root_squash)" | sudo tee -a /etc/exports
+echo "/srv/wordpress 192.168.70.0/24(rw,sync,no_subtree_check,no_root_squash)" | sudo tee -a /etc/exports
 ```
 
 | Option           | Ý nghĩa                 |
@@ -239,7 +239,12 @@ echo "/var/www/wordpress 192.168.70.0/24(rw,sync,no_subtree_check,no_root_squash
 
 - Apply export `sudo exportfs -rav`
 - Kiểm tra `sudo exportfs -v`
-
+- Nếu lỗi 
+```bash
+chown -R root:root /var/lib/nfs
+chmod 755 /var/lib/nfs
+restorecon -Rv /var/lib/nfs
+```
 ### 2.4 Khởi động dịch vụ NFS
 ```bash
 sudo systemctl enable nfs-server
@@ -302,7 +307,7 @@ which mount.nfs
 ### 3.3 Mount NFS vào WordPress uploads
 ```bash
 sudo mkdir -p /var/www/wordpress
-sudo mount 192.168.70.114: /srv/wordpress /var/www/wordpress
+sudo mount -t nfs 192.168.70.124:/srv/wordpress /var/www/wordpress
 ```
 Test
 ```bash
@@ -310,7 +315,7 @@ df -h | grep wordpress
 ```
 Để mount tự động khi khởi động
 ```bash
-echo "192.168.70.114:/srv/wordpress /var/www/wordpress nfs defaults 0 0" | sudo tee -a /etc/fstab
+echo "192.168.70.124:/srv/wordpress /var/www/wordpress nfs defaults 0 0" | sudo tee -a /etc/fstab
 ```
 ## 4. Cài WordPress trên NFS server
 ```bash
