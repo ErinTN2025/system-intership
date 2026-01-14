@@ -326,13 +326,21 @@ sudo rm -f latest.tar.gz
 ls -l /srv/wordpress
 sudo chown -R www-data:www-data wordpress
 ```
-## 4. Cài đặt MariaDB trên web1 (DB dùng chung)
+## 4. Cài đặt MariaDB trên Database Server (DB dùng chung)
 ### 4.1 Cài MariaDB:
 ```bash
 sudo dnf install mariadb-server -y
 sudo systemctl enable --now mariadb
 ```
 ### 4.2 Tạo database Wordpress
+```bash
+sudo mysql
+```
+```mysql
+ALTER USER 'root'@'localhost' IDENTIFIED BY '12345678'; or
+SET PASSWORD FOR 'root'@'localhost' = PASSWORD('12345678');
+FLUSH PRIVILEGES;
+```
 ```bash
 sudo mysql -u root -p 
 ```
