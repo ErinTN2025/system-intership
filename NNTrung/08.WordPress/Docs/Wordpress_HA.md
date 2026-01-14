@@ -249,7 +249,7 @@ restorecon -Rv /var/lib/nfs
 ```bash
 sudo systemctl enable nfs-server
 sudo systemctl start nfs-server
-systemctl status nfs-server
+sudo systemctl status nfs-server
 ```
 
 ### 2.5 Mở cổng tường lửa trên web1 (nếu firewall đang chạy)
@@ -276,6 +276,7 @@ showmount -e localhost
 ### 3.1 Cài Stack web trên cả web1 & web 2
 ```bash
 sudo apt update
+sudo apt install nginx
 sudo apt install -y software-properties-common
 sudo add-apt-repository ppa:ondrej/php -y
 sudo apt update
@@ -379,8 +380,6 @@ SELinux mặc định CẤM `httpd `connect DB qua network
 - Cho phép connect MySQL từ xa vĩnh viễn:
 ```bash
 sudo setsebool -P httpd_can_network_connect_db 1
-sudo systemctl restart httpd
-sudo systemctl restart php-fpm
 sudo setenforce 0
 ```
 ### 4.6 Cấu hình DB cho wordpress
@@ -424,6 +423,7 @@ server {
 Enable
 ```bash
 sudo ln -s /etc/nginx/sites-available/wordpress /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -461,6 +461,7 @@ Kích hoạt soft-link
 ```bash
 sudo ln -s /etc/nginx/sites-available/wordpress-lb /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
+sudo rm -f /etc/nginx/sites-enabled/default
 ```
 
 ### 6.3 NGINX trên LOAD BALANCER trả 404 TRƯỚC KHI proxy vào backend.
@@ -489,17 +490,14 @@ Content-Length: 162
 ```bash
 http://192.168.70.124
 ```
+![altimage](../Images/wordpresslab1.png)
 
-## 8. Cài đặt PHP + Nginx + WordPress trên CentOS (Options)
-### 5.1 Trên web-server1 (CentOS):
-```bash
-sudo dnf install nginx php php-fpm php-mysqlnd -y
-```
-### 5.2 Trên web-server2 (ubuntu):
-```bash
-sudo apt install nginx php-fpm php-mysql -y
-```
-### 5.3 Sửa phiên bản php nếu không trùng giữa Rocky và Ubuntu (Options)
+![altimage](../Images/wordpresslab2.png)
+
+![altimage](../Images/wordpresslab3.png)
+
+
+# Cài đặt phiên bản php mong muốn trên Rocky hay CentOS 9(Options)
 - **Dừng dịch vụ**: `sudo systemctl stop php-fpm`
 - **Gỡ toàn bộ PHP & Extension**: 
 ```bash
