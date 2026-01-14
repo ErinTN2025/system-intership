@@ -436,27 +436,34 @@ sudo apt install nginx -y
 ### 6.2 Cấu hình `/etc/nginx/sites-available/wordpress-lb`:
 ```bash
 upstream wordpress_backend {
-    server 192.168.70.114;
-    server 192.168.70.126;
-}
+    server 192.168.70.114;        # Gồm 2 webnod đuôi .114 và .126
+    server 192.168.70.126;        # Mỗi request → gửi luân phiên tới 2 node.
+}                                 # Nếu 1 node chết → node kia vẫn phục vụ
 
 server {
-    listen 80;
-    server_name _;
+    listen 80;                    # Lắng nghe cổng 80
+    server_name _;                # Bắt mọi domain không match server_name khác
 
     location / {
-        proxy_pass http://wordpress_backend;
+        proxy_pass http://wordpress_backend;    # Mọi request gửi cho 2 WebNod 
         proxy_http_version 1.1;
 
-        proxy_set_header Host $http_host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host $http_host;        # Giữ nguyên domain user nhập
+        proxy_set_header X-Real-IP $remote_addr;    # Gửi IP thật của client
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;    # Forward đúng trang WP
+        proxy_set_header X-Forwarded-Proto $scheme;   # Giúp hiểu đúng protocol
 
-        proxy_redirect off;
+        proxy_redirect off; #Ngăn backend trả về redirect
     }
 }
 ```
+Load Balancer Nginx nhận toàn bộ request HTTP từ client tại cổng 80.
+Các request này được phân phối theo cơ chế round-robin đến các web node phía sau (`192.168.70.114` và `192.168.70.126`).
+Nginx chỉ đóng vai trò reverse proxy, không xử lý PHP hay truy cập database.
+Các header như `Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto` được forward để backend nhận đúng domain, IP thật của client và protocol gốc.
+`proxy_redirect off` đảm bảo backend không trả redirect sai IP nội bộ.
+Khi một web node không phản hồi, Nginx tự động loại node đó khỏi vòng cân bằng tải.
+
 Kích hoạt soft-link
 ```bash
 sudo ln -s /etc/nginx/sites-available/wordpress-lb /etc/nginx/sites-enabled/
@@ -497,47 +504,3 @@ http://192.168.70.124
 ![altimage](../Images/wordpresslab3.png)
 
 
-# Cài đặt phiên bản php mong muốn trên Rocky hay CentOS 9(Options)
-- **Dừng dịch vụ**: `sudo systemctl stop php-fpm`
-- **Gỡ toàn bộ PHP & Extension**: 
-```bash
-sudo dnf remove -y 'php*'
-rpm -qa | grep php
-```
-- **Reset module PHP**: `sudo dnf module reset php -y`
-- **Cài Remi repo (chuẩn RHEL/Rocky)**
-```bash
-sudo dnf install -y epel-release
-sudo dnf install -y https://rpms.remirepo.net/enterprise/remi-release-9.rpm
-```
-- **Chọn PHP version**: 
-```bash
-dnf module list php
-sudo dnf module enable php:remi-8.4 -y
-```
-- **Cài PHP + extensions cần thiết cho WordPress**
-```bash
-sudo dnf install -y \
-php php-fpm php-mysqlnd php-gd php-xml \
-php-mbstring php-curl php-zip php-opcache
-```
-- **Bật FPM**: `sudo systemctl enable --now php-fpm`
-- **Check lại phiên bản**
-```bash
-php -v
-php-fpm -v
-rpm -q php-fpm
-```
-- **Check trên Ubuntu**
-```bash
-ls /usr/sbin | grep php-fpm
-php -v
-
-### 5.4 Tải wordPress chỉ cần thực hiện trên `web1`
-```bash
-cd /var/www/wordpress
-sudo curl -O https://wordpress.org/latest.tar.gz
-sudo tar -xzf latest.tar.gz --strip-components=1
-sudo chown -R nginx:nginx(apache/apache) /var/www/wordpress
-```
-- `Web2` sẽ thấy nội dung vì đã mount NFS rồi.
