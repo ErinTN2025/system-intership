@@ -225,6 +225,16 @@
 - Linux Distro( Linux Distribution) là một phiên bản hệ điều hành Linux hoàn chỉnh, được xây dựng từ Kernel Linux + các gói phần mềm bổ sung(libraries, công cụ quản trị, trình quản lý gói, môi trường desktop, ứng dụng mặc định).
 - Mỗi Distro có cách quản lý, tối ưu và mục đích sử dụng khác nhau, phù hợp với nhiều đối tượng từ người mới dùng đến lập trình viên và quản trị hệ thống.
 
+Kernel không phải toàn bộ hệ điều hành.
+
+Nếu chỉ có kernel thì bạn không dùng được máy tính mà phải cần thêm:
+- command line tools
+- package manager
+- GUI
+- system utilities
+- drivers
+
+Tập hợp này gọi là Linux distribution.
 ### 2. Thành phần chính của một bản phân phối Linux
 ![altimage](../images/Linuxdistribution.png)
 #### Lớp lõi (Core) - Trung tâm hệ thống

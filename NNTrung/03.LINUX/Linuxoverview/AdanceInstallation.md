@@ -338,11 +338,55 @@ sudo lvextend -L +5G /dev/my_vg/data_lv
 sudo resize2fs /dev/my_vg/data_lv
 ```
 
+**Ví dụ**: 
+```bash
+sudo lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
+```
+Trong đó: 
+```bash
+aaaaaaa@aaaaaaa:~$ lsblk
+NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sda                         8:0    0   50G  0 disk
+├─sda1                      8:1    0    1M  0 part
+├─sda2                      8:2    0    2G  0 part /boot
+└─sda3                      8:3    0   38G  0 part
+  └─ubuntu--vg-ubuntu--lv 252:0    0   19G  0 lvm  /
+sr0                        11:0    1 1024M  0 rom
+```
 ![altimhar](../images/lvextendresize2fs.png)
-
 **LV Snapshot & Restore**
 ```plaintext
 sudo lvcreate -s -n web_lv_snap -L 1G /dev/my_vg/web_lv
 # (Simulate data loss)
 sudo lvconvert --merge /dev/my_vg/web_lv_snap
+```
+
+### 6. Lưu ý quan trọng nếu bạn mở bổ sung bộ nhớ cho máy ảo
+
+![altimage](../images/Screenshot_8.png)
+
+Disk:
+- `\dev\sda` = 50G
+- `\dev\sda3` = 38G
+
+Nhưng LVM chưa thấy phần đó -> nên `Ivextend` chưa dùng được
+- Mở rộng partition:
+```bash
+sudo growpart /dev/sda 3
+```
+- Resize PV
+```bash
+sudo pvresize /dev/sda3
+```
+- Resize filesystem
+```bash
+sudo resize2fs /dev/ubuntu-vg/ubuntu-lv
+```
+- Mở rộng:
+```bash
+sudo lvextend -r -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
+```
+- Kiểm tra kết quả
+```bash
+df -h
 ```
