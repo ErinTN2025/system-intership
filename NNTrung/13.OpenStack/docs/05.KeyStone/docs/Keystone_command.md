@@ -1,5 +1,6 @@
 # Keystone Command
 ## 1. Các lệnh quản lý cốt lõi (Core Identity)
+Chạy `openstack --help` để xem tất cả, hoặc `openstack identity --help` để xem nhóm Identity.
 ### 1.1 Domain
 ```bash
 openstack domain create [--description <desc>] [--enable|--disable] <name>
@@ -207,4 +208,59 @@ openstack mapping list
 openstack mapping show <mapping>
 ```
 ## 6. Các lệnh quản trị Keystone (keystone-manage)
-- 
+Đây là lệnh chạy trực tiếp trên server Keystone (thường với quyền root hoặc dưới user keystone):
+
+```bash
+keystone-manage bootstrap
+```
+Khởi tạo Keystone lần đầu (tạo admin user, service, endpoint…)
+```bash
+keystone-manage db_version
+```
+```bash
+keystone-manage db_sync
+```
+- Thường cần chạy thủ công
+```bash
+keystone-manage fernet_setup
+```
+- Tạo kho khóa Fernet lần đầu
+```bash
+keystone-manage fernet_rotate
+```
+- Xoay khóa Fernet (nên chạy định kỳ)
+```bash
+keystone-manage mapping_engine
+```
+```bash
+keystone-manage token_flush
+```
+- Deprecated, token giờ dùng Fernet/JWS
+```bash
+keystone-manage credential_setup
+```
+```bash
+keystone-manage credential_migrate
+```
+```bash
+keystone-manage doctor
+```
+- Kiểm tra vấn đề phổ biến
+```bash
+keystone-manage --help
+```
+- Xem đầy đủ
+## 7. Các lệnh hữu ích khác
+```bash
+openstack limit list
+```
+```bash
+openstack registered limit list
+```
+```bash
+openstack registered limit create ...
+```
+```bash
+openstack project quota ...
+```
+- Một số service dùng
