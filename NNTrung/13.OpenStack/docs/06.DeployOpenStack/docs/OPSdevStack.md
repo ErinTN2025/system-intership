@@ -87,7 +87,7 @@ cp samples/local.conf local.conf
 cat > /opt/stack/devstack/local.conf << 'EOF'
 [[local|localrc]]
 
-HOST_IP=192.168.133.144     # IP management của node DevStack
+HOST_IP=192.168.70.124     # IP management của node DevStack
 
 ADMIN_PASSWORD=secret      # Password đăng nhập Horizon
 DATABASE_PASSWORD=secret  # Password MariaDB
