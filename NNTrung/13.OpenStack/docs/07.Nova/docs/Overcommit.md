@@ -64,3 +64,11 @@ systemctl restart openstack-nova-conductor.service
 
 ## Lưu ý:
 OpenStack chỉ hiển thị thống số tài nguyên thật, không hiển thị thông số tài nguyên ảo:
+
+Từ các phiên bản OpenStack mới (như Stein, Train trở đi), giá trị trong nova.conf đôi khi bị "ghi đè" bởi giá trị được lưu trong cơ sở dữ liệu của Placement.
+
+Nếu bạn đã sửa trong nova.conf thành 1.0 mà kiểm tra lệnh trên vẫn thấy 16.0, bạn cần dùng lệnh sau để cập nhật trực tiếp vào database:
+
+```bash
+openstack resource provider inventory set --resource VCPU --allocation-ratio 1.0 <UUID>
+```
