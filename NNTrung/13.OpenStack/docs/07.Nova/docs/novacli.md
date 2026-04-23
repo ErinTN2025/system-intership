@@ -5,7 +5,7 @@
 pip install python-openstackclient python-novaclient  # novaclient chỉ khi cần
 
 # Source file credentials (thường do admin cung cấp)
-source admin-openrc.sh     # hoặc user-openrc.sh
+source openrc    # hoặc user-openrc.sh
 # Kiểm tra
 openstack --version
 openstack server list
@@ -17,7 +17,7 @@ openstack server list
 openstack server list [--all-projects] [--long] [--name <tên>] [--status ACTIVE|SHUTOFF|ERROR]
 openstack server show <tên-hoặc-uuid> [--fit-width]
 
-# Tạo instance (cú pháp đầy đủ nhất)
+# Tạo instance 
 openstack server create <tên-vm> \
   --image <image-id-hoặc-tên> \
   --flavor <flavor-id-hoặc-tên> \
@@ -30,6 +30,12 @@ openstack server create <tên-vm> \
   --availability-zone <az> \
   --user-data <file-cloudinit.yaml> \
   --tag <tag1> --tag <tag2>
+
+# Khi tạo VM lab chỉ cần 3 cái cơ bản
+openstack server create vm-test \
+  --image <image> \
+  --flavor <flavor> \
+  --network <network>
 
 # Thao tác cơ bản
 openstack server start <vm>

@@ -8,6 +8,14 @@
 - `publicurl`: Là những gì mà người khác truy cập vào endpoint sử dụng dịch vụ.
 
 ## Show list endpoint
+- Source file môi trường admin
+```bash
+source openrc admin admin
+```
+- Hoặc source file môi trường demo
+```bash
+source openrc demo demo | source openrc 
+```
 ```bash
 openstack endpoint list
 ```
