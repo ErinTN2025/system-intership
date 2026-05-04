@@ -19,6 +19,9 @@ source openrc demo demo | source openrc
 ```bash
 openstack endpoint list
 ```
+
+![altimage](../images/Screenshot_13.png)
+
 - Hiển thị chi tiết một endpoint
 ```bash
 openstack endpoint show <endpoint>
@@ -39,6 +42,8 @@ Catalog làm cho việc tìm kiếm dịch vụ hiệu quả, chẳng hạn như
 ```bash
 openstack catalog list
 ```
+![altimage](../images/Screenshot_12.png)
+
 ### Show thông tin một mục trong catalog
 ```bash
 openstack catalog show <service>
