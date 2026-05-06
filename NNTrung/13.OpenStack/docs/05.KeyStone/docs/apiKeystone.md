@@ -18,7 +18,7 @@ Headers (Tiêu đề): Chứa các thông tin bổ trợ.
 
 Ví dụ: Content-Type: application/json (Nói với server rằng "Tôi đang gửi dữ liệu dạng JSON đấy") hoặc X-Auth-Token (Tấm thẻ bài để chứng minh bạn đã đăng nhập).
 
-Body (Thân của yêu cầu): Chứa dữ liệu thực tế bạn muốn gửi lên (thường dùng với POST hoặc PUT). Trong ví dụ OpenStack của bạn, Body chính là đoạn mã JSON chứa username và password.
+Body (Thân của yêu cầu): Chứa dữ liệu thực tế bạn muốn gửi lên (thường dùng với POST hoặc PUT). Trong OpenStack, Body chính là đoạn mã JSON chứa username và password.
 
 ### 2.2 Ví dụ mô phỏng thực tế
 Hãy tưởng tượng việc gọi API qua curl giống như bạn đi gửi một bưu phẩm:
