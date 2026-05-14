@@ -104,6 +104,7 @@ chronyc tracking
 ```bash
 sudo useradd -m -s /bin/bash kolla
 sudo passwd kolla
+echo "kolla ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/kolla
 sudo chmod 440 /etc/sudoers.d/kolla
 ```
 
@@ -359,7 +360,20 @@ Mặc định Kolla đã cấu hình hợp lý cho 12GB, không cần can thiệ
 > Mọi lệnh chạy từ `~`, trong venv đã activate (`source ~/kolla-venv/bin/activate`).
 
 ### 5.1. Bootstrap servers
-Cài Docker và dependencies trên cả 3 node:
+- Chạy lệnh này trên control01, 
+- Vì control01 là:
+  - deployment host
+  - nơi cài Kolla-Ansible
+  - nơi chạy Ansible
+- Sau đó Ansible sẽ tự:
+  - SSH sang compute01, compute02
+  - dùng sudo
+  - cài Docker
+  - cấu hình kernel/modules
+  - cài dependencies
+
+trên các node compute.
+
 ```bash
 cd ~
 kolla-ansible bootstrap-servers -i multinode
