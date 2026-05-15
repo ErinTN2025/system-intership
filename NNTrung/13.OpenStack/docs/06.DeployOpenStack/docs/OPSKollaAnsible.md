@@ -202,6 +202,7 @@ sudo apt install -y python3-dev libffi-dev gcc libssl-dev python3-venv git
 ```bash
 python3 -m venv ~/kolla-venv
 source ~/kolla-venv/bin/activate
+pip install kolla-ansible
 pip install -U pip
 ```
 
@@ -307,7 +308,6 @@ kolla_base_distro: "ubuntu"
 openstack_release: "2025.1"
 
 # === VIP và mạng ===
-# Vì không có IP rảnh trong subnet để làm VIP, dùng IP của control01
 # và TẮT Keepalived (không HA failover, chấp nhận được cho lab)
 kolla_internal_vip_address: "192.168.70.122"
 enable_keepalived: "no"
@@ -323,8 +323,9 @@ kolla_enable_tls_external: "no"
 neutron_plugin_agent: "openvswitch"
 
 # === Service cơ bản ===
-enable_haproxy: "yes"
+enable_haproxy: "no"
 enable_horizon: "yes"
+enable_proxysql: "no"
 enable_neutron_provider_networks: "yes"
 
 # === Cinder tắt để tiết kiệm RAM ===
@@ -337,7 +338,24 @@ enable_magnum: "no"
 enable_octavia: "no"
 ```
 
-> **Thay `192.168.70.122` bằng IP thực của control01.**
+- Nếu bạn đặt `kolla_internal_vip_address: "192.168.70.122"`
+- Tắt HAproxy vì là lab đơn giản nếu bật nó bị xung đột port 3306 với Mariadb.
+
+![altimage](../images/Screenshot_18.png)
+
+VIP = Virtual IP — IP ảo.
+- IP thật là IP gắn liền với card mạng vật lý, máy tắt thì mất
+- VIP là IP ảo được Keepalived tạo ra và "gắn thêm" lên card mạng, có thể di chuyển giữa các máy
+
+Tại sao cần VIP?
+
+Trong trường hợp của bạn chỉ có 1 node thì VIP có vẻ vô nghĩa, nhưng khi có 3 control nodes thì:
+```bash
+control01 (IP thật: .121)  ← đang giữ VIP .200 (master)
+control02 (IP thật: .122)  ← standby
+control03 (IP thật: .123)  ← standby
+```
+Nếu control01 chết → Keepalived tự động chuyển VIP .200 sang control02. Client không cần biết, cứ kết nối vào .200 như cũ.
 
 ### 4.5. Tối ưu cho RAM 12GB
 
@@ -416,7 +434,11 @@ Thời gian: ~30-60 phút. Bước này:
 ```bash
 ssh control01 'sudo docker ps -a | head -20'
 ```
-
+- Nếu bị lỗi, chỉ cần fix lỗi đó rồi:
+```bash
+kolla-ansible deploy -i multinode
+```
+lại là thành công, nếu tiếp tục bị lỗi hoặc lỗi quá nhiều, chuyển xuống bước cuối cùng fix lại
 ### 5.5. Post-deploy
 
 ```bash
@@ -609,3 +631,50 @@ kolla-ansible deploy -i multinode --limit compute03
 - Quickstart: https://docs.openstack.org/kolla-ansible/latest/user/quickstart.html
 - Globals reference: https://docs.openstack.org/kolla-ansible/latest/admin/deployment-philosophy.html
 
+
+## 9. Nếu bị lỗi không thể fix được
+- Trường hợp nhẹ
+```bash
+# Xóa hết container cũ
+sudo docker stop $(sudo docker ps -aq)
+sudo docker rm $(sudo docker ps -aq)
+
+# Kiểm tra sạch chưa
+sudo ss -tlnp | grep -E "3306|5672|15672"
+
+# Deploy lại
+kolla-ansible deploy -i ~/multinode
+```
+
+```bash
+sudo su -
+```
+- Xóa sạch tất cả:
+```bash
+# Xóa hết docker containers, volumes, images
+sudo docker stop $(sudo docker ps -aq)
+sudo docker rm $(sudo docker ps -aq)
+docker volume prune -f
+docker image prune -af
+docker network prune -f
+
+# Xóa config kolla
+rm -rf /etc/kolla
+
+# Xóa home kolla
+rm -rf /home/kolla/kolla-venv
+
+# Xóa user kolla luôn
+userdel -r kolla 2>/dev/null
+
+# Xóa kolla-ansible system-wide nếu có
+pip3 uninstall kolla-ansible -y 2>/dev/null
+```
+
+- Tạo lại User kolla:
+```bash
+useradd -m -s /bin/bash kolla
+echo "kolla ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/kolla
+usermod -aG docker kolla
+```
+- Làm lại y hệt như trên
