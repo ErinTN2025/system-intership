@@ -531,56 +531,6 @@ kolla-ansible destroy -i multinode --yes-i-really-really-mean-it
 **`-t nova`** = chỉ chạy tasks có tag `nova` (tương đương chỉ deploy nova)
 
 ---
-
-## XII. Debugging trong Kolla-Ansible
-
-### 12.1 Nguyên tắc
-
-Khi có lỗi, đọc theo thứ tự:
-
-```
-1. Ansible output (lỗi task nào?)
-      ↓
-2. docker logs <container> (container đó báo gì?)
-      ↓
-3. docker exec -it <container> bash (vào trong xem config)
-```
-
-### 12.2 Lệnh debug thường dùng
-
-```bash
-# Xem tất cả container và trạng thái
-sudo docker ps -a
-
-# Xem log 1 container
-sudo docker logs -f nova_compute
-
-# Vào trong container
-sudo docker exec -it keystone bash
-
-# Xem file config bên trong container
-sudo docker exec keystone cat /etc/keystone/keystone.conf
-
-# Restart 1 service
-sudo docker restart neutron_server
-
-# Xem resource usage
-sudo docker stats
-```
-
-### 12.3 Lỗi hay gặp và nguyên nhân
-
-| Lỗi | Nguyên nhân | Fix |
-|-----|-------------|-----|
-| MariaDB không start | Clock skew > 100ms | Sync NTP, chạy lại deploy |
-| prechecks fail VIP | VIP bị dùng | Bình thường nếu VIP = IP control01 |
-| nova_compute không register | Không có KVM nested | Thêm `nova_compute_virt_type: "qemu"` |
-| VM không có IP | DHCP agent lỗi | `docker logs neutron_dhcp_agent` |
-| SSH floating IP không được | Phải dùng namespace | `sudo ip netns exec qrouter-xxx ssh ...` |
-| Deploy treo ở keystone | MariaDB chưa sẵn sàng | Đợi 5 phút, chạy lại deploy |
-
----
-
 ## XIII. Tóm tắt — Mental model để nhớ
 
 ```
