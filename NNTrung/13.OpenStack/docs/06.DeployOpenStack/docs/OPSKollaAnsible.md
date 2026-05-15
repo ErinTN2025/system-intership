@@ -471,6 +471,10 @@ openstack network agent list
 - Compute service: `nova-conductor`, `nova-scheduler`, `nova-compute@compute01`, `nova-compute@compute02` đều `up`/`enabled`
 - Network agent: `Open vSwitch agent`, `DHCP agent`, `L3 agent`, `Metadata agent` đều `:-)` (alive)
 
+![altimage](../images/Screenshot_5.png)
+
+![altimage](../images/Screenshot_6.png)
+
 ### 6.3. Truy cập Horizon
 
 Từ máy của bạn (cần có route tới `192.168.70.122`):
@@ -484,6 +488,9 @@ Login:
 - **Password:** lấy bằng `grep keystone_admin_password /etc/kolla/passwords.yml`
 - **Domain:** `default`
 
+![altimage](../images/loginops.png)
+
+![altimage](../images/successlogin.png)
 ### 6.4. Tạo môi trường demo bằng init-runonce
 
 ```bash
@@ -499,6 +506,14 @@ EXT_NET_RANGE='start=10.99.0.100,end=10.99.0.200'
 EXT_NET_GATEWAY='10.99.0.1'
 ```
 
+Trong mặc định:
+```bash
+EXT_NET_CIDR=${EXT_NET_CIDR:-'10.0.2.0/24'}
+EXT_NET_RANGE=${EXT_NET_RANGE:-'start=10.0.2.150,end=10.0.2.199'}
+EXT_NET_GATEWAY=${EXT_NET_GATEWAY:-'10.0.2.1'}
+```
+- Nếu biến `EXT_NET_CIDR` đã tồn tại → dùng giá trị hiện tại của nó.(Để mặc định cx được)
+
 > Vì `eth1` là dummy, "external network" này là ảo, không ra Internet thật được. Chọn subnet bất kỳ không trùng với subnet thật của công ty (`192.168.70.0/24`).
 
 Chạy:
@@ -508,6 +523,8 @@ bash ~/init-runonce
 ```
 
 Script tạo: image Cirros, flavor m1.tiny → m1.large, demo project, demo network + router, keypair, security group.
+
+![altimage](../images/Screenshot_7.png)
 
 ### 6.5. Tạo VM test
 
@@ -525,6 +542,64 @@ openstack server create \
 openstack server list
 ```
 
+Kết quả:
+```bash
++-------------------------------------+------------------------------------------------------------------------------------------+
+| Field                               | Value                                                                                    |
++-------------------------------------+------------------------------------------------------------------------------------------+
+| OS-DCF:diskConfig                   | MANUAL                                                                                   |
+| OS-EXT-AZ:availability_zone         | None                                                                                     |
+| OS-EXT-SRV-ATTR:host                | None                                                                                     |
+| OS-EXT-SRV-ATTR:hostname            | test-vm                                                                                  |
+| OS-EXT-SRV-ATTR:hypervisor_hostname | None                                                                                     |
+| OS-EXT-SRV-ATTR:instance_name       | None                                                                                     |
+| OS-EXT-SRV-ATTR:kernel_id           | None                                                                                     |
+| OS-EXT-SRV-ATTR:launch_index        | None                                                                                     |
+| OS-EXT-SRV-ATTR:ramdisk_id          | None                                                                                     |
+| OS-EXT-SRV-ATTR:reservation_id      | r-s2vnghj7                                                                               |
+| OS-EXT-SRV-ATTR:root_device_name    | None                                                                                     |
+| OS-EXT-SRV-ATTR:user_data           | None                                                                                     |
+| OS-EXT-STS:power_state              | N/A                                                                                      |
+| OS-EXT-STS:task_state               | scheduling                                                                               |
+| OS-EXT-STS:vm_state                 | building                                                                                 |
+| OS-SRV-USG:launched_at              | None                                                                                     |
+| OS-SRV-USG:terminated_at            | None                                                                                     |
+| accessIPv4                          | None                                                                                     |
+| accessIPv6                          | None                                                                                     |
+| addresses                           | N/A                                                                                      |
+| adminPass                           | tcimFFPkCE5V                                                                             |
+| config_drive                        | None                                                                                     |
+| created                             | 2026-05-15T01:37:52Z                                                                     |
+| description                         | None                                                                                     |
+| flavor                              | description=, disk='1', ephemeral='0', , id='m1.tiny', is_disabled=, is_public='True',   |
+|                                     | location=, name='m1.tiny', original_name='m1.tiny', ram='512', rxtx_factor=, swap='0',   |
+|                                     | vcpus='1'                                                                                |
+| hostId                              | None                                                                                     |
+| host_status                         | None                                                                                     |
+| id                                  | 96ba4039-6f2a-41d3-8803-1e99477af53f                                                     |
+| image                               | cirros (99922c58-4387-4f97-b869-f0c0ffd28254)                                            |
+| key_name                            | mykey                                                                                    |
+| locked                              | None                                                                                     |
+| locked_reason                       | None                                                                                     |
+| name                                | test-vm                                                                                  |
+| pinned_availability_zone            | None                                                                                     |
+| progress                            | None                                                                                     |
+| project_id                          | 75980035e3d745299d9edfb937f34e10                                                         |
+| properties                          | None                                                                                     |
+| scheduler_hints                     |                                                                                          |
+| security_groups                     | name='d1fb4bbd-d17c-48d6-953f-3a89b040aebc'                                              |
+| server_groups                       | None                                                                                     |
+| status                              | BUILD                                                                                    |
+| tags                                |                                                                                          |
+| trusted_image_certificates          | None                                                                                     |
+| updated                             | 2026-05-15T01:37:53Z                                                                     |
+| user_id                             | dcba7d5d580243618719efedee4b5771                                                         |
+| volumes_attached                    |                                                                                          |
++-------------------------------------+------------------------------------------------------------------------------------------+
+```
+
+![altimage](../images/Screenshot_8.png)
+
 Đợi VM `ACTIVE`, sau đó:
 
 ```bash
@@ -537,10 +612,38 @@ openstack server add floating ip test-vm <FIP>
 
 Test SSH từ control01:
 
+- Lưu ý: IP `10.0.2.185` là floating IP từ external network `10.0.2.0/24` — mạng này là ảo hoàn toàn vì eth1 là **dummy interface**, không có route thật ra ngoài.
+
 ```bash
-ssh -i ~/.ssh/id_rsa cirros@<FIP>
+control01 (eth0: 192.168.70.122)
+    └─ ping 10.0.2.185  ← không biết đi đâu
+                           vì 10.0.2.0/24 chỉ tồn tại trong Neutron
+                           không có route từ host ra mạng đó
+```
+- Phải SSH từ bên trong namespace của Neutron router, không phải từ host:
+```bash
+# Xem router namespace
+sudo ip netns list
+# Output kiểu: qrouter-xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+
+# Ping từ trong namespace
+sudo ip netns exec qrouter-<id> ping 10.0.2.185
+
+# SSH từ trong namespace
+sudo ip netns exec qrouter-<id> ssh -i ~/.ssh/id_rsa cirros@10.0.2.185
+```
+
+```bash
+sudo ip netns exec qrouter-6fa88eea-2656-43ce-9a70-77cca431d4fc ping 10.0.2.185
+sudo ip netns exec qrouter-6fa88eea-2656-43ce-9a70-77cca431d4fc ssh cirros@10.0.2.185
 # Password Cirros mặc định: gocubsgo
 ```
+
+![altimage](../images/Screenshot_9.png)
+
+![altimage](../images/Screenshot_12.png)
+
+
 ---
 
 ## 7. Vận hành và troubleshoot
