@@ -28,6 +28,31 @@
 | **5. Proxy & Jump Host Access**       | Sử dụng một máy SSH trung gian để truy cập nhiều máy khác (proxy hoặc jump server).        | `ssh -J jump_host target_host`     |
 | **6. X11 Forwarding**                 | Truyền ứng dụng GUI (x11 apps) từ máy chủ về hiển thị ở client.                            | `ssh -X user@server`               |
 
+Không chỉ từ ngoài truy cập vào trong, mà Port Forwarding bằng SSH hỗ trợ cả 2 chiều (vào trong và ra ngoài) tùy thuộc vào option bạn chọn (-L hoặc -R).
+
+#### Local Port Forwarding (`ssh -L`) -> Chiều từ TRONG ra NGOÀI (hoặc giữa 2 Private)
+- **Kịch bản**: Máy của bạn (Local) đang ở nhà, bạn muốn kết nối đến một database MySQL (Cổng 3306) nằm sâu trong mạng nội bộ của công ty. Bạn không thể kết nối trực tiếp vì firewall chặn, nhưng bạn có quyền SSH vào server công ty.
+- **Cách hoạt động**: Bạn mở một cổng local trên máy mình (ví dụ: 8080), thông qua đường truyền SSH bảo mật, mọi dữ liệu gửi vào cổng 8080 trên máy bạn sẽ được "bắn" sang cổng 3306 của MySQL server ở công ty.
+- **Cú pháp**: `ssh -L 8080:mysql_server:3306 user@ssh_server`
+
+
+#### Remote Port Forwarding (`ssh -R`) -> Chiều từ NGOÀI vào TRONG (Đúng như bạn nghĩ)
+- **Kịch bản**: Máy của bạn đang nằm trong mạng Private (ở nhà/công ty), bạn đang chạy một web demo ở cổng 80. Bạn muốn một người bạn ở ngoài Internet truy cập vào xem thử, nhưng máy bạn không có IP công cộng (Public IP).
+
+- **Cách hoạt động**: Bạn chủ động SSH từ máy của bạn ra một VPS có IP Public. Bạn bảo VPS đó: "Hãy mở cổng 8080 trên VPS. Ai truy cập vào cổng 8080 của ông, hãy đẩy ngược traffic đó về cổng 80 trên máy tôi ở trong này".
+
+- **Cú pháp**: ssh -R 8080:localhost:80 user@vps_public
+
+#### Dynamic Port Forwarding (ssh -D)
+Biến máy SSH từ xa thành một **SOCKS Proxy Server**. Khi bạn cấu hình trình duyệt đi qua proxy này, bạn có thể lướt web dưới danh nghĩa của máy SSH đó (thường dùng để fake IP hoặc vượt tường lửa chặn web).
+
+#### Proxy & Jump Host Access (ssh -J)
+Cái này thực chất là để truy cập từ ngoài VÀO TRONG mạng Private
+- **Kịch bản**: Công ty bạn có một cụm server database, web server nằm hoàn toàn trong vùng mạng nội bộ biệt lập (Private Subnet), không có IP Public. Để bảo mật, công ty chỉ dựng duy nhất một máy có IP Public gọi là Jump Host (hoặc Bastion Host).
+- **Cách hoạt động**: Bạn đang ở ngoài Internet (ở nhà), bạn muốn SSH vào một con Database Server ở sâu bên trong. Bạn không thể SSH trực tiếp. Bạn phải đi "bắc cầu": Đầu tiên SSH vào Jump Host, rồi từ Jump Host đó mới SSH tiếp vào Target Server.
+- **Giải pháp với -J:** Thay vì phải SSH làm 2 bước thủ công, lệnh ssh -J giúp bạn đi xuyên qua Jump Host đến thẳng máy đích chỉ bằng 1 câu lệnh duy nhất.
+
+Cú pháp: `ssh -J user@jump_host user@target_internal_ip`
 ### 2.2 Port Forwarding (Chuyển tiếp cổng)
 - SSH cho phép bạn chuyển tiếp lưu lượng mạng (network traffic) qua một đường hầm mã hóa (encrypted tunnel). Có 3 loại chính:
 
