@@ -1,0 +1,1656 @@
+# GIAI ĐOẠN 0 — NỀN TẢNG CHO CỤM OPENSTACK HA MANUAL
+
+> **Release:** OpenStack **2025.1 Epoxy** trên **Ubuntu 24.04 LTS** (Noble).
+> **Mục tiêu giai đoạn này:** chuẩn bị OS nền cho cả 11 node để Giai đoạn 1 (Galera) chạy được.
+> **Nguyên tắc:** làm xong → chạy phần VERIFY → xanh hết mới qua Giai đoạn 1.
+> Sai ở Giai đoạn 0 (nhất là NTP) thì Galera/RabbitMQ sẽ vỡ về sau rất khó truy.
+
+---
+
+## 0. BẢN ĐỒ NODE
+
+| Hostname | Vai trò | IP |
+|---|---|---|
+| deployer | Bastion / SSH jump / script | 192.168.70.114 |
+| controller01 | Control plane + OVN central | 192.168.70.122 |
+| controller02 | Control plane + OVN central | 192.168.70.127 |
+| controller03 | Control plane + OVN central | 192.168.70.119 |
+| compute01 | nova-compute + ovn-controller + KVM | 192.168.70.113 |
+| compute02 | nova-compute + ovn-controller + KVM | 192.168.70.124 |
+| compute03 | nova-compute + ovn-controller + KVM | 192.168.70.112 |
+| cinder01 | cinder-volume + LVM + NFS | 192.168.70.117 |
+| ceph01 | Ceph mon/mgr/osd | 192.168.70.126 |
+| ceph02 | Ceph mon/mgr/osd | 192.168.70.125 |
+| ceph03 | Ceph mon/mgr/osd | 192.168.70.116 |
+| **vip-internal** | VIP HAProxy/Keepalived (chưa gắn node) | 192.168.70.100 |
+
+---
+
+## 1. SECURITY GROUP — LÀM TRƯỚC TIÊN (ở console cloud công ty)
+
+Trước khi đụng vào node, gắn security group cho cả 11 máy. OpenStack HA mở **rất nhiều cổng**
+(Galera 3306/4567/4568/4444, RabbitMQ 4369/5672/25672, OVN 6641/6642, Ceph 6789 + 6800–7300, VRRP cho
+Keepalived...). Siết từng cổng bây giờ = tự hành. Cách gọn cho lab:
+
+- Tạo 1 security group, ví dụ `os-internal`.
+- Thêm rule **allow all traffic** với **source = chính security group đó** (self-reference /
+  "allow all within group"). Nghĩa là: máy nào đeo group này thì nói chuyện với nhau thả ga,
+  nhưng người ngoài group không vào được.
+- Gắn `os-internal` cho **cả 11 node**.
+- **Keepalived dùng VRRP (giao thức IP 112, không phải TCP/UDP).** Self-reference "all protocols"
+  đã bao luôn VRRP. Nếu cloud công ty bắt khai từng protocol, nhớ cho phép **protocol 112**.
+- Nhớ chừa 1 rule SSH (22) từ IP của bạn tới `deployer` để còn vào được.
+
+---
+
+## 2. CÁC BƯỚC LÀM TRÊN **TỪNG NODE** (cả 11 máy)
+
+Làm tuần tự khối này trên mỗi node. Phần khác nhau duy nhất giữa các node là **hostname** (mục 2.2).
+
+### 2.1. Cập nhật hệ thống + gói cơ bản
+```bash
+sudo apt update
+sudo apt -y dist-upgrade
+sudo apt -y install vim curl chrony netcat-openbsd net-tools software-properties-common
+```
+> `netcat-openbsd` cho lệnh `nc` (test cổng). `software-properties-common` cho `add-apt-repository`.
+
+### 2.2. Set hostname (đổi tên cho ĐÚNG từng node)
+Trên mỗi node chạy đúng tên của nó. Ví dụ trên controller01:
+```bash
+sudo hostnamectl set-hostname controller01
+```
+> Thay `controller01` bằng tên thật của node đang đứng (deployer / controller0X / compute0X /
+> cinder01 / ceph0X). Logout/login lại để prompt cập nhật.
+
+### 2.3. /etc/hosts — GIỐNG HỆT NHAU trên cả 11 node
+Dán **nguyên khối** dưới đây vào `/etc/hosts` của **mọi** node (gồm cả chính nó):
+```bash
+sudo tee -a /etc/hosts > /dev/null <<'EOF'
+
+# === OpenStack cluster ===
+192.168.70.114  deployer
+192.168.70.122  controller01
+192.168.70.127  controller02
+192.168.70.119  controller03
+192.168.70.113  compute01
+192.168.70.124  compute02
+192.168.70.112  compute03
+192.168.70.117  cinder01
+192.168.70.126  ceph01
+192.168.70.125  ceph02
+192.168.70.116  ceph03
+192.168.70.100  vip-internal
+EOF
+```
+>  Xoá/ sửa dòng `127.0.1.1 <tên cũ>` nếu cloud-init thêm vào, để tên node không trỏ về loopback.
+> Kiểm tra: `grep -n 127.0.1.1 /etc/hosts` — nếu có thì comment lại bằng `#`.
+
+### 2.4. Chặn cloud-init ghi đè /etc/hosts
+Cloud-init của cloud công ty có thể viết lại `/etc/hosts` mỗi lần reboot → mất bảng trên.
+Tắt riêng phần đó (KHÔNG đụng network nên KHÔNG gây crash):
+```bash
+sudo sed -i 's/^manage_etc_hosts:.*/manage_etc_hosts: false/' /etc/cloud/cloud.cfg
+grep -q '^manage_etc_hosts:' /etc/cloud/cloud.cfg || \
+  echo 'manage_etc_hosts: false' | sudo tee -a /etc/cloud/cloud.cfg
+```
+>  **KHÔNG đổi static IP, KHÔNG sửa netplan.** Giữ DHCP — IP nội bộ cloud vốn cố định suốt đời VM.
+> Đổi IP tay là đường nhanh nhất làm cloud-init crash máy.
+
+### 2.5. NTP (chrony) — SỐNG CÒN cho Galera
+Mọi node lệch giờ vài giây là Galera/RabbitMQ/Keystone token vỡ. Cấu hình **controller01 làm
+nguồn giờ nội bộ**, các node khác đồng bộ về nó (và vẫn có nguồn ngoài làm dự phòng).
+
+**Trên controller01** (server giờ nội bộ):
+```bash
+sudo tee /etc/chrony/chrony.conf > /dev/null <<'EOF'
+pool ntp.ubuntu.com iburst maxsources 4
+# Cho phép các node trong subnet đồng bộ về node này
+allow 192.168.70.0/24
+# Nếu mất internet vẫn tự phát giờ
+local stratum 10
+driftfile /var/lib/chrony/chrony.drift
+makestep 1.0 3
+rtcsync
+EOF
+sudo systemctl restart chrony
+```
+
+**Trên 10 node còn lại** (trỏ về controller01):
+```bash
+sudo tee /etc/chrony/chrony.conf > /dev/null <<'EOF'
+server controller01 iburst prefer
+pool ntp.ubuntu.com iburst maxsources 2
+driftfile /var/lib/chrony/chrony.drift
+makestep 1.0 3
+rtcsync
+EOF
+sudo systemctl restart chrony
+```
+> Chờ ~30–60s rồi verify bằng `chronyc tracking` (xem mục VERIFY). Lệnh `server controller01`
+> chạy được là nhờ /etc/hosts ở 2.3 — nên phải làm hosts trước.
+
+### 2.6. Bật Ubuntu Cloud Archive — Epoxy (2025.1)
+```bash
+sudo add-apt-repository -y cloud-archive:epoxy
+sudo apt update
+sudo apt -y dist-upgrade
+sudo apt -y install python3-openstackclient
+```
+> Làm trên **cả 11 node** (kể cả ceph/cinder — chúng cũng cần client + thư viện chung).
+> `cloud-archive:epoxy` là kho chính thống Canonical backport OpenStack 2025.1 lên Ubuntu 24.04.
+
+---
+
+## 3. SSH KEY TỪ DEPLOYER → 10 NODE CÒN LẠI
+
+Mục tiêu: từ `deployer` SSH sang 10 node kia **không hỏi mật khẩu** (để script tự động về sau).
+
+**Chỉ trên deployer:**
+```bash
+# Tạo key (Enter hết, không passphrase cho lab)
+ssh-keygen -t ed25519 -C "deployer" -f ~/.ssh/id_ed25519 -N ""
+```
+Copy key sang từng node (nhập mật khẩu user 1 lần cho mỗi node):
+```bash
+for h in controller01 controller02 controller03 \
+         compute01 compute02 compute03 \
+         cinder01 ceph01 ceph02 ceph03; do
+  ssh-copy-id -o StrictHostKeyChecking=accept-new "$h"
+done
+```
+> Nếu user trên các node khác tên (vd `ubuntu`), dùng `ssh-copy-id ubuntu@$h`.
+> Nếu cloud chỉ cho SSH bằng key (không password): chèn public key của deployer vào
+> `~/.ssh/authorized_keys` của từng node qua console, hoặc qua key gốc ban đầu.
+
+(Tuỳ chọn) Cho gọn, tạo `~/.ssh/config` trên deployer:
+```bash
+cat >> ~/.ssh/config <<'EOF'
+Host controller* compute* cinder* ceph* deployer
+    User ubuntu
+    StrictHostKeyChecking accept-new
+EOF
+chmod 600 ~/.ssh/config
+```
+> Đổi `User ubuntu` cho khớp user thật của bạn.
+
+---
+
+## 4. VERIFY CUỐI GIAI ĐOẠN 0 (xanh hết mới qua Giai đoạn 1)
+
+### 4.1. Chạy trên TỪNG node — kiểm tra cục bộ
+```bash
+hostname                                  # đúng tên node
+ping -c1 controller01 && ping -c1 ceph01  # ping được bằng TÊN (không phải IP)
+chronyc tracking | grep -i leap           # mong đợi: "Leap status : Normal"
+apt policy python3-openstackclient | grep -i epoxy   # thấy dòng kho epoxy
+```
+Riêng 3 node **ceph01/02/03** kiểm tra thêm disk OSD thô (đĩa thứ 2, để TRỐNG):
+```bash
+lsblk
+# Mong đợi: thấy 1 đĩa ≥40GB KHÔNG có MOUNTPOINT, KHÔNG phân vùng (vd vdb/sdb).
+# Đó là đĩa Ceph sẽ nuốt ở Giai đoạn 4.5. KHÔNG format, KHÔNG mount nó.
+```
+
+### 4.2. Test 1 cổng TCP thông giữa 2 node (mô phỏng Galera 3306)
+Trên **controller02** mở cổng nghe tạm:
+```bash
+nc -l 3306
+```
+Trên **controller01** (terminal khác) bắn thử:
+```bash
+nc -zv controller02 3306        # mong đợi: "... succeeded!" hoặc "open"
+```
+> Thông = security group + mạng OK. Xong thì Ctrl+C tắt `nc -l` ở controller02.
+> Có thể lặp lại với vài cặp node khác cho chắc (vd deployer → ceph01 6789).
+
+### 4.3. Test SSH không mật khẩu — chạy trên DEPLOYER
+```bash
+for h in controller01 controller02 controller03 \
+         compute01 compute02 compute03 \
+         cinder01 ceph01 ceph02 ceph03; do
+  echo -n "$h => "; ssh -o BatchMode=yes "$h" hostname
+done
+```
+> Mong đợi: in ra đúng hostname từng node, **không** hỏi mật khẩu, **không** lỗi.
+> `BatchMode=yes` ép fail ngay nếu còn đòi password (để lộ node nào chưa copy key).
+
+### Checklist xanh
+- [ ] 11 node đúng hostname
+- [ ] /etc/hosts giống nhau, ping bằng tên OK trên mọi node
+- [ ] `chronyc tracking` = **Normal** trên mọi node
+- [ ] `apt policy python3-openstackclient` thấy kho **epoxy** trên mọi node
+- [ ] 3 node ceph có đĩa OSD ≥40GB trống (lsblk, không mountpoint)
+- [ ] `nc` cổng giữa 2 node = open
+- [ ] Từ deployer SSH 10 node không hỏi pass
+- [ ] Security group `os-internal` (all-within-group + VRRP) gắn đủ 11 node
+
+ Xanh hết → **GIAI ĐOẠN 1: dựng Galera cluster 3 controller**, bootstrap, test quorum
+(tắt 1 node xem cụm còn sống). Đây là trái tim HA.
+
+---
+
+## 5. NGUỒN THAM KHẢO CHÍNH THỐNG (2025.1 Epoxy)
+
+- Install Guide — Environment / OpenStack packages (Ubuntu):
+  https://docs.openstack.org/install-guide/environment-packages-ubuntu.html
+- Install Guide — NTP (chrony):
+  https://docs.openstack.org/install-guide/environment-ntp.html
+- Install Guide — Firewalls & default ports:
+  https://docs.openstack.org/install-guide/firewalls-default-ports.html
+- Ubuntu Cloud Archive wiki:
+  https://wiki.ubuntu.com/OpenStack/CloudArchive
+- Epoxy (2025.1) release index:
+  https://releases.openstack.org/epoxy/index.html
+
+
+
+# GIAI ĐOẠN 1 — GALERA CLUSTER (MariaDB) 3 CONTROLLER
+
+> **Tiền đề:** Giai đoạn 0 đã xanh hết (hostname, /etc/hosts, chrony=Normal, repo epoxy, mạng thông).
+> **Phạm vi:** chỉ làm trên **controller01 / controller02 / controller03**. Không đụng node khác.
+> **Mục tiêu:** 3 node MariaDB chạy multi-primary đồng bộ (active-active), test quorum.
+> **Đây là TRÁI TIM HA.** Mọi service OpenStack về sau ghi DB vào cụm này qua VIP.
+
+---
+
+## 0. GALERA LÀ GÌ 
+
+MariaDB thường = 1 server. **Galera** biến 3 MariaDB thành 1 cụm **multi-primary**: ghi vào
+node nào cũng được, dữ liệu **đồng bộ tức thì** sang 2 node kia trước khi commit. Nhờ vậy:
+
+- 1 node chết → 2 node còn lại vẫn phục vụ → **HA**.
+- Nhưng cần **quorum** (>50% node sống) để tránh **split-brain** (2 nửa cụm tự cho mình đúng,
+  ghi đè nhau → hỏng data). 3 node: sống ≥2 thì cụm hoạt động; chỉ còn 1 thì node đó tự khoá lại.
+
+Vài cổng cần nhớ (đã mở sẵn nhờ security group all-within-group ở Giai đoạn 0):
+- **3306** client kết nối + SST kiểu mysqldump
+- **4567** replication traffic (TCP/UDP)
+- **4568** IST — đồng bộ phần thiếu (incremental)
+- **4444** SST — copy nguyên data cho node mới join
+
+---
+
+## 1. CÀI MARIADB + GALERA (chạy trên CẢ 3 controller)
+
+Dùng gói trong Ubuntu/UCA — **KHÔNG thêm repo mariadb.com** (tránh lệch version với OpenStack).
+```bash
+sudo apt update
+sudo apt -y install mariadb-server mariadb-client galera-4 rsync
+```
+> `galera-4` là provider replication. `rsync` dùng cho SST. Sau khi cài, MariaDB tự chạy ở chế
+> độ đơn (standalone) — ta sẽ dừng nó lại để cấu hình cụm.
+
+Dừng dịch vụ trên **cả 3 node** (chưa cấu hình cụm thì chưa cho chạy lung tung):
+```bash
+sudo systemctl stop mariadb
+sudo systemctl disable mariadb   # tạm tắt auto-start, bật lại sau khi cụm ổn
+```
+
+---
+
+## 2. FILE CẤU HÌNH GALERA (mỗi node 1 file, KHÁC nhau 2 dòng)
+
+Tạo `/etc/mysql/mariadb.conf.d/99-galera.cnf` trên **từng node**. Phần lớn giống nhau, chỉ
+khác `wsrep_node_name` và `wsrep_node_address`.
+
+### Trên controller01 (IP 192.168.70.122):
+```bash
+sudo tee /etc/mysql/mariadb.conf.d/99-galera.cnf > /dev/null <<'EOF'
+[mysqld]
+# --- cơ bản, bắt buộc cho Galera ---
+binlog_format=ROW
+default_storage_engine=InnoDB
+innodb_autoinc_lock_mode=2
+bind-address=0.0.0.0
+
+# --- bật Galera ---
+wsrep_on=ON
+wsrep_provider=/usr/lib/galera/libgalera_smm.so
+wsrep_cluster_name="openstack_galera"
+
+# Danh sách IP CẢ 3 node — giống hệt trên mọi node
+wsrep_cluster_address="gcomm://192.168.70.122,192.168.70.127,192.168.70.119"
+
+# --- RIÊNG node này ---
+wsrep_node_name="controller01"
+wsrep_node_address="192.168.70.122"
+
+# SST dùng rsync (đơn giản, không cần user/pass riêng cho lab)
+wsrep_sst_method=rsync
+EOF
+```
+
+### Trên controller02 (IP 192.168.70.127):
+```bash
+sudo tee /etc/mysql/mariadb.conf.d/99-galera.cnf > /dev/null <<'EOF'
+[mysqld]
+binlog_format=ROW
+default_storage_engine=InnoDB
+innodb_autoinc_lock_mode=2
+bind-address=0.0.0.0
+
+wsrep_on=ON
+wsrep_provider=/usr/lib/galera/libgalera_smm.so
+wsrep_cluster_name="openstack_galera"
+wsrep_cluster_address="gcomm://192.168.70.122,192.168.70.127,192.168.70.119"
+
+wsrep_node_name="controller02"
+wsrep_node_address="192.168.70.127"
+
+wsrep_sst_method=rsync
+EOF
+```
+
+### Trên controller03 (IP 192.168.70.119):
+```bash
+sudo tee /etc/mysql/mariadb.conf.d/99-galera.cnf > /dev/null <<'EOF'
+[mysqld]
+binlog_format=ROW
+default_storage_engine=InnoDB
+innodb_autoinc_lock_mode=2
+bind-address=0.0.0.0
+
+wsrep_on=ON
+wsrep_provider=/usr/lib/galera/libgalera_smm.so
+wsrep_cluster_name="openstack_galera"
+wsrep_cluster_address="gcomm://192.168.70.122,192.168.70.127,192.168.70.119"
+
+wsrep_node_name="controller03"
+wsrep_node_address="192.168.70.119"
+
+wsrep_sst_method=rsync
+EOF
+```
+
+>  Xác minh provider tồn tại đúng path (chạy trên mỗi node):
+> ```bash
+> ls -l /usr/lib/galera/libgalera_smm.so
+> ```
+> Nếu không thấy, tìm bằng `dpkg -L galera-4 | grep smm` rồi sửa dòng `wsrep_provider` cho khớp.
+
+---
+
+## 3. BOOTSTRAP — KHỞI TẠO CỤM (chỉ 1 LẦN, chỉ trên controller01)
+
+Node đầu tiên phải "khai sinh" cụm bằng lệnh đặc biệt. **Chỉ làm trên controller01, chỉ 1 lần.**
+```bash
+sudo galera_new_cluster
+```
+Kiểm tra ngay nó đã thành Primary và đang là cụm 1 node:
+```bash
+sudo mariadb -e "SHOW STATUS LIKE 'wsrep_cluster_size';"
+sudo mariadb -e "SHOW STATUS LIKE 'wsrep_local_state_comment';"
+```
+> Mong đợi: `wsrep_cluster_size = 1` và `wsrep_local_state_comment = Synced`.
+>  **TUYỆT ĐỐI không chạy `galera_new_cluster` trên node 2/3.** Chỉ node đầu mới bootstrap.
+
+![altimage](../images/Screenshot_14.png)
+
+## 4. JOIN NODE 2 VÀ 3 (start bình thường, LẦN LƯỢT)
+
+Trên **controller02**:
+```bash
+sudo systemctl start mariadb
+```
+Đợi nó join xong (10–30s, đang kéo data từ controller01 qua SST). Kiểm tra trên controller01:
+```bash
+sudo mariadb -e "SHOW STATUS LIKE 'wsrep_cluster_size';"   # mong đợi: 2
+```
+Khi đã thấy `2`, mới sang **controller03**:
+```bash
+sudo systemctl start mariadb
+```
+Kiểm tra lại:
+```bash
+sudo mariadb -e "SHOW STATUS LIKE 'wsrep_cluster_size';"   # mong đợi: 3
+```
+> Làm **lần lượt từng node**, đợi join xong mới tới node kế. Start cùng lúc dễ tranh chấp SST.
+
+Sau khi đủ 3 → bật lại auto-start trên cả 3 node (để reboot vẫn lên):
+```bash
+sudo systemctl enable mariadb
+```
+
+![altimage](../images/Screenshot_15.png)
+
+---
+
+## 5. VERIFY CỤM + TEST ĐỒNG BỘ
+
+### 5.1. Trạng thái cụm (chạy trên controller01)
+```bash
+sudo mariadb -e "SHOW STATUS LIKE 'wsrep_cluster_size';"        # = 3
+sudo mariadb -e "SHOW STATUS LIKE 'wsrep_cluster_status';"      # = Primary
+sudo mariadb -e "SHOW STATUS LIKE 'wsrep_local_state_comment';" # = Synced
+sudo mariadb -e "SHOW STATUS LIKE 'wsrep_ready';"               # = ON
+```
+
+![altimage](../images/Screenshot_16.png)
+
+### 5.2. Test replication thật
+Trên **controller01** tạo data:
+```bash
+sudo mariadb -e "CREATE DATABASE hatest;
+  CREATE TABLE hatest.t(id INT PRIMARY KEY AUTO_INCREMENT, note VARCHAR(50));
+  INSERT INTO hatest.t(note) VALUES('viet tu controller01');"
+```
+Trên **controller02** đọc lại (phải thấy ngay):
+```bash
+sudo mariadb -e "SELECT * FROM hatest.t;"     # thấy dòng 'viet tu controller01'
+```
+Ghi ngược từ **controller03**:
+```bash
+sudo mariadb -e "INSERT INTO hatest.t(note) VALUES('viet tu controller03');"
+```
+Đọc lại trên **controller01** → thấy cả 2 dòng = đồng bộ 2 chiều OK. Dọn dẹp:
+```bash
+sudo mariadb -e "DROP DATABASE hatest;"
+```
+
+---
+
+## 6. TEST QUORUM (phần quan trọng nhất của HA — đừng bỏ)
+
+Mục tiêu: chứng minh **tắt 1 node, cụm vẫn sống**; và hiểu giới hạn split-brain.
+
+### 6.1. Tắt 1 node — cụm phải vẫn chạy
+Trên **controller03**:
+```bash
+sudo systemctl stop mariadb
+```
+Trên controller01 kiểm tra:
+```bash
+sudo mariadb -e "SHOW STATUS LIKE 'wsrep_cluster_size';"     # = 2
+sudo mariadb -e "SHOW STATUS LIKE 'wsrep_cluster_status';"   # vẫn Primary
+sudo mariadb -e "INSERT INTO mysql.general_log VALUES();" 2>/dev/null; \
+  sudo mariadb -e "CREATE DATABASE q; DROP DATABASE q;"      # vẫn ghi được
+```
+> 2/3 node sống = vẫn đủ quorum → cụm hoạt động bình thường. Đây là HA.
+
+### 6.2. Bật lại node — tự join lại
+```bash
+# trên controller03
+sudo systemctl start mariadb
+# trên controller01: size quay lại 3
+sudo mariadb -e "SHOW STATUS LIKE 'wsrep_cluster_size';"     # = 3
+```
+
+### 6.3. (Hiểu thêm, KHÔNG cần làm) — mất quorum
+Nếu tắt 2/3 node, node cuối thấy mình <50% → **tự chuyển non-Primary, từ chối ghi** để tránh
+split-brain. Đó là thiết kế đúng, không phải lỗi. Khôi phục bằng cách bật lại các node kia.
+
+### Checklist xanh Giai đoạn 1
+- [ ] `wsrep_cluster_size = 3`, `status = Primary`, `local_state = Synced`, `wsrep_ready = ON`
+- [ ] Tạo DB ở controller01 → đọc được ở controller02 (đồng bộ)
+- [ ] Ghi ở controller03 → đọc được ở controller01 (2 chiều)
+- [ ] Tắt 1 node → size=2, cụm vẫn ghi được (quorum OK)
+- [ ] Bật lại → tự join, size về 3
+- [ ] `systemctl enable mariadb` trên cả 3 node
+
+ Xanh hết → **GIAI ĐOẠN 2: RabbitMQ cluster + Memcached.**
+
+---
+
+## 7. NGUỒN THAM KHẢO CHÍNH THỐNG
+
+- MariaDB Galera Cluster Guide (mariadb.com):
+  https://mariadb.com/docs/galera-cluster/galera-cluster-quickstart-guides/mariadb-galera-cluster-guide
+- Configuring MariaDB Galera Cluster (cổng, tham số):
+  https://mariadb.com/kb/en/configuring-mariadb-galera-cluster/
+- OpenStack Install Guide — SQL database:
+  https://docs.openstack.org/install-guide/environment-sql-database.html
+
+
+# GIAI ĐOẠN 2 — RABBITMQ CLUSTER + MEMCACHED
+
+> **Tiền đề:** Giai đoạn 1 xanh (Galera 3 node Synced, test quorum OK).
+> **Phạm vi:** RabbitMQ trên **controller01/02/03**. Memcached cũng trên 3 controller.
+> **Mục tiêu:** cụm message queue 3 node + cache phân tán, sẵn sàng cho Keystone/Nova/Neutron...
+
+---
+
+## 0. RABBITMQ & MEMCACHED ĐỂ LÀM GÌ (đọc 1 phút)
+
+**RabbitMQ = bưu điện của OpenStack.** Các service không gọi thẳng nhau; chúng **gửi message qua
+hàng đợi**. Vd nova-api muốn tạo VM → bỏ "đơn hàng" vào RabbitMQ → nova-compute nhận và xử lý.
+Tách rời như vậy giúp service co giãn và chịu lỗi. RabbitMQ chết = cả cụm tê liệt giao tiếp →
+nên phải cụm 3 node.
+
+**Memcached = bộ nhớ đệm token.** Keystone phát token cho mọi request. Lưu token trong RAM
+(Memcached) thay vì hỏi DB mỗi lần → nhanh hơn nhiều. Mỗi controller chạy 1 memcached, các
+service trỏ tới cả 3.
+
+**Khác biệt với Galera cần nhớ:**
+- Galera đồng bộ chặt (mọi node y hệt). RabbitMQ cluster chia sẻ metadata nhưng **không tự mirror
+  toàn bộ message** ở cấu hình mặc định mới — OpenStack hiện đại để client tự kết nối nhiều node
+  và xử lý lỗi (dùng `rabbit_hosts` nhiều địa chỉ). Ta KHÔNG đặt policy `ha-mode: all` kiểu cũ.
+
+---
+
+## 1. ERLANG COOKIE — CHÌA KHOÁ CỤM (làm cẩn thận, đây là chỗ hay sai nhất)
+
+RabbitMQ chạy trên Erlang. 3 node chỉ "tin nhau" nếu có **cùng một Erlang cookie**. Khác cookie =
+"Connection attempt from disallowed node", không join được.
+
+### 1.1. Cài RabbitMQ trên CẢ 3 controller
+```bash
+sudo apt update
+sudo apt -y install rabbitmq-server
+```
+> Cài xong nó tự chạy. Ubuntu cấu hình auto-start sẵn.
+
+### 1.2. Đồng bộ cookie: lấy từ controller01, copy sang 02 & 03
+**Trên controller01** xem cookie:
+```bash
+sudo cat /var/lib/rabbitmq/.erlang.cookie; echo
+```
+Copy chuỗi đó. **Trên controller02 và controller03**, dừng dịch vụ rồi ghi đè cookie cho khớp:
+```bash
+# trên controller02 VÀ controller03 (làm từng node)
+sudo systemctl stop rabbitmq-server
+echo -n 'DÁN_CHUỖI_COOKIE_TỪ_CONTROLLER01_VÀO_ĐÂY' | sudo tee /var/lib/rabbitmq/.erlang.cookie
+sudo chown rabbitmq:rabbitmq /var/lib/rabbitmq/.erlang.cookie
+sudo chmod 400 /var/lib/rabbitmq/.erlang.cookie
+sudo systemctl start rabbitmq-server
+```
+> `echo -n` để KHÔNG thêm ký tự xuống dòng (newline làm cookie sai). Quyền phải đúng
+> `rabbitmq:rabbitmq` và `400`. Sai quyền → RabbitMQ không đọc được cookie, không start.
+
+Khởi động lại controller01 cho đồng bộ trạng thái (tuỳ chọn nhưng nên):
+```bash
+# controller01
+sudo systemctl restart rabbitmq-server
+```
+
+---
+
+## 2. GỘP CỤM (controller01 làm gốc; 02 & 03 join vào)
+
+RabbitMQ định danh node bằng **tên** `rabbit@<hostname>`, dùng /etc/hosts ở Giai đoạn 0 → phải
+dùng tên, không phải IP.
+
+**controller01** là node gốc — không cần làm gì thêm (nó tự là 1 cụm 1 node).
+
+**Trên controller02**, join vào controller01:
+```bash
+sudo rabbitmqctl stop_app
+sudo rabbitmqctl reset
+sudo rabbitmqctl join_cluster rabbit@controller01
+sudo rabbitmqctl start_app
+```
+**Trên controller03**, tương tự:
+```bash
+sudo rabbitmqctl stop_app
+sudo rabbitmqctl reset
+sudo rabbitmqctl join_cluster rabbit@controller01
+sudo rabbitmqctl start_app
+```
+> Dùng **disc node** (mặc định), KHÔNG `--ram`. RAM node đã lỗi thời và lab bạn thừa RAM → disc
+> an toàn hơn (metadata cụm ghi xuống đĩa, reboot không mất).
+
+Kiểm tra cụm (chạy ở node bất kỳ):
+```bash
+sudo rabbitmqctl cluster_status
+```
+> Mong đợi: phần `running_nodes` liệt kê đủ **3 node**: rabbit@controller01/02/03.
+
+(Tuỳ chọn) đặt tên cụm cho gọn:
+```bash
+sudo rabbitmqctl set_cluster_name openstack-rabbit
+```
+
+---
+
+## 3. TẠO USER OPENSTACK (chỉ làm 1 LẦN, trên controller01)
+
+Vì cụm đã gộp, tạo user 1 node là cả cụm có. **Xoá user mặc định `guest`** (rủi ro bảo mật):
+```bash
+# tạo user cho OpenStack — đổi 'RABBIT_PASS' thành mật khẩu của bạn, GHI LẠI để dùng các giai đoạn sau
+sudo rabbitmqctl add_user openstack RABBIT_PASS
+sudo rabbitmqctl set_permissions openstack ".*" ".*" ".*"
+
+# (khuyến nghị) xoá guest
+sudo rabbitmqctl delete_user guest
+```
+> **GHI LẠI `RABBIT_PASS`.** Mọi service (Keystone, Nova, Neutron, Cinder, Glance) sẽ cắm
+> chuỗi `rabbit://openstack:RABBIT_PASS@controller01,controller02,controller03` vào config.
+
+---
+
+## 4. (TUỲ CHỌN) BẬT GIAO DIỆN QUẢN LÝ WEB
+
+Xem cụm bằng trình duyệt cho trực quan (cổng 15672):
+```bash
+# trên cả 3 controller
+sudo rabbitmq-plugins enable rabbitmq_management
+```
+Tạo 1 admin để đăng nhập web:
+```bash
+# controller01
+sudo rabbitmqctl add_user rabbitadmin ADMIN_PASS
+sudo rabbitmqctl set_user_tags rabbitadmin administrator
+sudo rabbitmqctl set_permissions rabbitadmin ".*" ".*" ".*"
+```
+> Truy cập `http://<ip-controller>:15672`. Lab thôi — production đừng phơi cổng này ra ngoài.
+
+---
+
+## 5. MEMCACHED (trên cả 3 controller)
+
+```bash
+sudo apt -y install memcached python3-memcache
+```
+Cho memcached lắng nghe trên IP node (không chỉ localhost) để service node khác trỏ tới được.
+Sửa file `/etc/memcached.conf`, dòng `-l`:
+```bash
+# trên controller01 — đổi IP cho đúng từng node
+sudo sed -i 's/^-l .*/-l 127.0.0.1,192.168.70.122/' /etc/memcached.conf
+sudo systemctl restart memcached
+```
+> controller02 dùng `192.168.70.127`, controller03 dùng `192.168.70.119`. Giữ `127.0.0.1` để
+> dịch vụ cục bộ vẫn gọi được. Mặc định Ubuntu chỉ nghe `127.0.0.1` → không sửa thì node khác
+> không tới được.
+
+> Memcached KHÔNG phải cụm đồng bộ — nó là cache rời. Các service sẽ được khai cả 3 địa chỉ
+> `controller01:11211,controller02:11211,controller03:11211`; client tự rải/né node chết. Mất 1
+> memcached chỉ là mất một phần cache, không sập hệ thống.
+
+---
+
+## 6. VERIFY GIAI ĐOẠN 2
+
+### 6.1. RabbitMQ cụm đủ 3 node
+```bash
+sudo rabbitmqctl cluster_status        # running_nodes có đủ rabbit@controller01/02/03
+sudo rabbitmqctl list_users            # thấy 'openstack'; KHÔNG còn 'guest'
+```
+
+### 6.2. Test HA — tắt 1 node RabbitMQ, cụm vẫn sống
+```bash
+# trên controller03
+sudo systemctl stop rabbitmq-server
+# trên controller01
+sudo rabbitmqctl cluster_status        # running_nodes còn 2, cụm vẫn chạy
+# bật lại
+# (controller03)
+sudo systemctl start rabbitmq-server
+# (controller01) — đợi ~10s
+sudo rabbitmqctl cluster_status        # về 3 node
+```
+
+### 6.3. Memcached nghe đúng IP (trên mỗi controller)
+```bash
+ss -lntp | grep 11211                  # thấy IP node + 127.0.0.1 cổng 11211
+# test từ node khác:
+nc -zv controller01 11211              # open
+```
+
+### Checklist xanh Giai đoạn 2
+- [ ] RabbitMQ `cluster_status` đủ 3 running_nodes trên cả cụm
+- [ ] User `openstack` tồn tại, `guest` đã xoá
+- [ ] Tắt 1 node RabbitMQ → cụm còn 2 vẫn chạy → bật lại về 3
+- [ ] Memcached nghe trên IP node (ss thấy 11211), node khác `nc` tới được
+- [ ] Đã GHI LẠI `RABBIT_PASS`
+
+➡️ Xanh hết → **GIAI ĐOẠN 3: HAProxy + Keepalived (VIP 192.168.70.100).**
+
+---
+
+## 7. NGUỒN THAM KHẢO CHÍNH THỐNG
+
+- OpenStack HA Guide — Messaging / stateful services:
+  https://docs.openstack.org/ha-guide/control-plane-stateful.html
+- OpenStack-Ansible — RabbitMQ cluster maintenance (cookie, join):
+  https://docs.openstack.org/openstack-ansible/latest/admin/maintenance-tasks/rabbitmq-maintain.html
+- OpenStack Install Guide — Message queue:
+  https://docs.openstack.org/install-guide/environment-messaging-ubuntu.html
+- OpenStack Install Guide — Memcached:
+  https://docs.openstack.org/install-guide/environment-memcached-ubuntu.html
+
+
+
+# GIAI ĐOẠN 3 — HAPROXY + KEEPALIVED (VIP 192.168.70.100)
+
+> **Tiền đề:** Giai đoạn 2 xanh (Galera + RabbitMQ + Memcached chạy ổn trên 3 controller).
+> **Phạm vi:** chỉ làm trên **controller01/02/03**.
+> **Mục tiêu:** có **một địa chỉ duy nhất** (VIP 192.168.70.100) đại diện cho cụm. Tắt 1 controller
+> → VIP nhảy sang controller sống tự động, các service phía sau (DB, MQ, các API sắp tới) vẫn
+> tới được. Đây là tầng "vỏ HA" — sai ở đây thì mọi service sau cũng sai theo.
+
+---
+
+## 0. KIẾN TRÚC & VÌ SAO 2 PHẦN TÁCH BIỆT
+
+Đây là chỗ rất nhiều người nhầm — HAProxy ≠ Keepalived. Hai phần làm hai việc khác nhau:
+
+**HAProxy = load balancer** (cân bằng tải).
+- Lắng nghe trên VIP, nhận request, **chia về 3 backend** (vd 3 Galera, 3 Keystone...).
+- Có health check: backend nào chết tự bỏ qua.
+- Chạy trên **CẢ 3 controller**, nhưng chỉ HAProxy ở node nắm VIP mới thực sự nhận traffic.
+
+**Keepalived = quản lý VIP** (failover).
+- Dùng giao thức VRRP để bầu 1 node làm MASTER giữ VIP.
+- MASTER chết → BACKUP có priority cao nhất lên thay → VIP "nhảy" sang node mới.
+- Có health check HAProxy: nếu HAProxy ở node MASTER chết, nó **tự hạ priority** để node khác
+  chiếm VIP — tránh tình huống "VIP còn ở node A nhưng HAProxy node A đã chết".
+
+**Flow:** client → VIP (Keepalived giữ trên 1 node) → HAProxy node đó → 3 backend thật.
+
+**Đặc thù môi trường cloud (QUAN TRỌNG):**
+- Nhiều cloud chặn **multicast** trong VPC → VRRP multicast mặc định không chạy. Ta dùng
+  **VRRP unicast** (khai rõ IP các peer). Cách này luôn chạy.
+- Cần bật `net.ipv4.ip_nonlocal_bind=1` để HAProxy có thể bind vào VIP ngay cả khi node chưa
+  giữ VIP — quan trọng vì khi failover, HAProxy ở node mới phải bind ngay vào VIP.
+- VRRP dùng **IP protocol 112**, không phải TCP/UDP. Security group all-within-group đã bao
+  (nếu phải khai rõ thì cho phép protocol 112 giữa 3 controller).
+
+---
+
+## 1. XÁC ĐỊNH TÊN NIC TRƯỚC KHI VIẾT CONFIG
+
+QEMU/cloud-init có thể tạo tên NIC khác nhau (`ens3`, `eth0`, `enp1s0`...). Chạy trên **mỗi
+controller** để xem:
+
+```bash
+ip -br addr show
+```
+
+Tìm dòng có IP `192.168.70.x` của node đó. Cột đầu là tên NIC. Ví dụ output:
+```
+eth0  UP  192.168.70.122/24 ...
+```
+→ NIC là `eth0`. Ghi nhớ, sẽ dùng trong config Keepalived ở mục 4. **Cả 3 controller thường
+cùng tên NIC** (vì cùng image), nhưng cứ check để chắc.
+
+> Tài liệu dưới đây mặc định NIC là `eth0`. Nếu của bạn khác, thay tất cả `eth0` cho khớp.
+
+---
+
+## 2. CÀI 2 GÓI (trên cả 3 controller)
+
+```bash
+sudo apt update
+sudo apt -y install haproxy keepalived
+```
+
+Tạm dừng cả 2 dịch vụ để cấu hình trước:
+```bash
+sudo systemctl stop haproxy keepalived
+```
+
+---
+
+## 3. CẤU HÌNH KERNEL — `ip_nonlocal_bind` (trên cả 3 controller)
+
+Cho phép HAProxy bind vào VIP kể cả khi node không giữ VIP:
+```bash
+sudo tee /etc/sysctl.d/99-haproxy-vip.conf > /dev/null <<'EOF'
+net.ipv4.ip_nonlocal_bind = 1
+net.ipv4.ip_forward = 1
+EOF
+sudo sysctl --system
+sudo sysctl -n net.ipv4.ip_nonlocal_bind   # phải in "1"
+```
+
+> Bỏ bước này thì sau failover, HAProxy ở node mới sẽ start fail với lỗi "Cannot bind socket".
+
+---
+
+## 4. CẤU HÌNH KEEPALIVED — VIP failover
+
+3 node có config gần giống nhau, **chỉ khác `state`, `priority`, `unicast_src_ip`, `unicast_peer`**.
+controller01 = MASTER (priority cao nhất); 02 & 03 = BACKUP.
+
+### 4.1. Script health-check HAProxy (giống nhau trên cả 3 node)
+
+```bash
+sudo mkdir -p /etc/keepalived/scripts
+sudo tee /etc/keepalived/scripts/check_haproxy.sh > /dev/null <<'EOF'
+#!/bin/bash
+# Trả 0 nếu HAProxy đang chạy, khác 0 nếu chết
+/usr/bin/killall -0 haproxy 2>/dev/null
+EOF
+sudo chmod +x /etc/keepalived/scripts/check_haproxy.sh
+```
+> `killall -0` không thực sự giết — nó chỉ "ping" tiến trình. 0 = đang chạy.
+
+### 4.2. Config controller01 (MASTER, priority 110)
+
+```bash
+sudo tee /etc/keepalived/keepalived.conf > /dev/null <<'EOF'
+global_defs {
+    router_id controller01
+}
+
+vrrp_track_process chk_haproxy {
+    process haproxy
+    weight -30
+    delay 2
+    fall 2
+    rise 2
+}
+
+vrrp_instance VI_OPENSTACK {
+    state MASTER
+    interface eth0
+    virtual_router_id 70
+    priority 110
+    advert_int 1
+
+    authentication {
+        auth_type PASS
+        auth_pass OpenStac
+    }
+
+    unicast_src_ip 192.168.70.122
+    unicast_peer {
+        192.168.70.127
+        192.168.70.119
+    }
+
+    virtual_ipaddress {
+        192.168.70.120/24 dev eth0
+    }
+
+    track_process {
+        chk_haproxy
+    }
+}
+EOF
+```
+
+### 4.3. Config controller02 (BACKUP, priority 100)
+
+```bash
+sudo tee /etc/keepalived/keepalived.conf > /dev/null <<'EOF'
+global_defs {
+    router_id controller02
+}
+
+vrrp_track_process chk_haproxy {
+    process haproxy
+    weight -30
+    delay 2
+    fall 2
+    rise 2
+}
+
+vrrp_instance VI_OPENSTACK {
+    state BACKUP
+    interface eth0
+    virtual_router_id 70
+    priority 100
+    advert_int 1
+
+    authentication {
+        auth_type PASS
+        auth_pass OpenStac
+    }
+
+    unicast_src_ip 192.168.70.127
+    unicast_peer {
+        192.168.70.122
+        192.168.70.119
+    }
+
+    virtual_ipaddress {
+        192.168.70.120/24 dev eth0
+    }
+
+    track_process {
+        chk_haproxy
+    }
+}
+EOF
+```
+
+### 4.4. Config controller03 (BACKUP, priority 90)
+
+```bash
+sudo tee /etc/keepalived/keepalived.conf > /dev/null <<'EOF'
+global_defs {
+    router_id controller03
+}
+
+vrrp_track_process chk_haproxy {
+    process haproxy
+    weight -30
+    delay 2
+    fall 2
+    rise 2
+}
+
+vrrp_instance VI_OPENSTACK {
+    state BACKUP
+    interface eth0
+    virtual_router_id 70
+    priority 90
+    advert_int 1
+
+    authentication {
+        auth_type PASS
+        auth_pass OpenStac
+    }
+
+    unicast_src_ip 192.168.70.119
+    unicast_peer {
+        192.168.70.122
+        192.168.70.127
+    }
+
+    virtual_ipaddress {
+        192.168.70.120/24 dev eth0
+    }
+
+    track_process {
+        chk_haproxy
+    }
+}
+EOF
+```
+
+> **3 thông số phải đồng bộ tuyệt đối** trên cả 3 node, lệch là vỡ:
+> - `virtual_router_id 70` (giống nhau)
+> - `auth_pass OpenStackVRRP2025` (giống nhau)
+> - `virtual_ipaddress 192.168.70.120/24` (giống nhau)
+>
+> **3 thông số phải KHÁC nhau** từng node:
+> - `state` (1 MASTER, 2 BACKUP)
+> - `priority` (110 / 100 / 90)
+> - `unicast_src_ip` + `unicast_peer` (IP node hiện tại + 2 IP còn lại)
+
+---
+
+## 5. CẤU HÌNH HAPROXY — load balancer cho Galera
+
+Giai đoạn này HAProxy chỉ cần balance **Galera** (3306). RabbitMQ tự xử cluster bên trong, không
+cần HAProxy. Các backend khác (Keystone, Nova...) sẽ thêm vào ở các giai đoạn sau.
+
+### 5.1. Config giống nhau trên CẢ 3 controller
+
+```bash
+sudo tee /etc/haproxy/haproxy.cfg > /dev/null <<'EOF'
+global
+    log /dev/log local0
+    user haproxy
+    group haproxy
+    daemon
+    maxconn 4000
+
+defaults
+    log     global
+    mode    tcp
+    option  tcplog
+    option  dontlognull
+    timeout connect 10s
+    timeout client  60s
+    timeout server  60s
+    retries 3
+
+# Trang stats: http://<VIP>:9000/stats
+listen stats
+    bind 0.0.0.0:9000
+    mode http
+    stats enable
+    stats uri /stats
+    stats refresh 10s
+    stats realm HAProxy\ Stats
+    stats auth admin:HAProxyStatsPass
+
+# === Galera (chỉ active 1 node tại 1 thời điểm, tránh deadlock đa-writer) ===
+listen galera
+    bind 192.168.70.120:3306
+    mode tcp
+    balance source
+    option tcp-check
+    tcp-check connect
+    server controller01 192.168.70.122:3306 check inter 2s rise 2 fall 3
+    server controller02 192.168.70.127:3306 check inter 2s rise 2 fall 3 backup
+    server controller03 192.168.70.119:3306 check inter 2s rise 2 fall 3 backup
+EOF
+```
+
+> **Vì sao `backup` ở controller02/03?** Galera là multi-primary VỀ MẶT KỸ THUẬT (ghi node nào
+> cũng được), nhưng nếu nhiều client cùng ghi đồng thời vào nhiều node, dễ gặp **deadlock chứng
+> nhận** (certification conflict). Pattern an toàn cho OpenStack: chỉ một node active, hai node
+> kia làm backup hot — failover ngay khi node chính chết. Đây là khuyến nghị chuẩn của OpenStack
+> HA Guide và Percona.
+
+### 5.2. Bind log Unix socket (Ubuntu mặc định cần):
+```bash
+sudo tee /etc/rsyslog.d/49-haproxy.conf > /dev/null <<'EOF'
+$ModLoad imudp
+$UDPServerRun 514
+$UDPServerAddress 127.0.0.1
+local0.*    /var/log/haproxy.log
+EOF
+sudo systemctl restart rsyslog
+```
+
+---
+
+## 6. KHỞI ĐỘNG (CỤ THỂ THỨ TỰ)
+
+### 6.1. Trên cả 3 controller — bật & start HAProxy trước:
+```bash
+sudo systemctl enable haproxy
+sudo systemctl start haproxy
+sudo systemctl status haproxy --no-pager | head -10
+```
+Phải thấy `active (running)`. Nếu fail xem `journalctl -u haproxy -n 50`.
+
+![altimage](../images/Screenshot_17.png)
+
+### Nếu đoạn này bị lỗi nhiều khả năng do xung đột port với Mariadb
+```bash
+[ALERT]    (14327) : Binding [/etc/haproxy/haproxy.cfg:30] for proxy galera: cannot bind socket (Address already in use) for [192.168.70.100:3306]
+[ALERT]    (14327) : [/usr/sbin/haproxy.main()] Some protocols failed to start their listeners! Exiting.
+haproxy.service: Main process exited, code=exited, status=1/FAILURE
+haproxy.service: Failed with result 'exit-code'.
+Failed to start haproxy.service - HAProxy Load Balancer.
+haproxy.service: Scheduled restart job, restart counter is at 3.
+Starting haproxy.service - HAProxy Load Balancer...
+```
+MariaDB đang nghe trên 0.0.0.0:3306 — nghĩa là chiếm cổng 3306 trên tất cả interface, bao gồm cả IP VIP 192.168.70.100 (khi VIP có mặt). HAProxy cố bind vào 192.168.70.100:3306 thì đụng độ → "Address already in use".
+- Trên Controller01
+```bash
+sudo sed -i 's/^bind-address=.*/bind-address=192.168.70.122/' /etc/mysql/mariadb.conf.d/99-galera.cnf
+grep bind-address /etc/mysql/mariadb.conf.d/99-galera.cnf
+sudo systemctl restart mariadb
+```
+- Trên Controller02
+```bash
+sudo sed -i 's/^bind-address=.*/bind-address=192.168.70.127/' /etc/mysql/mariadb.conf.d/99-galera.cnf
+grep bind-address /etc/mysql/mariadb.conf.d/99-galera.cnf
+sudo systemctl restart mariadb
+```
+- Trên Controller03
+```bash
+sudo sed -i 's/^bind-address=.*/bind-address=192.168.70.119/' /etc/mysql/mariadb.conf.d/99-galera.cnf
+grep bind-address /etc/mysql/mariadb.conf.d/99-galera.cnf
+sudo systemctl restart mariadb
+```
+- Restart từng node một, đợi mỗi node Synced lại trước khi sang node kế (đừng restart cả 3 cùng lúc, lại rơi vào tình huống Galera mồ côi)
+```bash
+# sau mỗi restart, check trên node đó:
+sudo mariadb -e "SHOW STATUS LIKE 'wsrep_local_state_comment';"   # phải = Synced
+sudo mariadb -e "SHOW STATUS LIKE 'wsrep_cluster_size';"          # phải = 3
+```
+
+### 6.2. Trên cả 3 controller — bật & start Keepalived:
+```bash
+sudo systemctl enable keepalived
+sudo systemctl start keepalived
+sudo systemctl status keepalived --no-pager | head -10
+```
+
+### 6.3. Kiểm tra VIP đang ở controller01:
+```bash
+# trên controller01
+ip -br addr show | grep 192.168.70.100
+# mong đợi thấy 192.168.70.100/24 trên ens3
+```
+Trên controller02/03: lệnh trên không in gì (VIP không ở đây — đúng).
+
+---
+
+## 7. VERIFY GIAI ĐOẠN 3
+
+### 7.1. VIP có và HAProxy nghe trên VIP
+```bash
+# trên controller01 (node đang giữ VIP)
+ip addr show eth0 | grep 192.168.70.100        # thấy /24 dev 
+sudo ss -lntp | grep -E '3306|9000'            # HAProxy nghe 3306 và 9000
+
+# từ deployer hoặc node khác
+ping -c2 192.168.70.100                         # ping được VIP
+curl -s http://192.168.70.100:9000/stats -u admin:HAProxyStatsPass | head -5  # trả HTML
+```
+
+### 7.2. Kết nối DB qua VIP (test thật)
+Trên **deployer** (hoặc node bất kỳ):
+```bash
+sudo apt -y install mariadb-client
+mariadb -h 192.168.70.100 -u root -e "SHOW STATUS LIKE 'wsrep_cluster_size';"
+```
+Nếu root chưa có quyền remote (mặc định Ubuntu chỉ cho socket local), tạm test bằng cách
+khác — chạy trên 1 controller:
+```bash
+mariadb -h 192.168.70.100 -u root -e "SHOW STATUS LIKE 'wsrep_cluster_size';"
+```
+> Mong đợi: `wsrep_cluster_size = 3`. Kết nối qua VIP về backend = HA tầng vỏ đang chạy.
+
+### 7.3. Test failover — phần quan trọng nhất
+
+**Test A — tắt HAProxy ở controller01:**
+```bash
+# trên controller01
+sudo systemctl stop haproxy
+```
+Đợi 5s. Trên controller01:
+```bash
+ip -br addr show | grep 192.168.70.100        # VIP đã đi
+```
+Trên controller02:
+```bash
+ip -br addr show | grep 192.168.70.100        # VIP đã sang đây
+```
+Bật lại HAProxy controller01:
+```bash
+sudo systemctl start haproxy
+```
+Đợi 5s. VIP quay lại controller01 (vì priority cao nhất).
+
+**Test B — tắt nguyên controller01** (mô phỏng node chết):
+```bash
+# trên controller01
+sudo shutdown -h now
+```
+Trên controller02:
+```bash
+ip -br addr show | grep 192.168.70.100        # VIP nhảy sang đây trong vài giây
+```
+Từ deployer:
+```bash
+ping -c2 192.168.70.100                        # VIP vẫn ping được
+mariadb -h 192.168.70.100 -u root -e "SHOW STATUS LIKE 'wsrep_cluster_size';"  # = 2
+```
+Bật lại controller01 → VIP quay về. Galera join lại (xem checklist Giai đoạn 1).
+
+### Checklist xanh Giai đoạn 3
+- [ ] VIP `192.168.70.100` đang ở controller01 (priority 110)
+- [ ] `curl http://192.168.70.100:9000/stats` trả về trang HAProxy stats
+- [ ] `mariadb -h 192.168.70.100` kết nối được, `cluster_size = 3`
+- [ ] Tắt HAProxy controller01 → VIP nhảy sang controller02 trong ~5s
+- [ ] Tắt nguyên controller01 → VIP vẫn nhảy sang, kết nối DB qua VIP vẫn được
+- [ ] Bật lại controller01 → VIP về (vì priority cao nhất)
+- [ ] `systemctl is-enabled haproxy keepalived` = enabled trên cả 3
+
+
+## 8. CHÚ Ý KHI TÁCH BIỆT VỚI CÁC GIAI ĐOẠN SAU
+
+- **HAProxy hiện chỉ load balance Galera (3306).** Mỗi service OpenStack sau này (Keystone 5000,
+  Nova 8774, Glance 9292...) sẽ thêm 1 `listen` block vào `/etc/haproxy/haproxy.cfg` rồi
+  `systemctl reload haproxy`. Đừng restart, dùng reload — giữ connection cũ.
+- **VIP `192.168.70.100` là endpoint nội bộ.** Mọi service OpenStack sẽ trỏ vào VIP này (cả
+  client lẫn các service nói chuyện với nhau). Không bao giờ trỏ tới IP cụ thể của 1 controller.
+- **Memcached & RabbitMQ không qua HAProxy.** Service được khai trực tiếp 3 địa chỉ controller
+  cho 2 dịch vụ này (xem lại Giai đoạn 2). HAProxy chỉ dành cho HTTP API + Galera.
+
+---
+
+## 9. NGUỒN THAM KHẢO
+
+- OpenStack HA Guide — HAProxy:
+  https://docs.openstack.org/ha-guide/control-plane-stateless.html
+- Keepalived user guide:
+  https://www.keepalived.org/manpage.html
+- VRRP unicast for cloud environments:
+  https://docs.openstack.org/openstack-ansible/latest/user/aio/quickstart.html
+
+
+# GIAI ĐOẠN 4 — KEYSTONE (Identity Service) HA
+
+> **Tiền đề:** Giai đoạn 3 xanh — VIP 192.168.70.100 hoạt động, HAProxy đang load balance Galera,
+> failover VIP test thành công.
+> **Phạm vi:** chạy Keystone trên cả **controller01/02/03**, sau HAProxy.
+> **Mục tiêu:** Identity Service HA — `openstack token issue` qua VIP ra token, tắt 1 controller
+> vẫn ra token. Đây là service OpenStack ĐẦU TIÊN trong cụm; mọi service sau (Glance, Nova,
+> Neutron, Cinder...) đều phải đăng ký + xin token với Keystone.
+
+---
+
+## 0. KEYSTONE LÀ GÌ (đọc 2 phút trước khi gõ)
+
+**Keystone = "phòng nhân sự + lễ tân" của OpenStack.** Mọi request tới bất kỳ service nào đều
+phải kèm **token**. Keystone phát token, kiểm tra quyền, và giữ "danh bạ endpoint" (Glance ở
+đâu, Nova ở đâu...).
+
+**Các khái niệm phải nắm:**
+- **Domain** — cấp tổ chức cao nhất. Mặc định có `Default`.
+- **Project** (cũ gọi tenant) — đơn vị chia tài nguyên. Mặc định tạo `admin` và sẽ thêm `service`.
+- **User** — tài khoản. `admin` được tạo lúc bootstrap.
+- **Role** — quyền (`admin`, `member`, `reader`).
+- **Service + Endpoint** — mỗi service có 3 endpoint: `public` (client ngoài), `internal` (service
+  nói chuyện nội bộ), `admin` (legacy, vẫn cần). Tất cả trỏ về **VIP**, không phải IP cụ thể.
+- **Fernet token** — token dạng "chứng minh thư có thể tự xác thực", không cần lưu DB. Cần các
+  node Keystone **dùng chung khoá Fernet** → ta phải sync khoá giữa 3 node.
+
+**Vì sao HA Keystone phải lưu ý 3 thứ:**
+1. **DB qua VIP** — keystone.conf trỏ tới `192.168.70.100:3306`, không phải controller01.
+2. **Fernet keys phải giống nhau ở 3 node** — không sync = token sinh ở node 1, validate ở node 2 fail.
+3. **HAProxy phải load balance cổng 5000** (Keystone Identity API) — cần thêm `listen` block.
+
+---
+
+## 1. TẠO DATABASE CHO KEYSTONE (1 LẦN, trên 1 controller bất kỳ)
+
+Vì Galera đồng bộ, làm 1 node là cả cụm có. Chạy trên controller01:
+
+```bash
+sudo mariadb <<'EOF'
+CREATE DATABASE keystone;
+CREATE USER 'keystone'@'%' IDENTIFIED BY 'KEYSTONE_DBPASS';
+GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%';
+FLUSH PRIVILEGES;
+EOF
+```
+
+> Đổi `KEYSTONE_DBPASS` thành mật khẩu thật của bạn. **GHI LẠI** — sẽ dùng trong keystone.conf.
+> User dùng `'%'` (không phải `'localhost'`) vì Keystone ở 3 controller sẽ connect qua VIP — IP
+> nguồn sẽ là IP node nào đó, không phải localhost.
+
+Verify từ controller02:
+```bash
+sudo mariadb -e "SHOW DATABASES;" | grep keystone   # thấy 'keystone' (Galera đã sync)
+```
+
+---
+
+## 2. CÀI KEYSTONE + APACHE (trên cả 3 controller)
+
+Keystone chạy dưới Apache với mod_wsgi, không phải daemon riêng. Apache đảm nhiệm cổng 5000.
+
+```bash
+sudo apt update
+sudo apt -y install keystone apache2 libapache2-mod-wsgi-py3 python3-pymysql
+```
+
+> `python3-pymysql` để Keystone nói chuyện với MariaDB. Gói `keystone` của Ubuntu/UCA tự cấu
+> hình Apache giúp bạn (tạo virtualhost cổng 5000) — không cần làm tay.
+
+---
+
+## 3. CẤU HÌNH `/etc/keystone/keystone.conf` (3 NODE GIỐNG NHAU)
+
+File mặc định to. Ta chỉ cần đảm bảo 2 section là đủ: `[database]` và `[token]`.
+
+### 3.1. Backup file gốc (lần đầu thôi)
+```bash
+sudo cp /etc/keystone/keystone.conf /etc/keystone/keystone.conf.bak
+```
+
+### 3.2. Ghi đè (trên CẢ 3 controller — config y hệt nhau)
+```bash
+sudo tee /etc/keystone/keystone.conf > /dev/null <<'EOF'
+[DEFAULT]
+log_dir = /var/log/keystone
+
+[database]
+# Trỏ qua VIP để HA — Galera backend sẽ là controller01 (active),
+# 02/03 backup tự nhảy nếu 01 chết.
+connection = mysql+pymysql://keystone:KEYSTONE_DBPASS@192.168.70.100/keystone
+max_retries = -1
+
+[token]
+provider = fernet
+
+[cache]
+enabled = true
+backend = dogpile.cache.memcached
+memcache_servers = 192.168.70.122:11211,192.168.70.127:11211,192.168.70.119:11211
+EOF
+```
+
+> Đổi `KEYSTONE_DBPASS` cho khớp mật khẩu mục 1. Memcache 3 node để Keystone cache token
+> rải đều, mất 1 memcache không sập.
+
+---
+
+## 4. SYNC SCHEMA DB (1 LẦN, trên controller01)
+
+```bash
+sudo -u keystone keystone-manage db_sync
+```
+
+Verify (từ controller02 để chắc Galera đã sync):
+```bash
+sudo mariadb keystone -e "SHOW TABLES;" | head -20
+```
+Phải thấy nhiều bảng (`user`, `project`, `role`, `endpoint`, `service`...).
+
+![altimage](../images/Screenshot_19.png)
+
+---
+
+## 5. KHỞI TẠO FERNET & CREDENTIAL KEYS (trên controller01)
+
+```bash
+sudo keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+sudo keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+```
+
+Hai lệnh trên tạo khoá ở `/etc/keystone/fernet-keys/` và `/etc/keystone/credential-keys/`.
+**Phải có cùng khoá trên cả 3 node**, nếu không token sinh ở node 1 validate ở node 2 sẽ fail.
+
+### 5.1. Đồng bộ khoá sang controller02/03 (chạy trên controller01)
+```bash
+# từ controller01
+sudo rsync -avz --delete /etc/keystone/fernet-keys/ controller02:/etc/keystone/fernet-keys/
+sudo rsync -avz --delete /etc/keystone/credential-keys/ controller02:/etc/keystone/credential-keys/
+sudo rsync -avz --delete /etc/keystone/fernet-keys/ controller03:/etc/keystone/fernet-keys/
+sudo rsync -avz --delete /etc/keystone/credential-keys/ controller03:/etc/keystone/credential-keys/
+```
+
+> Nếu rsync hỏi pass = SSH key chưa setup giữa các controller. Cách khác: dùng `scp` từ
+> deployer, hoặc tar rồi `ssh ... 'tar xf -'`.
+
+### 5.2. Sửa owner trên controller02 và controller03
+```bash
+# trên controller02 và controller03
+sudo chown -R keystone:keystone /etc/keystone/fernet-keys /etc/keystone/credential-keys
+sudo chmod 700 /etc/keystone/fernet-keys /etc/keystone/credential-keys
+```
+
+---
+
+## 6. BOOTSTRAP KEYSTONE (1 LẦN, trên controller01)
+
+Tạo user `admin`, project `admin`, role `admin`, và đăng ký service Keystone + 3 endpoint —
+TẤT CẢ trỏ về **VIP**.
+
+```bash
+sudo keystone-manage bootstrap \
+  --bootstrap-password ADMIN_PASS \
+  --bootstrap-admin-url http://192.168.70.100:5000/v3/ \
+  --bootstrap-internal-url http://192.168.70.100:5000/v3/ \
+  --bootstrap-public-url http://192.168.70.100:5000/v3/ \
+  --bootstrap-region-id RegionOne
+```
+
+> Đổi `ADMIN_PASS` thành mật khẩu admin. **GHI LẠI** — sẽ login OpenStack bằng pass này.
+> Endpoint dùng VIP `192.168.70.100`. Đây là điểm cốt lõi của HA: client trỏ VIP, không trỏ
+> controller01 cụ thể, controller01 chết vẫn dùng được.
+
+---
+
+## 7. CẤU HÌNH APACHE (trên cả 3 controller)
+
+### 7.1. Set ServerName
+```bash
+# trên mỗi node — ghi tên node của nó
+echo "ServerName $(hostname)" | sudo tee -a /etc/apache2/apache2.conf
+```
+
+### 7.2. Restart Apache + enable boot
+```bash
+sudo systemctl restart apache2
+sudo systemctl enable apache2
+```
+
+### 7.3. Verify Apache nghe cổng 5000 (Keystone)
+```bash
+sudo ss -lntp | grep 5000
+```
+Mong đợi: thấy `apache2` listen trên `0.0.0.0:5000` (hoặc `:::5000`).
+
+---
+
+## 8. THÊM KEYSTONE VÀO HAPROXY (trên cả 3 controller)
+
+Thêm 1 listen block — load balance cổng 5000 sang 3 controller. Khác với Galera (1 active +
+2 backup), Keystone **stateless** → balance đều cả 3.
+
+Sửa `/etc/haproxy/haproxy.cfg`, thêm vào cuối file:
+```bash
+sudo tee -a /etc/haproxy/haproxy.cfg > /dev/null <<'EOF'
+
+# === Keystone (Identity API) ===
+listen keystone_api
+    bind 192.168.70.100:5000
+    mode tcp
+    balance roundrobin
+    option tcp-check
+    tcp-check connect
+    server controller01 192.168.70.122:5000 check inter 2s rise 2 fall 3
+    server controller02 192.168.70.127:5000 check inter 2s rise 2 fall 3
+    server controller03 192.168.70.119:5000 check inter 2s rise 2 fall 3
+EOF
+```
+
+Validate config rồi reload (không restart — giữ connection cũ):
+```bash
+sudo haproxy -c -f /etc/haproxy/haproxy.cfg     # "Configuration file is valid"
+sudo systemctl reload haproxy
+```
+
+Verify HAProxy nghe 5000 trên VIP (node đang giữ VIP — controller01):
+```bash
+sudo ss -lntp | grep 5000
+# mong đợi 2 dòng: apache2 trên 0.0.0.0:5000 + haproxy trên 192.168.70.100:5000
+```
+- Nếu chỉ có đúng 1 dòng thì cần fix theo các bước sau:
+- Bước 1: Sửa `/etc/apache2/sites-available/keystone.conf` trên controller01
+```bash
+# trên controller01
+sudo tee /etc/apache2/sites-available/keystone.conf > /dev/null <<'EOF'
+Listen 192.168.70.122:5000
+
+<VirtualHost 192.168.70.122:5000>
+    WSGIDaemonProcess keystone-public processes=5 threads=1 user=keystone group=keystone display-name=%{GROUP}
+    WSGIProcessGroup keystone-public
+    WSGIScriptAlias / /usr/bin/keystone-wsgi-public
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+    ErrorLogFormat "%{cu}t %M"
+    ErrorLog /var/log/apache2/keystone.log
+    CustomLog /var/log/apache2/keystone_access.log combined
+
+    <Directory /usr/bin>
+        Require all granted
+    </Directory>
+</VirtualHost>
+EOF
+
+sudo apache2ctl configtest                # phải in "Syntax OK"
+sudo systemctl restart apache2
+sudo ss -lntp | grep apache2              # phải thấy 192.168.70.122:5000
+```
+- Verify HAProxy thấy backend controller01 UP:
+```bash
+sudo systemctl reload haproxy
+sleep 3
+sudo journalctl -u haproxy -n 5 --no-pager -o cat
+# mong đợi thấy: "Server keystone_api/controller01 is UP"
+```
+- Nếu không UP: Apache fix xong, log HAProxy sạch (không còn dòng Connection refused cho controller01). Nhưng log có vẻ bị cắt sớm, chưa thấy dòng Server keystone_api/controller01 is UP rõ ràng.
+```bash
+# 1. Status backend thực tế qua stats
+curl -s "http://192.168.70.100:9000/stats;csv" -u admin:HAProxyStatsPass | grep keystone_api | awk -F, '{print $1, $2, $18}'
+```
+- Sửa lặp lại y hệt cho Controller02 và 03
+```bash
+sudo tee /etc/apache2/sites-available/keystone.conf > /dev/null <<'EOF'
+Listen 192.168.70.127:5000
+
+<VirtualHost 192.168.70.127:5000>
+    WSGIDaemonProcess keystone-public processes=5 threads=1 user=keystone group=keystone display-name=%{GROUP}
+    WSGIProcessGroup keystone-public
+    WSGIScriptAlias / /usr/bin/keystone-wsgi-public
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+    ErrorLogFormat "%{cu}t %M"
+    ErrorLog /var/log/apache2/keystone.log
+    CustomLog /var/log/apache2/keystone_access.log combined
+
+    <Directory /usr/bin>
+        Require all granted
+    </Directory>
+</VirtualHost>
+EOF
+
+sudo tee /etc/apache2/ports.conf > /dev/null <<'EOF'
+Listen 80
+
+<IfModule ssl_module>
+        Listen 443
+</IfModule>
+
+<IfModule mod_gnutls.c>
+        Listen 443
+</IfModule>
+EOF
+
+sudo apache2ctl configtest
+sudo systemctl restart apache2
+sudo ss -lntp | grep 5000
+```
+
+Sau khi xong cả 2 node
+Quay lại controller01 (hoặc bất kỳ controller nào) kiểm tra HAProxy thấy đủ 3 backend UP:
+```bash
+curl -s "http://192.168.70.100:9000/stats;csv" -u admin:HAProxyStatsPass | grep keystone_api | awk -F, '{print $1, $2, $18}'
+```
+---
+
+## 9. TẠO FILE `admin-openrc` (trên deployer)
+
+File này set biến môi trường để chạy lệnh `openstack` CLI mà không phải gõ pass mỗi lần.
+
+```bash
+# trên deployer
+cat > ~/admin-openrc <<'EOF'
+export OS_PROJECT_DOMAIN_NAME=Default
+export OS_USER_DOMAIN_NAME=Default
+export OS_PROJECT_NAME=admin
+export OS_USERNAME=admin
+export OS_PASSWORD=ADMIN_PASS
+export OS_AUTH_URL=http://192.168.70.100:5000/v3
+export OS_IDENTITY_API_VERSION=3
+export OS_IMAGE_API_VERSION=2
+EOF
+chmod 600 ~/admin-openrc
+```
+
+> Đổi `ADMIN_PASS` cho khớp pass bootstrap ở mục 6.
+
+Đảm bảo deployer có CLI (cài ở Giai đoạn 0 rồi, nhưng check lại):
+```bash
+which openstack    # /usr/bin/openstack
+```
+
+---
+## Đoạn này sẽ check xem VIP có cho phép 
+- Nếu `openstack token issue` không được chỉ có 2 khả năng:
+  - anti-spoofing / port security
+
+- Cách fix — phải làm ở cloud console, không phải trong VM
+Mỗi cloud có thuật ngữ khác nhau, nhưng đều có 1 trong 3 cách:
+
+**Cách 1** — allowed_address_pairs (OpenStack-native, AWS, Azure):
+Gắn thêm IP 192.168.70.100/24 vào danh sách "allowed addresses" cho NIC eth0 của cả 3 controller. Cho phép NIC gửi/nhận packet với source/dest = .100 ngoài IP gốc.
+
+**Cách 2** — port_security_enabled = false:
+Tắt anti-spoofing hoàn toàn cho 3 NIC controller. Nhanh nhưng rộng (cho phép gửi mọi IP).
+
+**Cách 3** — gán VIP làm secondary IP ở console cloud (như "Reserved IP" của một số provider): cloud tự biết IP này hợp lệ.
+
+Bạn phải hỏi admin cloud công ty xem cloud của họ là gì (OpenStack? VMware? cloud thuê?), rồi xin 1 trong 3:
+
+- Bật `allowed_address_pairs = 192.168.70.100/32` cho NIC của controller01, 02, 03
+- Hoặc tắt port security cho 3 NIC đó
+- Hoặc cấp 1 VIP "reserved" đúng quy trình của họ
+
+Đây là việc của tầng cloud, không có cách nào fix từ trong VM. Mn của bạn xác nhận MAC bình thường — nhưng mn có thể chưa nghĩ tới anti-spoofing. Hỏi cụ thể "có port security / anti-spoofing chặn IP ngoài IP gốc không, và làm sao bật allowed_address_pairs?"
+
+## Tips nhỏ đổi IP VIP(nếu bất khả kháng)
+Vì ta đã làm xong ở trên nhưng vì tình huống bất khả kháng ta phải đổi IP VIP làm theo các bước sau:
+### 1.1 `/etc/hosts` trên cả 11 node (deployer + 3 controller + 3 compute + cinder + 3 ceph)
+```bash
+sudo sed -i 's/192\.168\.70\.100/192.168.70.120/g' /etc/hosts
+# verify
+grep vip-internal /etc/hosts
+```
+### 1.2 Keepalived config trên 3 controller (file `/etc/keepalived/keepalived.conf`)
+```bash
+sudo sed -i 's/192\.168\.70\.100/192.168.70.120/g' /etc/keepalived/keepalived.conf
+sudo systemctl restart keepalived
+# verify
+ip -br addr show | grep 192.168.70.120   # trên controller01 phải có
+```
+### 1.3 HAProxy config trên 3 controller (file `/etc/haproxy/haproxy.cfg`)
+```bash
+sudo sed -i 's/192\.168\.70\.100/192.168.70.120/g' /etc/haproxy/haproxy.cfg
+sudo haproxy -c -f /etc/haproxy/haproxy.cfg   # "Configuration file is valid"
+sudo systemctl restart haproxy
+```
+### 1.4 Keystone config trên 3 controller (`/etc/keystone/keystone.conf — chỉ có 1 chỗ là connection = ...@192.168.70.100/keystone`)
+```bash
+sudo sed -i 's/192\.168\.70\.100/192.168.70.120/g' /etc/keystone/keystone.conf
+sudo systemctl restart apache2
+```
+### 1.5 Keystone endpoint trong DB
+- Drop DB Keystone và bootstrap lại với VIP mới (làm lại từ đầu)
+```bash
+# trên controller01, SAU KHI đã đổi VIP và Keystone chạy được trên .120
+sudo mariadb -e "DROP DATABASE keystone; CREATE DATABASE keystone; GRANT ALL ON keystone.* TO 'keystone'@'%';"
+sudo -u keystone keystone-manage db_sync
+sudo keystone-manage bootstrap \
+  --bootstrap-password ADMIN_PASS \
+  --bootstrap-admin-url http://192.168.70.120:5000/v3/ \
+  --bootstrap-internal-url http://192.168.70.120:5000/v3/ \
+  --bootstrap-public-url http://192.168.70.120:5000/v3/ \
+  --bootstrap-region-id RegionOne
+```
+
+## 10. VERIFY GIAI ĐOẠN 4
+
+### 10.1. Lấy token qua VIP (trên deployer)
+```bash
+source ~/admin-openrc
+openstack token issue
+```
+Mong đợi: bảng có `id` (token), `expires`, `project_id`, `user_id`. Lấy được token = Keystone +
+HAProxy + DB + Memcache chạy đúng.
+
+### 10.2. Liệt kê service + endpoint
+```bash
+openstack service list
+# +----+----------+----------+
+# | ID | Name     | Type     |
+# +----+----------+----------+
+# | .. | keystone | identity |
+# +----+----------+----------+
+
+openstack endpoint list
+# 3 dòng: public/internal/admin, đều trỏ http://192.168.70.100:5000/v3/
+```
+
+![altimage](../images/Screenshot_20.png)
+
+### 10.3. Tạo project `service` (chuẩn bị cho các giai đoạn sau)
+Mọi service OpenStack (Glance/Nova/Neutron...) sẽ tạo user trong project này:
+```bash
+openstack project create --domain default --description "Service Project" service
+openstack project list   # thấy 'admin' và 'service'
+```
+
+### 10.4. Test HA — tắt 1 controller, vẫn lấy được token
+
+**Test A — tắt Apache ở controller01:**
+```bash
+ssh controller01 'sudo systemctl stop apache2'
+# trên deployer
+openstack token issue   # vẫn ra token (HAProxy chuyển sang controller02/03)
+ssh controller01 'sudo systemctl start apache2'
+```
+
+**Test B — tắt nguyên controller01:**
+```bash
+ssh controller01 'sudo shutdown -h now'
+sleep 30
+# trên deployer
+openstack token issue        # vẫn ra token
+openstack endpoint list      # vẫn list được
+```
+Bật lại controller01. Đợi Galera join về size=3, Apache + HAProxy + Keepalived auto start.
+
+## 11. NGUỒN THAM KHẢO
+
+- Keystone Install — Ubuntu (2025.1):
+  https://docs.openstack.org/keystone/2025.1/install/keystone-install-ubuntu.html
+- Fernet tokens — key distribution for HA:
+  https://docs.openstack.org/keystone/latest/admin/fernet-token-faq.html
+- OpenStack HA Guide:
+  https://docs.openstack.org/ha-guide/
