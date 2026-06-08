@@ -549,7 +549,7 @@ Copy chuỗi đó. **Trên controller02 và controller03**, dừng dịch vụ r
 ```bash
 # trên controller02 VÀ controller03 (làm từng node)
 sudo systemctl stop rabbitmq-server
-echo -n 'DÁN_CHUỖI_COOKIE_TỪ_CONTROLLER01_VÀO_ĐÂY' | sudo tee /var/lib/rabbitmq/.erlang.cookie
+echo -n 'Husc2LW1zHb0Nzmsur1rTlSHmCYiVup3Fs4Pj1MwFl8cUJ0rWNDYlcU4' | sudo tee /var/lib/rabbitmq/.erlang.cookie
 sudo chown rabbitmq:rabbitmq /var/lib/rabbitmq/.erlang.cookie
 sudo chmod 400 /var/lib/rabbitmq/.erlang.cookie
 sudo systemctl start rabbitmq-server
