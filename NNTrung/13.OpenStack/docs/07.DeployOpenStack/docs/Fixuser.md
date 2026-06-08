@@ -1,5 +1,6 @@
-1. **`/etc/skel/.profile` và `/etc/skel/.bashrc` cũng bị nhiễm XML** → nên lệnh `cp /etc/skel/...` của bạn chỉ copy file hỏng đè lên file hỏng.
-2. Lệnh `sudo cp` bạn chạy trước đó có vẻ không thực sự ghi đè (có thể do alias hoặc gì đó), nhưng giờ không quan trọng — ta sẽ tạo file thủ công bằng `tee`.
+# Khi tạo User trên cloud thường bị nhiễm lỗi ký tự
+
+Trong đa số trường hợp **`/etc/skel/.profile` và `/etc/skel/.bashrc` cũng bị nhiễm XML** → nên lệnh `cp /etc/skel/...`  chỉ copy file hỏng đè lên file hỏng.
 
 Hệ thống `/etc/profile` và `/etc/bash.bashrc` vẫn ổn nên fix xong là dùng bình thường.
 
