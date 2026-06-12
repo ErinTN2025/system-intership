@@ -70,7 +70,7 @@
 ## Cấu trúc file, thư mục trong Linux
 - Mọi thứ trong Linux đều là file. Chúng được phân cấp theo tiêu chuẩn FHS(Filesystem Hierarchy Standard)
 - Linux represents system resources — including hardware and communication channels — as files.
-- All hardware devices are represented under the directory: 📂 `/dev` → stands for “device files”
+- All hardware devices are represented under the directory:  `/dev` → stands for “device files”
 - For example:
 
 | Device                  | File in `/dev`                | Description              |
