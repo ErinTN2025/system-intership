@@ -255,3 +255,42 @@ Nhìn vào trên ta thấy phân quyền rõ ràng giả sử đó là 1 file qu
 | Phân quyền  | "Ai được làm gì?" |
 | Cấp quyền   | "Làm cách nào để người đó có quyền đó "|
 
+
+## Systemd
+Systemd là tiến trình đầu tiên được kernel khởi động và chịu trách nhiệm quản lý toàn bộ các service, tiến trình nền và quá trình boot của hệ thống.
+- Nó như là 1 quản gia của cả hệ điều hành Linux
+
+```bash
+BIOS/UEFI
+    ↓
+Bootloader (GRUB)
+    ↓
+Kernel
+    ↓
+systemd (PID 1)
+```
+### 2. Các thành phần của Systemd
+Về cơ bản thì systemd tương đương với một chương trình quản lý hệ thống và các dịch vụ trong Linux. Nó cung cấp một số các tiện ích như sau
+
+- `systemctl` dùng để quản lý trạng thái của các dịch vụ hệ thống (bắt đầu, kết thúc, khởi động lại hoặc kiểm tra trạng thái hiện tại)
+- `journald` dùng để quản lý nhật ký hoạt động của hệ thống (hay còn gọi là ghi log)
+- `logind` dùng để quản lý và theo dõi việc đăng nhập/đăng xuất của người dùng
+- `networkd` dùng để quản lý các kết nối mạng thông qua các cấu hình mạng
+- `timedated` dùng để quản lý thời gian hệ thống hoặc thời gian mạng
+- `udev` dùng để quản lý các thiết bị và firmware
+
+### 3. Unit file
+Tất cả các chương trình được quản lý bởi **systemd** đều được thực thi dưới dạng `daemon` hay `background` bên dưới nền và được cấu hình thành 1 file configuration gọi là unit file. Các unit file này sẽ bao gồm 12 loại:
+
+- service (các file quản lý hoạt động của 1 số chương trình)
+- socket (quản lý các kết nối)
+- device (quản lý thiết bị)
+- mount (gắn thiết bị)
+- automount (tự đống gắn thiết bị)
+- swap (vùng không gian bộ nhớ trên đĩa cứng)
+- target (quản lý tạo liên kết)
+- path (quản lý các đường dẫn)
+- timer (dùng cho cron-job để lập lịch)
+- snapshot (sao lưu)
+- slice (dùng cho quản lý tiến trình)
+- scope (quy định không gian hoạt động)

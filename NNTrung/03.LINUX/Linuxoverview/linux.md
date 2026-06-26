@@ -170,8 +170,8 @@
 
 | Phần                         | Lưu gì                                                                                                                          |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| 🧱 **Dữ liệu (data blocks)** | Nội dung thực sự của file (ví dụ: chữ, hình, mã nguồn, …)                                                                       |
-| 📇 **inode**                 | Thông tin *về* file (metadata) — ai là chủ sở hữu, quyền truy cập, thời gian tạo/sửa, vị trí dữ liệu nằm ở đâu trên ổ đĩa, v.v. |
+|  **Dữ liệu (data blocks)** | Nội dung thực sự của file (ví dụ: chữ, hình, mã nguồn, …)                                                                       |
+|  **inode**                 | Thông tin *về* file (metadata) — ai là chủ sở hữu, quyền truy cập, thời gian tạo/sửa, vị trí dữ liệu nằm ở đâu trên ổ đĩa, v.v. |
 
 - In Linux file systems, the primary function of an inode is to store metadata (information about a file) — not the file’s name or its data, but details about the file.
 - Một Inode chứa rất nhiều thông tin quan trọng:
@@ -304,3 +304,4 @@ Tập hợp này gọi là Linux distribution.
 - Symlink còn giúp truy cập và lưu trữ file ở nhiều vị trí khác nhau mà không cần phải tạo nhiều bản sao.
 
 ![altimgae](../images/linkonubuntu.png)
+
