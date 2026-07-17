@@ -151,11 +151,18 @@ CMD ["app.js"]
 Giải thích nhanh (đúng theo tài liệu tham khảo Dockerfile):
 
 * `FROM node:22-alpine AS builder` / `AS runner`: 2 stage — stage đầu cài `npm ci`, stage sau chỉ copy kết quả sang, không mang theo cache npm hay dev-dependencies → image nhỏ hơn nhiều.
-* `COPY package*.json ./` đặt **trước** `COPY . .` để tận dụng build cache: sửa code (`app.js`) không làm cache-miss bước `npm ci`.
-* `USER app`: không chạy container bằng root.
-* `HEALTHCHECK`: Compose/Swarm dựa vào đây để biết container đã "healthy" chưa.
-* `ENTRYPOINT` + `CMD` dạng exec: nhận đúng `SIGTERM` khi `docker stop`.
+* `COPY package*.json ./`: Nó sẽ khớp và copy cả hai file: `package.json` và `package-lock.json` (nếu có).
 
+Đây là điểm mấu chốt của Docker Layer Caching (bộ nhớ đệm). Docker build theo từng bước (layer). Nếu file `package.json` không có gì thay đổi so với lần build trước, Docker sẽ dùng lại "bản lưu" (cache) của bước cài đặt thư viện tiếp theo mà không cần tải lại từ đầu. Việc này giúp bạn tiết kiệm hàng phút trời mỗi lần build lại code.
+
+- `npm ci` (Clean Install): Khi build image, chúng ta dùng npm ci. Lệnh này nhanh hơn npm install rất nhiều vì nó không cố gắng tự động cập nhật thư viện. Nó hoạt động cực kỳ nghiêm ngặt: xóa thư mục node_modules cũ (nếu có) và cài đặt chính xác 100% các phiên bản được ghi trong file `package-lock.json`. Điều này đảm bảo app chạy trong Docker hoàn toàn giống hệt app chạy ở máy bạn, tránh lỗi
+- `--omit=dev`: Tham số này yêu cầu npm bỏ qua không cài đặt các thư viện phục vụ cho việc phát triển (`devDependencies` như: các công cụ kiểm tra code, chạy test, nodemon, typescript compiler...). Nhờ vậy, thư mục node_modules trong Docker image của bạn sẽ nhẹ hơn rất nhiều, giúp image gọn gàng và chạy mượt mà hơn.
+
+- `FROM node:20 AS builder`: Từ khóa `AS builder` ở đây dùng để đặt tên cho giai đoạn build (stage) này là `builder`.
+  - Bình thường: Lệnh COPY sẽ lấy file từ máy của bạn (máy host) để bỏ vào Docker image.
+  - Khi có `--from=builder`: Lệnh `COPY` sẽ không lấy file từ máy của bạn nữa. Thay vào đó, nó nhảy vào bên trong kết quả của giai đoạn `builder` trước đó để copy thư mục `/app/node_modules` ra ngoài.
+  - Mục đích là để giảm dung lượng tối đa cho Image cuối cùng: Giai đoạn 1 (builder): Bạn tải về đầy đủ các công cụ build, trình biên dịch, chạy lệnh npm install để cài đặt cả thư viện phát triển (devDependencies) và các file rác. Giai đoạn này image sẽ rất nặng (có thể lên tới 1GB).
+  - Giai đoạn 2 (Production): Bạn tạo một stage mới tinh, siêu nhẹ. Sau đó bạn chỉ dùng `--from=builder` để nhặt đúng thư mục node_modules đã được build xong từ stage trước bỏ qua stage này. Toàn bộ các công cụ build cồng kềnh ở stage 1 sẽ bị vứt bỏ, không bị mang vào image cuối cùng khi deploy lên server.
 ---
 
 ## 4. Build image
@@ -170,13 +177,20 @@ Kiểm tra:
 docker image ls
 ```
 
+![altimage](../images/Screenshot_33.png)
+
 Xem các layer đã tạo (đối chiếu với Dockerfile):
 
 ```bash
 docker image history counter-app:latest
 ```
+![altimage](../images/Screenshot_34.png)
 
+- **Lưu ý**:
+  - `docker image history` chỉ hiển thị quá trình tạo image. Image hiển thị ID là image cuối cùng.
+  - Xem layer thật bằng `docker image inspect` 
 ---
+
 
 ## 5. Chạy thử container đơn lẻ (không dùng Compose)
 
@@ -197,6 +211,8 @@ docker container run -d --name web \
   counter-app:latest
 ```
 
+![altimage](../images/Screenshot_36.png)
+
 Kiểm tra:
 
 ```bash
@@ -210,10 +226,15 @@ docker container logs web
 curl http://localhost:8080
 curl http://localhost:8080/health
 ```
+![altimage](../images/Screenshot_37.png)
+
+![altimage](../images/Screenshot_38.png)
 
 Gọi lại nhiều lần, số lượt truy cập sẽ tăng dần — chứng tỏ Redis đã lưu state thành công.
 
 Dọn dẹp bước thử nghiệm này trước khi sang bước Compose:
+
+
 
 ```bash
 docker container rm -f web redis
@@ -285,6 +306,8 @@ Kiểm tra:
 docker compose ps
 docker compose logs -f web
 ```
+
+![altimage](../images/Screenshot_48.png)
 
 Test:
 
