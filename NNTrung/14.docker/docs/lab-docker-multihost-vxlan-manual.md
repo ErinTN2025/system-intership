@@ -1,12 +1,6 @@
-# Lab: Multi-host Docker Networking bằng VXLAN thủ công (không Swarm, không tool auto)
+# Lab: Multi-host Docker Networking bằng VXLAN
 
-Mục tiêu: container ở **Host A** ping thẳng được container ở **Host B** — hai host khác máy vật lý/VM, không cùng LAN layer 2 — bằng cách tự tay dựng một đường hầm **VXLAN** nối 2 Docker bridge lại thành 1 miền L2 logic.
-
-Không dùng: `docker swarm`, `docker network create -d overlay`, pipework, flannel, weave... Toàn bộ dùng `ip link` (iproute2) + `docker network create -d bridge` thuần.
-
----
-
-## 0. Khái niệm cần nắm trước khi làm
+## 0. Khái niệm 
 
 | Thuật ngữ | Ý nghĩa |
 |---|---|
@@ -270,7 +264,7 @@ ip link delete vxlan100
 
 ---
 
-## 10. Mở rộng (đọc thêm, không bắt buộc làm)
+## 10. Mở rộng 
 
 * **Hơn 2 host**: cách làm `remote <ip>` cố định ở trên chỉ hợp với **unicast point-to-point** (2 node). Với N host, thủ công có 2 hướng:
   1. Multicast: `ip link add vxlan100 type vxlan id 100 group 239.1.1.1 dev eth0` — cần mạng underlay hỗ trợ IGMP/multicast.
