@@ -225,7 +225,8 @@ Dọn dẹp:
 docker rm -f w4
 ```
 
-**Kết luận quan sát được:** Bind mount vào một thư mục = ghi đè toàn bộ, không merge. Muốn giữ file gốc của image, chỉ nên mount **từng file cụ thể** (ví dụ chỉ `nginx.conf`), không mount đè cả thư mục cha nếu không chắc.
+- Khi mount sẽ bị mount đè nếu như file ở host không phải là file rỗng, Quy tắc này chỉ áp dụng cho named volume, không áp dụng cho bind mount.
+- Nếu là bind mount thì thư mục được mount vào (không phải host) sẽ luôn luôn bị đè nghĩa là luôn lấy file của host ấy như lab 3.
 
 ---
 
