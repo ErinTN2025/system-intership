@@ -8,8 +8,8 @@ Tổng số lượng: **5 VMs**
 | --- | --- | --- |
 | **Load Balancer & Gateway** | 1 | Cân bằng tải, tiếp nhận và điều hướng traffic |
 | **Backend** | 2 | Chạy ứng dụng web, xử lý logic, giảm tắc nghẽn traffic |
-| **Database+Cache+MinIO** | 1 | Lưu trữ dữ liệu hệ thống <br>• **Cache :** Quản lý cache (Redis)<br> • **Backup Script:** Tự động sao lưu dữ liệu, phòng chống sự cố<br> |
-| **Monitoring** | 1 | Theo dõi, giám sát & quản lý tài nguyên hệ thống<br> • **CI/CD:** Tự động hóa đóng gói, kiểm thử & triển khai phần mềm |
+| **Database+Cache+MinIO** | 1 | Lưu trữ dữ liệu hệ thống <br>• **Cache :** Quản lý cache (Redis)<br> |
+| **Monitoring** | 1 | Theo dõi, giám sát & quản lý tài nguyên hệ thống<br> • **CI/CD:** Tự động hóa đóng gói, kiểm thử & triển khai phần mềm • **Backup Script:** Tự động sao lưu dữ liệu, phòng chống sự cố<br>|
 
 
 
@@ -112,37 +112,46 @@ LB:
 
 | Source   | Destination | Port | Sử dụng cho   |
 | -------- | ----------- | ---- | ------------- |
-| Internet | HAProxy     | 443  | HTTPS         |
-| HAProxy  | Flask       | 5000 | Reverse Proxy |
-| Monitor  | LB          |  22  | SSH           |
+| Internet | LB          | 443  | HTTPS         |
+| Monitor  | LB          | 22   | SSH           |
 | Monitor  | LB          | 9100 | node_exporter |
+| LB       | Monitor     | 3100 | Loki          |
 
 Web1 + 2:
 
 | Source   | Destination | Port | Sử dụng cho   |
 | -------- | ----------- | ---- | ------------- |
-| HAProxy  | Flask       | 5000 | Reverse Proxy |
-| Flask    | MariaDB     | 3306 | Database      |
-| Flask    | Redis       | 6379 | Cache         |
-| Monitor  | LB          |  22  | SSH           |
-| Monitor  | Flask          | 9100 | node_exporter |
+| LB       | Web1/Web2   | 5000 | Reverse Proxy |
+| Web1/Web2| DB+MinIO+Cache | 3306 | Database   |
+| Web1/Web2| DB+MinIO+Cache | 6379 | Cache      |
+| Monitor  | Web1/Web2   | 22   | SSH           |
+| Monitor  | Web1/Web2   | 9100 | node_exporter |
+| Web1/Web2| Monitor     | 3100 | Loki          |
 
 DB+MinIO+Cache Server:
 
-| Source   | Destination | Port | Sử dụng cho   |
-| -------- | ----------- | ---- | ------------- |
-| Flask    | MariaDB  | 3306 | Database         |
-| Monitor  | LB          |  22  | SSH           |
-| Flask    | MinIO         | 9000 | Flask gọi API |
-| Monitor    | MinIO       | 9001 | Quan trị MinIO |
-| Monitor  | DB+MinIO          | 9100 | node_exporter |
-| Monitor  | DB+MinIO          | 9104 | mysql_exporter |
+| Source   | Destination     | Port | Sử dụng cho     |
+| -------- | --------------- | ---- | --------------- |
+| Web1/Web2| DB+MinIO+Cache  | 3306 | Database        |
+| Web1/Web2| DB+MinIO+Cache  | 6379 | Cache           |
+| Web1/Web2| DB+MinIO+Cache  | 9000 | MinIO API       |
+| Monitor  | DB+MinIO+Cache  | 22   | SSH             |
+| Monitor  | DB+MinIO+Cache  | 9001 | MinIO Console   |
+| Monitor  | DB+MinIO+Cache  | 9100 | node_exporter   |
+| Monitor  | DB+MinIO+Cache  | 9104 | mysqld_exporter |
+| Monitor  | DB+MinIO+Cache  | 9121 | redis_exporter  |
+| DB+MinIO+Cache | Monitor   | 3100 | Loki            |
 
 Monitor:
 
-| Source   | Destination | Port | Sử dụng cho   |
-| -------- | ----------- | ---- | ------------- |
-| Monitor  | LB          |  22  | SSH           |
+| Source   | Destination | Port | Sử dụng cho          |
+| -------- | ----------- | ---- | -------------------- |
+| Admin    | Monitor     | 22   | SSH quản trị         |
+| LB       | Monitor     | 3100 | Loki nhận log        |
+| Web1/Web2| Monitor     | 3100 | Loki nhận log        |
+| DB+MinIO+Cache | Monitor | 3100 | Loki nhận log     |
+| Monitor  | DB+MinIO+Cache | 3306 | Backup (mysqldump, pull) |
+| Monitor  | GitHub (Internet) | 443 | CI/CD pull image/code |
 
 
 ## 7. Audit

@@ -162,6 +162,20 @@ sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 sudo iptables -L -n -v
 ```
 
+Backend 1+2:
+```bash
+# Trên web1 — INPUT chain
+
+# 1. Cho phép traffic MỚI đúng port 5000, chỉ từ LB
+iptables -A INPUT -p tcp -s 10.0.20.19 --dport 5000 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+
+# 2. Cho phép traffic TRẢ VỀ của các kết nối đã được thiết lập (không quan tâm port cụ thể)
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+# 3. Mặc định drop hết còn lại
+iptables -P INPUT DROP
+```
+
 ### 1.8 Cài đặt OpenSSH
 ```bash
 sudo apt install openssh-server -y
