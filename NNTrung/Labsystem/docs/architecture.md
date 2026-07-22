@@ -56,7 +56,7 @@ Backend Storage 1 trong 2 phương án dưới đây:
 - auditd
 - Redis: lưu cache
 
-### 3.5 Monitor quản lý
+### 3.4 Monitor quản lý
 Monitoring:
 - Prometheus
 - Grafana
@@ -112,10 +112,12 @@ LB:
 
 | Source   | Destination | Port | Sử dụng cho   |
 | -------- | ----------- | ---- | ------------- |
+| Internet | LB          | 80   | HTTP          |
 | Internet | LB          | 443  | HTTPS         |
 | Monitor  | LB          | 22   | SSH           |
 | Monitor  | LB          | 9100 | node_exporter |
 | LB       | Monitor     | 3100 | Loki          |
+| Monitor  | LB  | 9115 | blackbox_exporter   |
 
 Web1 + 2:
 
@@ -127,6 +129,7 @@ Web1 + 2:
 | Monitor  | Web1/Web2   | 22   | SSH           |
 | Monitor  | Web1/Web2   | 9100 | node_exporter |
 | Web1/Web2| Monitor     | 3100 | Loki          |
+| Monitor  | Web/Web2  | 9115 | blackbox_exporter   |
 
 DB+MinIO+Cache Server:
 
@@ -140,6 +143,7 @@ DB+MinIO+Cache Server:
 | Monitor  | DB+MinIO+Cache  | 9100 | node_exporter   |
 | Monitor  | DB+MinIO+Cache  | 9104 | mysqld_exporter |
 | Monitor  | DB+MinIO+Cache  | 9121 | redis_exporter  |
+| Monitor  | DB+MinIO+Cache  | 9115 | blackbox_exporter   |
 | DB+MinIO+Cache | Monitor   | 3100 | Loki            |
 
 Monitor:
@@ -155,8 +159,37 @@ Monitor:
 
 
 ## 7. Audit
-
 - Others không có bất cứ quyền gì 
+  - Không phải file công khai chặn hết quyền người ngoài xem hay truy cập.
 - Mỗi Service sẽ là 1 system user riêng
+  - Đảm bảo khi 1 user bị đụng chạm chỉ 1 dịch vụ bị ảnh hưởng, không lây lan sang các dịch vụ khác.
 - Các file thông thường: 750
+  - Người sở hữu có toàn quyền, những người trong group được chỉ định chỉ có quyền xem không được chỉnh sửa file.
 - File Backup : 700
+
+## 8. Check list
+### Chỉ có duy nhất 1 LB
+- Hiện tại chỉ có duy nhất 1 LB nếu LB sập thì cả hệ thống cũng sẽ sập theo, đề xuất dùng Keepalive + VIP, khi triển khai thực tế tối thiểu 3 node LB.
+### Backend 
+- Mô phỏng 2 backend, làm giảm tải cho 1 node duy nhất nhờ cơ chế xoay vòng round robin. Nếu 1 node chết, node còn lại vẫn còn có thể tạm thời chống đỡ.
+### Database + Cache + Object Storage
+- Thiết kế nên chỉ riêng từng cụm clu
+ster Database, Redis, MinIO. Khi 1 cụm bị mất vẫn còn các cụm còn lại lưu thông tin.
+### Audit
+- Nếu 1 dịch vụ bị đổi quyền sở hữu, daemon của dịch vụ đó sẽ bị crash
+- blackbox_exporter là dịch vụ quan sát port trên máy bị tắt đó và báo lại về cho Monitor
+- auditd rule xác định thời điểm nào ai đã làm gì chown/chmod, ...
+- Loki log theo dõi lỗi Permission denied khi dịch vụ cố khởi động lại.
+### Network 
+- Cấu hình Iptables chặn các port không cần thiết - thiết kế port matrix trước để tránh nhầm lẫn.
+- DNS trỏ đến 1 trong những DNS server public của google: chuẩn bị thêm DNS server dự phòng ngoài 8.8.8.8
+- Ghi chép quản lý Network chi tiết cụ thể. Network được chia từng dải cô lập.
+- DB, Cache, Redis dùng chung 1 máy ảo nhưng container của chúng chia dải riêng.
+### Hardware
+- Đo hiệu suất RAM CPU: node-exporter trên từng node và Prometheus ở Monitor để quản 
+- Quản lý dung lượng ổ cứng
+- Đo tổng số Inode, inode còn trống
+### Backup 
+- Có định hướng thiết kế backup file bị hỏng
+### Datasaved
+- MinIO/ Redis không bị mất dữ liệu khi restart 
