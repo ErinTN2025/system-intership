@@ -2,14 +2,15 @@
 
 ## 1. Mô Hình Triển Khai (Deployment Model)
 
-Tổng số lượng: **5 VMs** 
+Tổng số lượng: **6 VMs** 
 
 | VM / Thành phần | Số lượng | Mô tả chức năng |
 | --- | --- | --- |
 | **Load Balancer & Gateway** | 1 | Cân bằng tải, tiếp nhận và điều hướng traffic |
 | **Backend** | 2 | Chạy ứng dụng web, xử lý logic, giảm tắc nghẽn traffic |
 | **Database** | 1 | Lưu trữ dữ liệu hệ thống *(Lưu ý: Môi trường Production thực tế cần 1 Database Cluster)* |
-| **Management & Ops Server** | 1 | Tích hợp các dịch vụ nền tảng và vận hành hệ thống:<br>• **Cache & Queue:** Quản lý cache (Redis) & Giao tiếp bất đồng bộ (RabbitMQ)<br>• **Monitoring:** Theo dõi, giám sát & quản lý tài nguyên hệ thống<br>• **Backup Script:** Tự động sao lưu dữ liệu, phòng chống sự cố<br>• **CI/CD:** Tự động hóa đóng gói, kiểm thử & triển khai phần mềm |
+| **Management & Ops Server** | 1 | Tích hợp các dịch vụ nền tảng và vận hành hệ thống:<br>• **Cache & Queue:** Quản lý cache (Redis) & Giao tiếp bất đồng bộ (RabbitMQ)<br> • **Backup Script:** Tự động sao lưu dữ liệu, phòng chống sự cố<br>| 
+| **Monitoring:** | 1 | Theo dõi, giám sát & quản lý tài nguyên hệ thống<br> • **CI/CD:** Tự động hóa đóng gói, kiểm thử & triển khai phần mềm |
 
 
 
