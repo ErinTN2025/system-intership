@@ -29,7 +29,7 @@ Các tham số cấu hình chung dưới đây được áp dụng đồng bộ 
 | **Firewall**              | Iptables                                                         |
 | **Swap**                  | Disable                                                          |
 | **System Update**         | apt update && apt upgrade (Update mới nhất ngày 20/07/2026)      |
-| **Docker**         | docker cli, docker engine bản 29.6.0-1~ubuntu.22.04~jammy, containerd.io, docker-buildx-plugin, docker-compose-plugin                                      |
+| **Docker**         | docker cli, docker engine bản 29.6.0-1 ubuntu.22.04 jammy, containerd.io, docker-buildx-plugin, docker-compose-plugin                                      |
 
 ## 3. Những phần mềm cài đặt trên từng máy
 ### 3.1 Load Balancer
