@@ -9,7 +9,7 @@ Tổng số lượng: **6 VMs**
 | **Load Balancer & Gateway** | 1 | Cân bằng tải, tiếp nhận và điều hướng traffic |
 | **Backend** | 2 | Chạy ứng dụng web, xử lý logic, giảm tắc nghẽn traffic |
 | **Database** | 1 | Lưu trữ dữ liệu hệ thống *(Lưu ý: Môi trường Production thực tế cần 1 Database Cluster)* |
-| **Management & Ops Server** | 1 | Tích hợp các dịch vụ nền tảng và vận hành hệ thống:<br>• **Cache & Queue:** Quản lý cache (Redis) & Giao tiếp bất đồng bộ (RabbitMQ)<br> • **Backup Script:** Tự động sao lưu dữ liệu, phòng chống sự cố<br>| 
+| **Management & Ops Server** | 1 | Tích hợp các dịch vụ nền tảng và vận hành hệ thống:<br>• **Cache & Queue:** Quản lý cache (Redis)<br> • **Backup Script:** Tự động sao lưu dữ liệu, phòng chống sự cố<br>| 
 | **Monitoring:** | 1 | Theo dõi, giám sát & quản lý tài nguyên hệ thống<br> • **CI/CD:** Tự động hóa đóng gói, kiểm thử & triển khai phần mềm |
 
 
@@ -36,28 +36,50 @@ Các tham số cấu hình chung dưới đây được áp dụng đồng bộ 
 ### 3.1 Load Balancer
 - HA Proxy 
 - Openssh client
+- node_exporter
+- auditd
 ### 3.2 Web1+2
-- Nginx
+- Promtail
 - Openssh client
+- node_exporter
+- auditd
 ### 3.3 DB+MinIO
+Quản trị:
 - Openssh cli
-Database
+- auditd
+Database:
 - MariaDB
-
+- node_exporter
+- mysql_exporter
 Backend Storage 1 trong 2 phương án dưới đây:
-
-- NFS Share:
+- NFS Share
 - MinIO
 ### 3.4 Redis
+- node_exporter
 - Openssh cli
+- auditd
 - Redis: lưu cache
-### 3.5 Monitor quản lý 
+### 3.5 Monitor quản lý
+Monitoring:
 - Prometheus
 - Grafana
-- Loki
-- Zabbix(lựa chọn thay thế)
-- Openssh Server
+- Loki (nếu giữ)
+- Docker (chạy 3 service trên dạng container)
 
+Backup:
+- Cron (có sẵn trong OS, chỉ cần viết script + đăng ký lịch)
+- mariadb-client (để chạy lệnh mysqldump từ xa tới VM db)
+- mc (MinIO Client) hoặc rsync (đẩy file backup từ VM db về đây, hoặc ngược lại)
+- gzip (nén file backup trước khi lưu)
+
+CI/CD:
+- GitHub Actions self-hosted runner
+- Docker cli (runner cần Docker để build image)
+- Ansible hoặc chỉ cần SSH client (để deploy sang web1/web2 sau khi build xong)
+
+Quản trị:
+- OpenSSH Server
+- Auditd
 
 ## 4. Network
 
@@ -95,20 +117,18 @@ LB:
 | -------- | ----------- | ---- | ------------- |
 | Internet | HAProxy     | 443  | HTTPS         |
 | HAProxy  | Flask       | 5000 | Reverse Proxy |
-| Flask    | MariaDB     | 3306 | Database      |
-| Flask    | Redis       | 6379 | Cache         |
 | Monitor  | LB          |  22  | SSH           |
+| Monitor  | LB          | 9100 | node_exporter |
 
 Web1 + 2:
 
 | Source   | Destination | Port | Sử dụng cho   |
 | -------- | ----------- | ---- | ------------- |
 | HAProxy  | Flask       | 5000 | Reverse Proxy |
-| Flask    | MariaDB  | 3306 | Database         |
+| Flask    | MariaDB     | 3306 | Database      |
 | Flask    | Redis       | 6379 | Cache         |
-| Flask    | RabbitMQ    | 5672 | Queue         |
 | Monitor  | LB          |  22  | SSH           |
-
+| Monitor  | Flask          | 9100 | node_exporter |
 
 DB+MinIO Server:
 
@@ -116,8 +136,9 @@ DB+MinIO Server:
 | -------- | ----------- | ---- | ------------- |
 | Flask    | MariaDB  | 3306 | Database         |
 | Monitor  | LB          |  22  | SSH           |
-| Flask    | MinIO       | 9000 | Flask gọi API |
+| Flask    | MinIO         | 9000 | Flask gọi API |
 | Monitor    | MinIO       | 9001 | Quan trị MinIO |
+| Monitor  | DB+MinIO          | 9100 | node_exporter |
 
 Monitor:
 
@@ -125,3 +146,12 @@ Monitor:
 | -------- | ----------- | ---- | ------------- |
 | Monitor  | LB          |  22  | SSH           |
 
+
+
+
+## 7. Audit
+
+- Others không có bất cứ quyền gì 
+- Mỗi Service sẽ là 1 system user riêng
+- Các file thông thường: 750
+- File Backup : 700
