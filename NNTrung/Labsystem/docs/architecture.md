@@ -2,15 +2,14 @@
 
 ## 1. Mô Hình Triển Khai (Deployment Model)
 
-Tổng số lượng: **6 VMs** 
+Tổng số lượng: **5 VMs** 
 
 | VM / Thành phần | Số lượng | Mô tả chức năng |
 | --- | --- | --- |
 | **Load Balancer & Gateway** | 1 | Cân bằng tải, tiếp nhận và điều hướng traffic |
 | **Backend** | 2 | Chạy ứng dụng web, xử lý logic, giảm tắc nghẽn traffic |
-| **Database** | 1 | Lưu trữ dữ liệu hệ thống *(Lưu ý: Môi trường Production thực tế cần 1 Database Cluster)* |
-| **Management & Ops Server** | 1 | Tích hợp các dịch vụ nền tảng và vận hành hệ thống:<br>• **Cache & Queue:** Quản lý cache (Redis)<br> • **Backup Script:** Tự động sao lưu dữ liệu, phòng chống sự cố<br>| 
-| **Monitoring:** | 1 | Theo dõi, giám sát & quản lý tài nguyên hệ thống<br> • **CI/CD:** Tự động hóa đóng gói, kiểm thử & triển khai phần mềm |
+| **Database+Cache+MinIO** | 1 | Lưu trữ dữ liệu hệ thống <br>• **Cache :** Quản lý cache (Redis)<br> • **Backup Script:** Tự động sao lưu dữ liệu, phòng chống sự cố<br> |
+| **Monitoring** | 1 | Theo dõi, giám sát & quản lý tài nguyên hệ thống<br> • **CI/CD:** Tự động hóa đóng gói, kiểm thử & triển khai phần mềm |
 
 
 
@@ -43,7 +42,7 @@ Các tham số cấu hình chung dưới đây được áp dụng đồng bộ 
 - Openssh client
 - node_exporter
 - auditd
-### 3.3 DB+MinIO
+### 3.3 DB+MinIO+Cache
 Quản trị:
 - Openssh cli
 - auditd
@@ -54,11 +53,9 @@ Database:
 Backend Storage 1 trong 2 phương án dưới đây:
 - NFS Share
 - MinIO
-### 3.4 Redis
-- node_exporter
-- Openssh cli
 - auditd
 - Redis: lưu cache
+
 ### 3.5 Monitor quản lý
 Monitoring:
 - Prometheus
@@ -106,7 +103,7 @@ Lý do phải chia Subnet:
 | LB | NIC 1: 10.0.10.10 - NIC 2: 10.0.20.19 - NIC 3: 10.0.40.36 | 2GB | 2 | 20GB (1 ổ sda) | 
 | web1 | NIC 1: 10.0.20.20 - NIC 2: 10.0.30.28 - NIC 3: 10.0.40.37 | 2GB | 2 | 20GB (1 ổ sda)  |
 | web2 | NIC 1: 10.0.20.21 - NIC 2: 10.0.30.29 - NIC 3: 10.0.40.38| 2GB | 2 | 20GB (1 ổ sda) |
-| db | NIC 1: 10.0.30.30 - NIC 2: 10.0.40.39 | 2GB | 2 | 20GB (1 ổ sda) |
+| db+MinIO+cache | NIC 1: 10.0.30.30 - NIC 2: 10.0.40.39 | 2GB | 2 | 20GB (1 ổ sda) |
 | Monitor | NIC 1: 10.0.40.40 | 3GB | 2 | 20GB (1 ổ sda) |
 
 ## 6. Port Matrix
@@ -130,7 +127,7 @@ Web1 + 2:
 | Monitor  | LB          |  22  | SSH           |
 | Monitor  | Flask          | 9100 | node_exporter |
 
-DB+MinIO Server:
+DB+MinIO+Cache Server:
 
 | Source   | Destination | Port | Sử dụng cho   |
 | -------- | ----------- | ---- | ------------- |
@@ -139,14 +136,13 @@ DB+MinIO Server:
 | Flask    | MinIO         | 9000 | Flask gọi API |
 | Monitor    | MinIO       | 9001 | Quan trị MinIO |
 | Monitor  | DB+MinIO          | 9100 | node_exporter |
+| Monitor  | DB+MinIO          | 9104 | mysql_exporter |
 
 Monitor:
 
 | Source   | Destination | Port | Sử dụng cho   |
 | -------- | ----------- | ---- | ------------- |
 | Monitor  | LB          |  22  | SSH           |
-
-
 
 
 ## 7. Audit
