@@ -33,7 +33,7 @@ Các tham số cấu hình chung dưới đây được áp dụng đồng bộ 
 
 ## 3. Những phần mềm cài đặt trên từng máy
 ### 3.1 Load Balancer
-- HA Proxy
+- HA Proxy 
 - Openssh client
 ### 3.2 Web1+2
 - Nginx
@@ -51,14 +51,14 @@ Backend Storage 1 trong 2 phương án dưới đây:
 - Openssh cli
 - Redis: lưu cache
 ### 3.5 Monitor quản lý 
-- Prometheus: 
+- Prometheus
 - Grafana
 - Loki
 - Zabbix(lựa chọn thay thế)
 - Openssh Server
 
 
-## 3. Network
+## 4. Network
 
 ![altimage](../image/Screenshot_51.png)
 
@@ -76,7 +76,7 @@ Lý do phải chia Subnet:
 - Tối ưu vận hành
 ---
 
-## 4. VM desin
+## 5. VM desin
 
 | **VM** | **IP**|  **Memory**| **Processors** | **Hard Disk( bao gồm cả OS)** |
 |---|----|----|---|--|
@@ -86,7 +86,7 @@ Lý do phải chia Subnet:
 | db | NIC 1: 10.0.30.30 - NIC 2: 10.0.40.39 | 2GB | 2 | 20GB (1 ổ sda) |
 | Monitor | NIC 1: 10.0.40.40 | 3GB | 2 | 20GB (1 ổ sda) |
 
-## 5. Port Matrix
+## 6. Port Matrix
 
 LB:
 
