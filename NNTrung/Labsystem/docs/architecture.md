@@ -31,6 +31,31 @@ Các tham số cấu hình chung dưới đây được áp dụng đồng bộ 
 | **System Update**         | apt update && apt upgrade (Update mới nhất ngày 20/07/2026)      |
 | **Docker**         | docker cli, docker engine bản 29.6.0-1~ubuntu.22.04~jammy, containerd.io, docker-buildx-plugin, docker-compose-plugin                                      |
 
+## 3. Những phần mềm cài đặt trên từng máy
+### 3.1 Load Balancer
+- HA Proxy
+- Openssh client
+### 3.2 Web1+2
+- Nginx
+- Openssh client
+### 3.3 DB+MinIO
+- Openssh cli
+Database
+- MariaDB
+
+Backend Storage 1 trong 2 phương án dưới đây:
+
+- NFS Share:
+- MinIO
+### 3.4 Redis
+- Openssh cli
+- Redis: lưu cache
+### 3.5 Monitor quản lý 
+- Prometheus: 
+- Grafana
+- Loki
+- Zabbix(lựa chọn thay thế)
+- Openssh Server
 
 
 ## 3. Network
@@ -99,26 +124,3 @@ Monitor:
 | -------- | ----------- | ---- | ------------- |
 | Monitor  | LB          |  22  | SSH           |
 
-## 6. Những phần mềm cài đặt trên từng máy
-### 6.1 Load Balancer
-- HA Proxy
-- Openssh client
-### 6.2 Web1+2
-- Nginx
-- Openssh client
-### 6.3 DB+MinIO
-- Openssh cli
-Database
-- MariaDB
-Backend Storage 1 trong 2 phương án dưới đây:
-- NFS Share:
-- MinIO
-### 6.4 Redis
-- Openssh cli
-- Redis: lưu cache
-### 6.5 Monitor quản lý 
-- Prometheus: 
-- Grafana
-- Loki
-- Zabbix
-- Openssh Server
