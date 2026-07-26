@@ -32,20 +32,24 @@ Các tham số cấu hình chung dưới đây được áp dụng đồng bộ 
 | **Docker**         | docker cli, docker engine bản 29.6.0-1 ubuntu.22.04 jammy, containerd.io, docker-buildx-plugin, docker-compose-plugin                                      |
 
 ## 3. Những phần mềm cài đặt trên từng máy
+- Các service cài đặt được đóng gói bằng docker
 ### 3.1 Load Balancer
 - HA Proxy 
 - Openssh client
 - node_exporter
 - auditd
+- blackbox_exporter
 ### 3.2 Web1+2
 - Promtail
 - Openssh client
 - node_exporter
 - auditd
+- blackbox_exporter
 ### 3.3 DB+MinIO+Cache
 Quản trị:
 - Openssh cli
 - auditd
+- blackbox_exporter
 Database:
 - MariaDB
 - node_exporter
@@ -102,8 +106,8 @@ Lý do phải chia Subnet:
 |---|----|----|---|--|
 | LB | NIC 1: 10.0.10.10 - NIC 2: 10.0.20.19 - NIC 3: 10.0.40.36 | 2GB | 2 | 20GB (1 ổ sda) | 
 | web1 | NIC 1: 10.0.20.20 - NIC 2: 10.0.30.28 - NIC 3: 10.0.40.37 | 2GB | 2 | 20GB (1 ổ sda)  |
-| web2 | NIC 1: 10.0.20.21 - NIC 2: 10.0.30.29 - NIC 3: 10.0.40.38| 2GB | 2 | 20GB (1 ổ sda) |
-| db+MinIO+cache | NIC 1: 10.0.30.30 - NIC 2: 10.0.40.39 | 2GB | 2 | 20GB (1 ổ sda) |
+| web2 | NIC 1: 10.0.20.21 - NIC 2: 10.0.30.29 - NIC 3: 10.0.40.38| 4GB | 2 | 40GB (1 ổ sda) |
+| db+MinIO+cache | NIC 1: 10.0.30.30 - NIC 2: 10.0.40.39 | 3GB | 2 | 30GB (1 ổ sda) |
 | Monitor | NIC 1: 10.0.40.40 | 3GB | 2 | 20GB (1 ổ sda) |
 
 ## 6. Port Matrix
@@ -112,7 +116,6 @@ LB:
 
 | Source   | Destination | Port | Sử dụng cho   |
 | -------- | ----------- | ---- | ------------- |
-| Internet | LB          | 80   | HTTP          |
 | Internet | LB          | 443  | HTTPS         |
 | Monitor  | LB          | 22   | SSH           |
 | Monitor  | LB          | 9100 | node_exporter |
@@ -166,6 +169,8 @@ Monitor:
 - Các file thông thường: 750
   - Người sở hữu có toàn quyền, những người trong group được chỉ định chỉ có quyền xem không được chỉnh sửa file.
 - File Backup : 700
+- Bỏ hết quyền sudo của các user thường, giữ lại duy nhất 1 user Admin và cấp sudo cho duy nhất user này.
+
 
 ## 8. Check list
 ### Chỉ có duy nhất 1 LB
@@ -193,3 +198,16 @@ ster Database, Redis, MinIO. Khi 1 cụm bị mất vẫn còn các cụm còn l
 - Có định hướng thiết kế backup file bị hỏng
 ### Datasaved
 - MinIO/ Redis không bị mất dữ liệu khi restart 
+### TLS/CA
+- Web ra ngoài là https 
+### Đường LAN nội
+- Có mã hóa mTLS đảm bảo 2 máy thực sự là đang giao tiếp với nhau.
+
+### web giới hạn thời gian truy cập (token/session hết hạn)
+- Mỗi khi user đăng nhập cung cấp 1 token trong 1 khoảng thời gian nếu người đó tiếp tục dùng token tự động renew
+
+User thật renew bằng token A → server cấp token B, hủy A
+
+Kẻ cướp phiên (đã lấy được token A trước đó) renew bằng token A
+- Server thấy A đã bị dùng/hủy rồi → phát hiện có 2 người dùng chung 1 chain
+- Revoke toàn bộ session family, force logout cả 2

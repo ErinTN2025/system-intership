@@ -38,9 +38,18 @@ Mỗi User trong Linux được mô tả bởi một số thông tin được l�
 - Ví dụ: Một tài khoản như `john` hoặc `Aaaaaaa`
 ### c. System User (Người dùng hệ thống)
 - Được tạo để chạy các dịch vụ hoặc tiến trình hệ thống( daemon), không dùng cho con người. System user thường không có khả năng đăng nhập tương tác.
-- UID: Thường nằm trong khoảng 1 đến 999( tùy hệ thống).
+
+Đặc điểm:
+- UID thường < 1000 (Ubuntu)
+- Không dùng để đăng nhập
+- Shell thường là:
+```bash
+/usr/sbin/nologin or /bin/false
+```
 - Các user như `www-data`( cho web server), `mysql`( cho vơ sở dữ liệu), hoặc `nobody`( cho các tiến trình không cần quyền cụ thể).
 - Đảm bảo các dịch vụ chạy với quyền hạn tối thiểu, tăng cường bảo mật.
+
+
 
 ### d. Guest User (Người dùng khách - Tạm thời)
 - Có quyền hạn thấp nhất, thường được dùng trên hệ thống chia sẻ công khai.
@@ -73,28 +82,7 @@ Mỗi User trong Linux được mô tả bởi một số thông tin được l�
 - Lệnh `chown`: Được sử dụng để thay đổi owner của tệp và thư mục.
 - Lệnh `chgrp`: Được sử dụng để thay đổi group owner của tệp và thư mục
 
-## Quản lý User và Group
-**Quản lý User:**
-| Chức năng | Câu lệnh |
-|-----------|----------|
-| Tạo mới user | `sudo adduser username`|
-| Xóa user | `sudo deluser username`|
-| Đổi mật khẩu user | `sudo passwd username`|
-| Liệt kê User | `cat /etc/passwd`|
-| Kiểm tra user hiện tại | `whoami`|
 
-![altimage](../images/deluser.png)
-**Quản lý Group**
-| Chức năng | Câu lệnh |
-|-----------|----------|
-| Tạo group mới | `sudo groupadd groupname`|
-| Xóa group| `sudo groupdel groupname`|
-|Thêm user vào group| `sudo usermod -aG groupname username`|
-| Liệt kê nhóm của user| `group username`|
-|Xem danh sách group| `cat /etc/group`|
-| Truy cập vào user| `su username`|
-
-![altimage](../images/changeuserubuntu.png)
 ### Phân quyền của một file trong thư mục
 Xem phân quyền của một file/thư mục:
 

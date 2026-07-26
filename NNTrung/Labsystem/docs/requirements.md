@@ -36,8 +36,6 @@
 - Có log tập trung.
 - Log không mất khi container restart.
 
-
-
 ### Documentation
 
 - Có README.

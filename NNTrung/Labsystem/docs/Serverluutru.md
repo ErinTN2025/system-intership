@@ -1,0 +1,217 @@
+# DB+Cache+MinIO
+```bash
+sudo mkdir -p /opt/dbstack/{mariadb-init,redis-conf,minio-data,mariadb-data}
+cd /opt/dbstack
+```
+## 1. Docker-compose.yml
+```yaml
+services:
+  mariadb:
+    image: mariadb:11.4          # LTS, còn support dài hạn — nếu bạn muốn bản khác cứ đổi tag
+    container_name: mariadb
+    restart: unless-stopped
+    env_file: .env-mariadb
+    ports:
+      - "10.0.30.30:3306:3306"
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - back
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    ports:
+      - "10.0.30.30:6379:6379"
+    volumes:
+      - ./redis-conf/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./redis-data:/data
+    networks:
+      - back
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    env_file: .env-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "10.0.30.30:9000:9000"
+      - "10.0.40.39:9001:9001"
+    volumes:
+      - ./minio-data:/data
+    networks:
+      - back
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: node_exporter
+    restart: unless-stopped
+    pid: host
+    network_mode: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro,rslave
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/host/root'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+  mysqld_exporter:
+    image: prom/mysqld-exporter:latest
+    container_name: mysqld_exporter
+    restart: unless-stopped
+    env_file: .env-mysqld-exporter
+    ports:
+      - "10.0.40.39:9104:9104"
+    networks:
+      - back
+    depends_on:
+      - mysql
+  redis_exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: redis_exporter
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR=redis://:SecretPassword234@redis:6379
+    ports:
+      - "10.0.40.39:9121:9121"
+    networks:
+      - back
+    depends_on:
+      - redis
+  blackbox_exporter:
+    image: prom/blackbox-exporter:latest
+    container_name: blackbox_exporter
+    restart: unless-stopped
+    ports:
+      - "10.0.40.39:9115:9115"
+    volumes:
+      - ./blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    command:
+      - '--config.file=/etc/blackbox_exporter/config.yml'
+    cap_add:
+      - NET_RAW
+    networks:
+      - back
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    restart: unless-stopped
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+    command:
+      - '-config.file=/etc/promtail/config.yml'
+    networks:
+      - back
+networks:
+  back:
+    driver: bridge
+```
+## 2. File `.env`
+```bash
+#!/bin/bash
+# gen-secrets.sh — chạy trên máy db trước khi docker compose up
+gen() { openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 24; }
+
+cat > .env-mariadb <<EOF
+MYSQL_ROOT_PASSWORD=$(gen)
+MYSQL_DATABASE=flasky_db
+MYSQL_USER=flasky
+MYSQL_PASSWORD=$(gen)
+EOF
+
+cat > .env-minio <<EOF
+MINIO_ROOT_USER=admin_$(gen)
+MINIO_ROOT_PASSWORD=$(gen)
+EOF
+
+REDIS_PW=$(gen)
+cat > .env-redis <<EOF
+REDIS_PASSWORD=${REDIS_PW}
+EOF
+
+# đẩy password redis vào redis.conf luôn cho khớp
+sed -i "s/^requirepass .*/requirepass ${REDIS_PW}/" redis-conf/redis.conf
+
+cat > .env-mysqld-exporter <<EOF
+DATA_SOURCE_NAME=exporter:$(gen)@(mariadb:3306)/
+EOF
+
+chmod 600 .env-* redis-conf/redis.conf
+echo "Đã sinh xong secrets — nhớ chép REDIS_PASSWORD dùng chung cho web1/web2 .env"
+```
+- Khóa toàn bộ quyền
+```bash
+find /opt -name ".env*" -exec chmod 600 {} \;
+find /opt -name ".env*" -exec chown root:root {} \;
+```
+- Check kỹ lại `.venv` bên Backend
+## 3. File `mariadb-init/01-create-exporter-user.sql` 
+```sql
+CREATE USER IF NOT EXISTS 'exporter'@'%' IDENTIFIED BY '<mật_khẩu_exporter>';
+GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'%';
+FLUSH PRIVILEGES;
+```
+Điều này đảm bảo nếu container `mysqld_exporter` bị chiếm quyền, kẻ tấn công chỉ có quyền SELECT/đọc trạng thái, không có quyền ghi/xóa dữ liệu — nguyên tắc least-privilege.
+```bash
+chmod 600 .env-mariadb .env-minio .env-mysqld-exporter
+```
+## 4. File `redis-conf/redis.conf` 
+- Cấu hình bắt buộc set password
+```conf
+bind 0.0.0.0
+protected-mode yes
+requirepass SecretPassword234
+
+# --- Persistence ---
+appendonly yes
+appendfsync everysec
+dir /data
+
+# RDB snapshot dự phòng thêm (không bắt buộc nếu đã có AOF, nhưng an toàn hơn)
+save 900 1
+save 300 10
+save 60 10000
+```
+
+## 5. File `blackbox.yml`
+```yaml
+modules: 
+  tcp_connect:
+    prober: tcp
+    timeout: 5s
+```
+- Tạo thêm file config `promtail/promtail-config.yml`
+```bash
+mkdir -p promtail
+```
+```yaml
+# promtail/promtail-config.yml (LB)
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://10.0.40.40:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: 'stream'
+      - target_label: 'host'
+        replacement: 'db'
+```
