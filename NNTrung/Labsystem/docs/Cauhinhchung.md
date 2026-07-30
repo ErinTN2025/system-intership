@@ -8,6 +8,13 @@ sudo apt upgrade -y
 ```bash
 lsb_release -a
 ```
+```bash
+sudo apt install isc-dhcp-client -y
+sudo apt install iputils-ping
+```
+```bash
+sudo apt install nano
+```
 ### 1.2 Thiết lập Timezone
 ```bash
 # Chỉnh sửa
@@ -37,7 +44,7 @@ sudo systemctl restart chrony
 
 # Các Server còn lại trỏ đến Load balancer
 sudo tee /etc/chrony/chrony.conf > /dev/null <<'EOF'
-server controller01 iburst prefer
+server 10.0.40.36 iburst prefer
 pool ntp.ubuntu.com iburst maxsources 2
 driftfile /var/lib/chrony/chrony.drift
 makestep 1.0 3
@@ -62,13 +69,14 @@ sudo hostnamectl set-hostname monitor
 sudo nano /etc/hosts 
 ```
 ### 1.5 Tắt Cloud-init
-- Tắt cloud-init tránh tình trạng ghi đè
+- Tắt cloud-init tránh tình trạng ghi đè, bạn tạo file có số là 99-tên-bất-kỳ.cfg để có thể ghi đè.
 ```bash
 sudo nano /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
 ```
 - Điền nội dung:
 ```bash
-network: {config: disabled}
+network: 
+    config: disabled
 ```
 - Tắt cloud-init ghi đè host
 ```bash
@@ -76,30 +84,39 @@ sudo sed -i 's/^manage_etc_hosts:.*/manage_etc_hosts: false/' /etc/cloud/cloud.c
 grep -q '^manage_etc_hosts:' /etc/cloud/cloud.cfg || \
   echo 'manage_etc_hosts: false' | sudo tee -a /etc/cloud/cloud.cfg
 ```
+
+
 ### 1.6 Cấu hình IP tĩnh
+- Bạn cần check kỹ không để NIC nào DOWN, nếu có thì UP nó lên
+```bash
+ip link
+sudo ip link set ens33 UP
+```
 ```bash
 sudo nano 50-cloud-init.yaml
 ```
 - Chỉnh sửa IP tĩnh: VD mẫu load balancer (những cái khác tương tự)
 ```yaml
 network:
+    version: 2
+    renderer: networkd
     ethernets:
         ens33:
+            dhcp4: false
             addresses:
               - 10.0.10.10/24
             routes:
               - to: default
-                via: 10.0.10.1
+                via: 10.0.10.2
             nameservers:
               addresses:
                 - 8.8.8.8
-        ens34:
+        ens37:
             addresses:
               - 10.0.20.19/24
-        ens35:
+        ens38:
             addresses:
               - 10.0.40.36/24
-    version: 2
 ```
 NIC ens33 sẽ được cấu hình là card Interface ra Internet.
 
@@ -108,7 +125,10 @@ sudo netplan try
 sudo netplan apply
 ```
 
-### 1.7 Quản lý Iptables
+### 1.7 Quản lý Firewall
+```bash
+sudo apt install firewall
+```
 - Đầu tiên đưa về trạng thái trắng
 ```bash
 sudo iptables -L -n -v
@@ -130,6 +150,20 @@ sudo iptables -A OUTPUT -o lo -j ACCEPT
 sudo iptables -A INPUT  -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 ```
+- Ngoại lệ cho phép `apt install`
+```bash
+# DNS
+sudo iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
+
+# HTTP/HTTPS
+sudo iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
+
+# Cho phép gói trả về
+sudo iptables -A INPUT  -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+```
 - LB:
 ```bash
 sudo iptables -A INPUT -p tcp --dport 443 -m conntrack --ctstate NEW -j ACCEPT
@@ -143,6 +177,7 @@ sudo iptables -A OUTPUT -p tcp -d 10.0.40.40 --dport 3100 -m conntrack --ctstate
 - Web1+2:
 ```bash
 sudo iptables -A INPUT -p tcp -s 10.0.20.19 --dport 5000 -m conntrack --ctstate NEW -j ACCEPT
+sudo iptables -A OUTPUT -p tcp -d 10.0.20.19 --dport 5000 -m conntrack --ctstate NEW -j ACCEPT
 sudo iptables -A INPUT -p tcp -s 10.0.40.40 --dport 22   -m conntrack --ctstate NEW -j ACCEPT
 sudo iptables -A INPUT -p tcp -s 10.0.40.40 --dport 9100 -m conntrack --ctstate NEW -j ACCEPT
 sudo iptables -A INPUT -p tcp -s 10.0.40.40 --dport 9115 -m conntrack --ctstate NEW -j ACCEPT
@@ -266,5 +301,153 @@ $ sudo apt install docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING conta
 
 
 
+### bash
+```bash
+#!/bin/bash
+set -e
+sudo apt update 
+sudo apt upgrade -y 
+
+sudo apt install isc-dhcp-client -y
+sudo apt install iputils-ping
+
+sudo apt install nano
+sudo timedatectl set-timezone Asia/Ho_Chi_Minh
+sudo apt install chrony -y
+
+sudo tee /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg > /dev/null <<EOF
+network:
+  config: disabled
+EOF
+
+sudo sed -i 's/^manage_etc_hosts:.*/manage_etc_hosts: false/' /etc/cloud/cloud.cfg
+grep -q '^manage_etc_hosts:' /etc/cloud/cloud.cfg || \
+  echo 'manage_etc_hosts: false' | sudo tee -a /etc/cloud/cloud.cfg
+
+sudo apt install openssh-client -y
+sudo swapoff -a 
+
+sudo apt update
+sudo apt install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Thêm kho lưu trữ vào Apt sources:
+sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+
+sudo apt update
+
+VERSION_STRING=5:29.6.0-1~ubuntu.22.04~jammy
+sudo apt install docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin -y
+```
+
+### Cấu hình ufw (firewall) - Tương tự iptables
+```bash
+#!/bin/bash
+set -e
+sudo ufw --force reset
+
+sudo ufw default deny incoming
+sudo ufw default deny outgoing
+sudo ufw default deny routed
 
 
+sudo ufw allow in on lo
+sudo ufw allow out on lo
+
+sudo ufw allow out 53          # DNS (tcp+udp)
+sudo ufw allow out 80/tcp      # HTTP
+sudo ufw allow out 443/tcp     # HTTPS
+```
+- LB:
+```bash
+
+sudo ufw allow in 443/tcp            
+sudo ufw allow in from 10.0.40.99 to any port 22   proto tcp                  
+sudo ufw allow in from 10.0.40.40 to any port 22   proto tcp   
+sudo ufw allow in from 10.0.40.40 to any port 9100 proto tcp   
+sudo ufw allow in from 10.0.40.40 to any port 9115 proto tcp   
+# --- OUTBOUND ---
+sudo ufw allow out to 10.0.20.20 port 5000  proto tcp  
+sudo ufw allow out to 10.0.20.21 port 5000  proto tcp  
+sudo ufw allow out to 10.0.40.40 port 3100  proto tcp   
+```
+- Backend
+```bash
+# --- INBOUND ---
+sudo ufw allow in from 10.0.40.99 to any port 22   proto tcp
+sudo ufw allow in from 10.0.20.19 to any port 5000 proto tcp
+sudo ufw allow in from 10.0.40.40 to any port 22   proto tcp
+sudo ufw allow in from 10.0.40.40 to any port 9100 proto tcp
+sudo ufw allow in from 10.0.40.40 to any port 9115 proto tcp
+
+# --- OUTBOUND ---
+sudo ufw allow out to 10.0.20.19 port 5000 proto tcp
+sudo ufw allow out to 10.0.30.30 port 3306 proto tcp
+sudo ufw allow out to 10.0.30.30 port 6379 proto tcp
+sudo ufw allow out to 10.0.30.30 port 9000 proto tcp
+sudo ufw allow out to 10.0.40.40 port 3100 proto tcp
+```
+- Database
+```bash
+# --- INBOUND ---
+sudo ufw allow in from 10.0.30.28 to any port 3306 proto tcp   # MySQL từ Web1
+sudo ufw allow in from 10.0.30.29 to any port 3306 proto tcp   # MySQL từ Web2
+sudo ufw allow in from 10.0.30.28 to any port 6379 proto tcp   # Redis từ Web1
+sudo ufw allow in from 10.0.30.29 to any port 6379 proto tcp   # Redis từ Web2
+sudo ufw allow in from 10.0.30.28 to any port 9000 proto tcp   # MinIO từ Web1
+sudo ufw allow in from 10.0.30.29 to any port 9000 proto tcp   # MinIO từ Web2
+
+sudo ufw allow in from 10.0.40.99 to any port 22   proto tcp 
+sudo ufw allow in from 10.0.40.40 to any port 22   proto tcp   # SSH từ Monitor
+sudo ufw allow in from 10.0.40.40 to any port 9001 proto tcp   # minio exporter?
+sudo ufw allow in from 10.0.40.40 to any port 9100 proto tcp   # node_exporter
+sudo ufw allow in from 10.0.40.40 to any port 9104 proto tcp   # mysqld_exporter
+sudo ufw allow in from 10.0.40.40 to any port 9121 proto tcp   # redis_exporter
+sudo ufw allow in from 10.0.40.40 to any port 9115 proto tcp   # blackbox_exporter
+sudo ufw allow in from 10.0.40.40 to any port 3306 proto tcp
+
+# --- OUTBOUND ---
+sudo ufw allow out to 10.0.40.40 port 3100 proto tcp   # -> Loki (Monitor)
+```
+- Monitor
+```bash
+# --- INBOUND ---
+# Thay 10.0.X.X bằng dải IP admin thật của bạn (VD: 10.0.50.0/24 hoặc IP văn phòng)
+sudo ufw allow in from 10.0.X.X to any port 22 proto tcp
+sudo ufw allow in from 10.0.40.36 to any port 3100 proto tcp   # Loki push từ LB
+sudo ufw allow in from 10.0.40.37 to any port 3100 proto tcp   # Loki push từ Web1
+sudo ufw allow in from 10.0.40.38 to any port 3100 proto tcp   # Loki push từ Web2
+sudo ufw allow in from 10.0.40.39 to any port 3100 proto tcp   # Loki push từ DB
+# --- OUTBOUND (Monitor đi scrape/SSH đến các host khác) ---
+# 10.0.40.36 (giả định LB)
+sudo ufw allow out to 10.0.40.36 port 22   proto tcp
+sudo ufw allow out to 10.0.40.36 port 9100 proto tcp
+sudo ufw allow out to 10.0.40.36 port 9115 proto tcp
+# 10.0.40.37 (giả định Web1)
+sudo ufw allow out to 10.0.40.37 port 22   proto tcp
+sudo ufw allow out to 10.0.40.37 port 9100 proto tcp
+sudo ufw allow out to 10.0.40.37 port 9115 proto tcp
+# 10.0.40.38 (giả định Web2)
+sudo ufw allow out to 10.0.40.38 port 22   proto tcp
+sudo ufw allow out to 10.0.40.38 port 9100 proto tcp
+sudo ufw allow out to 10.0.40.38 port 9115 proto tcp
+# 10.0.40.39 (giả định DB+MinIO+Cache)
+sudo ufw allow out to 10.0.40.39 port 22   proto tcp
+sudo ufw allow out to 10.0.40.39 port 9001 proto tcp
+sudo ufw allow out to 10.0.40.39 port 9100 proto tcp
+sudo ufw allow out to 10.0.40.39 port 9104 proto tcp
+sudo ufw allow out to 10.0.40.39 port 9121 proto tcp
+sudo ufw allow out to 10.0.40.39 port 9115 proto tcp
+sudo ufw allow out to 10.0.40.39 port 3306 proto tcp
+# HTTPS ra ngoài chung (đã có trong base, nhưng để rõ ràng theo file gốc)
+sudo ufw allow out 443/tcp
+```

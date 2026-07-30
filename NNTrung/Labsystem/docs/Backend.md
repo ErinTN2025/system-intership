@@ -58,8 +58,10 @@ networks:
 ```
 ## 2. file `.env`
 ```bash
-DATABASE_URL=mysql://user:password@10.0.30.30:3306/flasky_db
-REDIS_URL=redis://SecretPassword234@10.0.30.30:6379/0
+# .env
+SERVER_NAME=flasky.lab.local
+DATABASE_URL=mysql+pymysql://flasky:mysql1234@10.0.30.30:3306/flasky_db
+REDIS_URL=redis://:redis1234@10.0.30.30:6379/0
 MINIO_ENDPOINT=10.0.30.30:9000
 ```
 - Khóa toàn bộ quyền

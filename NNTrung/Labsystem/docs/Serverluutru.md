@@ -1,21 +1,21 @@
 # DB+Cache+MinIO
 ```bash
-sudo mkdir -p /opt/dbstack/{mariadb-init,redis-conf,minio-data,mariadb-data}
+sudo mkdir -p /opt/dbstack/{mariadb-init,redis-conf,minio-data,mariadb-data,redis-data}
 cd /opt/dbstack
 ```
 ## 1. Docker-compose.yml
 ```yaml
 services:
   mariadb:
-    image: mariadb:11.4          # LTS, còn support dài hạn — nếu bạn muốn bản khác cứ đổi tag
+    image: mariadb:11.4          
     container_name: mariadb
     restart: unless-stopped
     env_file: .env-mariadb
     ports:
       - "10.0.30.30:3306:3306"
     volumes:
-      - ./mysql-data:/var/lib/mysql
-      - ./mysql-init:/docker-entrypoint-initdb.d:ro
+      - ./mariadb-data:/var/lib/mysql
+      - ./mariadb-init:/docker-entrypoint-initdb.d:ro
     networks:
       - back
   redis:
@@ -68,13 +68,13 @@ services:
     networks:
       - back
     depends_on:
-      - mysql
+      - mariadb
   redis_exporter:
     image: oliver006/redis_exporter:latest
     container_name: redis_exporter
     restart: unless-stopped
     environment:
-      - REDIS_ADDR=redis://:SecretPassword234@redis:6379
+      - REDIS_ADDR=redis://:redis1234@redis:6379
     ports:
       - "10.0.40.39:9121:9121"
     networks:
@@ -113,36 +113,24 @@ networks:
 ```
 ## 2. File `.env`
 ```bash
-#!/bin/bash
-# gen-secrets.sh — chạy trên máy db trước khi docker compose up
-gen() { openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 24; }
-
-cat > .env-mariadb <<EOF
-MYSQL_ROOT_PASSWORD=$(gen)
+sudo tee .env-mariadb > /dev/null <<'EOF'
+MYSQL_ROOT_PASSWORD=mysql1234
 MYSQL_DATABASE=flasky_db
 MYSQL_USER=flasky
-MYSQL_PASSWORD=$(gen)
+MYSQL_PASSWORD=mysql1234
 EOF
 
-cat > .env-minio <<EOF
-MINIO_ROOT_USER=admin_$(gen)
-MINIO_ROOT_PASSWORD=$(gen)
+sudo tee .env-minio > /dev/null <<'EOF'
+MINIO_ROOT_USER=admin_minio1234
+MINIO_ROOT_PASSWORD=minio1234
+EOF
+sudo tee .env-redis > /dev/null <<'EOF' 
+REDIS_PASSWORD=redis1234
 EOF
 
-REDIS_PW=$(gen)
-cat > .env-redis <<EOF
-REDIS_PASSWORD=${REDIS_PW}
+sudo tee .env-mysqld-exporter > /dev/null <<'EOF' 
+DATA_SOURCE_NAME=exporter:mysql1234@(mariadb:3306)/
 EOF
-
-# đẩy password redis vào redis.conf luôn cho khớp
-sed -i "s/^requirepass .*/requirepass ${REDIS_PW}/" redis-conf/redis.conf
-
-cat > .env-mysqld-exporter <<EOF
-DATA_SOURCE_NAME=exporter:$(gen)@(mariadb:3306)/
-EOF
-
-chmod 600 .env-* redis-conf/redis.conf
-echo "Đã sinh xong secrets — nhớ chép REDIS_PASSWORD dùng chung cho web1/web2 .env"
 ```
 - Khóa toàn bộ quyền
 ```bash
@@ -152,20 +140,18 @@ find /opt -name ".env*" -exec chown root:root {} \;
 - Check kỹ lại `.venv` bên Backend
 ## 3. File `mariadb-init/01-create-exporter-user.sql` 
 ```sql
-CREATE USER IF NOT EXISTS 'exporter'@'%' IDENTIFIED BY '<mật_khẩu_exporter>';
+CREATE USER IF NOT EXISTS 'exporter'@'%' IDENTIFIED BY 'mysql1234';
 GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'%';
 FLUSH PRIVILEGES;
 ```
 Điều này đảm bảo nếu container `mysqld_exporter` bị chiếm quyền, kẻ tấn công chỉ có quyền SELECT/đọc trạng thái, không có quyền ghi/xóa dữ liệu — nguyên tắc least-privilege.
-```bash
-chmod 600 .env-mariadb .env-minio .env-mysqld-exporter
-```
+
 ## 4. File `redis-conf/redis.conf` 
 - Cấu hình bắt buộc set password
 ```conf
 bind 0.0.0.0
 protected-mode yes
-requirepass SecretPassword234
+requirepass redis1234
 
 # --- Persistence ---
 appendonly yes
@@ -214,4 +200,24 @@ scrape_configs:
         target_label: 'stream'
       - target_label: 'host'
         replacement: 'db'
+```
+
+### Test
+- Truy cập database:
+```bash
+sudo docker exec -it mariadb mariadb -u root -p flasky_db
+```
+- Hoặc 
+```bash
+sudo docker exec -it mariadb 
+mariadb -u root -p
+SHOW DATABASES;
+USE <ten_databases>;
+SHOW TABLES;
+DESC ten_bang;
+SELECT * FROM ten_bang;
+```
+```bash
+SELECT id, email, username, confirmed FROM users;
+UPDATE users SET confirmed=1 WHERE email='email_đăng_ký@gmail.com';
 ```

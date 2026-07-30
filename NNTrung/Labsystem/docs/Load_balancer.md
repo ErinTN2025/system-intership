@@ -10,15 +10,13 @@ lb                   UID=1000  HUMAN    /bin/bash
 getent group sudo
 ```
 
-## 2. Cài đặt OpenSSH và auditd 
+## 2. Cài đặt auditd 
 ```bash
-sudo apt update
-sudo apt install -y openssh-client auditd audispd-plugins
+sudo apt install -y auditd audispd-plugins
 
 sudo systemctl enable --now auditd
 sudo systemctl status auditd
 
-sudo apt install nano
 ```
 - Xác định quyền truy cập cho thư mục ssh và audit: root có toàn quyền, group root và người khác chỉ có quyền xem.
 ```bash
@@ -189,30 +187,30 @@ scrape_configs:
 sudo mkdir -p /opt/ca/{private,certs}
 cd /opt/ca
 
-openssl genrsa -out private/ca.key 4096
-chmod 400 private/ca.key
+sudo openssl genrsa -out private/ca.key 4096
+sudo chmod 400 private/ca.key
 
-openssl req -x509 -new -nodes -key private/ca.key -sha256 -days 365 \ 
-    -out certs/ca.crt \ 
+sudo openssl req -x509 -new -nodes -key private/ca.key -sha256 -days 365 \
+    -out certs/ca.crt \
     -subj "/C=VN/ST=HN/O=Flasky-Lab/CN=Flasky-Lab-Root-CA"
 ```
 ### 7.2 Tạo cert cho chính LB
 ```bash
 cd /opt/ca
 
-openssl genrsa -out private/lb.key 2048
-openssl req -new -key private/lb.key -out certs/lb.csr \
-  - subj "/C=VN/ST=HN/O=Flasky-Lab/CN=flasky.lab.local"
+sudo openssl genrsa -out private/lb.key 2048
+sudo openssl req -new -key private/lb.key -out certs/lb.csr \
+  -subj "/C=VN/ST=HN/O=Flasky-Lab/CN=flasky.lab.local"
 
-cat > certs/lb.ext <<EOF
+sudo tee certs/lb.ext > /dev/null <<'EOF'
 subjectAltName = DNS:flasky.lab.local, IP:10.0.10.10 
 EOF
 
-openssl x509 -req -in certs/lb.csr -CA certs/ca.crt -CAkey private/ca.key \
+sudo openssl x509 -req -in certs/lb.csr -CA certs/ca.crt -CAkey private/ca.key \
   -CAcreateserial -out certs/lb.crt -days 825 -sha256 -extfile certs/lb.ext
 
-cat certs/lb.crt private/lb.key > certs/lb.pem
-chmod 600 certs/lb.pem
+sudo cat certs/lb.crt private/lb.key | sudo tee certs/lb.pem > /dev/null
+sudo chmod 644 /opt/ca/certs/lb.pem
 ```
 
 ## Phương án 2(Tham khảo): Tạo Router giữa các mạng 
