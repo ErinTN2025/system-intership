@@ -102,25 +102,18 @@ Cú pháp: `ssh -J user@jump_host user@target_internal_ip`
   - Hai bên so khớp và đồng ý một bộ thuật toán chung, thống nhất bộ thuật toán bảo mật sẽ dùng cho toàn phiên (session)
 
 **Giai đoạn 4,5 Key Exchange**
+  - Ở đây mặc định Server phải có public key và client nắm private key của chính nó thì mới SSH được.
   - **Host key (khóa dài hạn của server)** đã tồn tại trên server (ví dụ /etc/ssh/ssh_host_rsa_key). Dùng để server chứng minh mình là ai( Server gửi public key của mình cho client).
-    - Client so sánh với bản lưu trong `~/.ssh/known_hosts`: Nếu khớp tin tưởng server nếu khác: cảnh báo host key has changed
-  - **Ephemeral key pair** được tạo tức thời cho quá trình KEX (ví dụ ECDH/DH ephemeral). 
-  - Cả SSH client và server dùng thuật toán trao đổi khóa (Key Exchange Algorithm – KEX) để tự động sinh ra một khóa phiên (session key) và mã định danh phiên (session ID) chung.
-    - Session key → dùng để mã hóa/giải mã dữ liệu trong suốt phiên làm việc.
-    - Session ID → định danh phiên, đảm bảo khi xác thực người dùng (login), server biết bạn thuộc phiên nào.
-  - Ngoài ra, client có thể đã có user key pair (ví dụ ~/.ssh/id_rsa) dùng để xác thực người dùng sau này.
-  - Mục đích: Tạo ra một “mật khẩu tạm thời” dùng chung, được sinh ngẫu nhiên cho từng phiên kết nối — giúp bảo mật, không reuse khóa giữa các phiên.
-  - Trong giai đoạn trao đổi khóa, client cũng xác thực danh tính của server.
-    - Server dùng private key của nó để ký (sign) một phần thông điệp trao đổi khóa.
-    - Client dùng public key của server (đã biết trước hoặc được lưu trong known_hosts) để xác minh chữ ký.
-    - Đảm bảo client đang nói chuyện với đúng server thật, không phải hacker (ngăn “man-in-the-middle attack”).
-  - Đây là quá trình xác thực server:
-    - Server ký bằng private key → chứng minh “tôi là chính chủ”.
-    - Client xác minh bằng public key → đảm bảo chữ ký hợp lệ.
-  - Sau khi trao đổi khóa thành công, cả hai bên cùng tạo ra cùng một session key (dù không hề gửi trực tiếp cho nhau).
-    - Giúp họ có thể dùng mã hóa đối xứng (symmetric encryption) — nhanh và hiệu quả hơn — cho phần còn lại của phiên.
-    - SSH không gửi trực tiếp khóa qua mạng.
-  - Thay vào đó, nó dùng thuật toán trao đổi khóa an toàn, phổ biến là:
+    - Client giải mã bằng private key của nó rồi so sánh với bản lưu trong `~/.ssh/known_hosts`: Nếu khớp tin tưởng server nếu khác: cảnh báo host key has changed.
+    - Nếu không có thì sẽ xác nhận là ssh lần đầu. -> lưu vào trong `/.ssh/known_hosts`
+    - Sau đó 2 Client và server mỗi bên sinh ra 1 cặp public - private key gọi chung là empheral key
+  - **Ephemeral key pair** được tạo tức thời cho quá trình KEX (ví dụ ECDH/DH ephemeral).
+```bash
+    Ephemeral Private A      Ephemeral Private B
+
+    Ephemeral Public A       Ephemeral Public B
+  ```
+  - Tại đây 2 bên trao đổi Ephemeral Public cho nhau. Mỗi bên tính ra Shared Secret để sinh session Key, nó dùng thuật toán trao đổi khóa an toàn, phổ biến là:
     - Diffie–Hellman (DH)
     - ECDH (Elliptic Curve Diffie–Hellman)
     - Hai bên có thể cùng tính ra một bí mật chung (shared secret) mà hacker nghe lén không thể tính ra được, vì chỉ có một phần dữ liệu công khai được trao đổi.
@@ -128,17 +121,20 @@ Cú pháp: `ssh -J user@jump_host user@target_internal_ip`
     - Không ai có thể đoán được khóa thực.
     - Không cần truyền khóa qua mạng.
     - Đảm bảo tính bí mật của session key dù toàn bộ quá trình diễn ra qua Internet không an toàn.
-  - Không có khóa nào được gửi trực tiếp. Cả hai tự tính ra cùng một kết quả bằng công thức toán học, dựa trên giá trị công khai và khóa riêng của chính mình.
-    - **Mục đích**: Ngăn chặn kẻ tấn công “nghe trộm” (eavesdropping) hoặc “chèn khóa giả”.
-  
-  ![altimage](../Images/SSHkeyexchange.png)
-
   - Máy chủ tạo ra số nguyên tố G,P và khóa riêng của máy chủ b, đồng thời tạo khóa công khai y của server bằng công thức `y=(G^b)%P`.
   - SSH Server chuyển số nguyên tố G, P và Public key y cho SSH client.
   - SSH Client tạo private key **a** và tính toán Public key **x** của client dựa trên công thức: `x = (G^a)%P.`
   - SSH Client gửi Public key **x** tới SSH Server.
   - SSH server tính toán Symmertric key K dựa trên công thức `K = (x^b)%P`, SSH Client cũng tính symmertric key K dựa trên công thức `K = (y^a)%P`
   - Luật toán này đảm bảo Symmetric keys được tạo ra bởi SSH server và client là 1. 
+
+    ![altimage](../Images/SSHkeyexchange.png)
+
+    - Session key → dùng để mã hóa/giải mã dữ liệu trong suốt phiên làm việc.
+    - Session ID → định danh phiên, đảm bảo khi xác thực người dùng (login), server biết bạn thuộc phiên nào.
+  - Mục đích: Tạo ra một “mật khẩu tạm thời” dùng chung, được sinh ngẫu nhiên cho từng phiên kết nối — giúp bảo mật, không reuse khóa giữa các phiên.
+    - Giúp họ có thể dùng mã hóa đối xứng (symmetric encryption) — nhanh và hiệu quả hơn — cho phần còn lại của phiên.
+  
 
 **Giai đoạn 6 - Initiate a login request (start userauth service)**
   - Sau KEX hoàn tất và cả hai đã chuyển sang kênh mã hóa bằng session key, client gửi yêu cầu khởi động service `ssh-userauth`.
