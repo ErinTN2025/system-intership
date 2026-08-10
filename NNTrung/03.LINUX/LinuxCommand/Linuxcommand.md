@@ -107,3 +107,10 @@ Tên file
 |`wget`| Tải tệp từ URL | `wget https://example.com/file.zip`|
 |`scp`| Sao chép tệp qua SSH | `scp file.txt user@remote:/home/user/`|
 |`rsync`|Đồng bộ tệp giữa hai máy| `rsync -avz /source/user@remote:/destination/`|
+
+## 8. Cách dùng lệnh find
+```bash
+sudo find /etc/kubernetes -type f \(-name"*.crt" -o -name "*.key" -o -name "*.pem")
+# hoặc tìm rộng hơn
+sudo find / -type f \( -name "*.crt" -o -name "*.key" -o -name "*.pem"\) 2> /dev/null
+``` 
