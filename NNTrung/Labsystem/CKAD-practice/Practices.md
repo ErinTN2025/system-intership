@@ -372,6 +372,8 @@ spec:
         drop: "All"
 ```
 
+
+
 ### 23. PodSecurity Restricted Namespace
 ```bash
 kubectl label ns session283884 pod-security.kubernetes.io/enforce=restricted
@@ -453,6 +455,20 @@ spec:
         - -c
         - sleep 3600
 ```
+```yaml
+apiVersion:  networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: payments
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+  egress: []
+```
 
 ## 25. AllowNameSpace Traffic
 ```yaml
@@ -523,6 +539,7 @@ spec:
 -  `from`: danh sách nguồn được phép
 - `podSelector: {}`: mọi Pod trong Namespace hiện tại
 - Nếu xóa 2 dòng cuối này đi nghĩa là mọi traffic từ bất kỳ nguồn nào. Còn ghi như này nghĩa là chỉ traffic trong Namespace.
+- `spec.podSelector` khác hoàn toàn `ingress.from.podSelector`(Cho phép Pod frontend → Pod được policy bảo vệ.) và `egress.to.podSelector`(Pod được policy bảo vệ được phép đi ra database.) nhé. `spec.podSelector` nó chọn Pod mà NetworkPolicy áp dụng vào.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
