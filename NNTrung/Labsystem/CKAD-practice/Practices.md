@@ -648,6 +648,21 @@ kubectl -n dns-lab exec dns-client --nslookup web.web.svc.cluster.local
 ```
 ![altimage](../image/Screenshot_3.png)
 
+
+- Lý do: Kubernetes DNS (thường là CoreDNS) tự động tạo DNS record cho Service:
+```
+web.web.svc.cluster.local
+│   │   │   │
+│   │   │   └── cluster domain
+│   │   └────── service
+│   └────────── namespace
+└────────────── service name
+```
+  - Khi chỉ ghi mỗi `web` như trường hợp đầu tiên nó sẽ hiểu thành: `web.dns-lab.svc.cluster.local` do đang đứng ở namespace: `dns-lab.svc`
+  - Khi ghi đầy đủ: FQDN, CoreDNS nhận được và biết sau đó trả về ClusterIP của Service.
+  - DNS được tạo cho Service ngay cả khi chưa có Pod: chỉ cần bạn selector: app: web thì ngay cả chưa tạo Pod thì Service vẫn tồn tại. 
+
+
 - Convert to headless service and resolve pod
 ```bash
 kubectl -n web delete service web
@@ -671,6 +686,7 @@ spec:
   externalName: www.google.com
 ```
 
+- Lưu ý: ExternalName là một loại Kubernetes Service đặc biệt. Nó dùng khi bạn muốn: Một tên Service trong Kubernetes trỏ tới một hostname bên ngoài Kubernetes. Nó không phải là DNS Server.
 ## 29. Create an Ingress named `web-ingress` that routes `web.example.com` to a service named `web`
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -713,7 +729,8 @@ kubectl -n ingress-tls create secret tls tls-secret --cert=tls.crt --key=tls.key
 ```bash
 kubectl -n ingress-tls create deploy web --image=nginx:1.25 --port=80
 kubectl -n ingress-tls expose deploy web --port=80 --target-port=80
-cat <<'EOF2' | kubectl apply -f -
+```
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -736,7 +753,6 @@ spec:
             name: web
             port:
               number: 80
-EOF2
 ```
 ```bash
 kubectl -n ingress-tls get ingress web-ingress -o yaml | sed -n '1,40p'
@@ -781,7 +797,8 @@ NODE_IP=$(kubectl get nodes -o jsonpath='{range .items[*]}{.status.addresses[?(@
 # sample backend to exercise the controller
 kubectl create deploy demo --image=nginx:1.25 --port=80
 kubectl expose deploy demo --port=80 --target-port=80
-cat <<'EOF' | kubectl apply -f -
+```
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -800,7 +817,6 @@ spec:
             name: demo
             port:
               number: 80
-EOF
 ```
 ```bash
 # hit the ingress with the Host header
@@ -808,6 +824,9 @@ curl -I -H 'Host: demo.local' http://$NODE_IP:30
 ```
 
 ## 32. Canary Ingress
+
+- Các bước thực hiện: 
+  - Tạo Web và webv2 để scale Canary dần dần lên.
 ```bash
 # Solution commands for canary-ingress
 cat <<'EOF' | kubectl apply -f -
@@ -940,12 +959,40 @@ EOF
 ```
 ```bash
 # busybox client to probe ingress responses
-kubectl -n canary-ingress run curl --image=busybox:1.36 --restart=Never --command -- sh -c "while true; do wget -qO- http://canary.local && sleep 1; done"
+kubectl -n canary-ingress run curl --image=busybox:1.36 --restart=Never --command -- sh -c "while true; do wget -O- \
+  --header="Host: canary.local" \
+  http://10.0.10.26:30000 && sleep 1; done"
 ```
 ```bash
 # stream several responses to observe ~90/10 split
 kubectl -n canary-ingress logs -f curl
 ```
+
+### 32.1 Các cách tăng Canary đang có hiện tại:
+- Thông thường người ta phải tăng Canary lên phiên bản mới hơn nếu nó hoạt động tốt và ổn định vậy tăng như nào:
+
+- **Cách 1**: Sửa YAML rồi apply
+  - Đổi: `canary-weight: "20"` rồi apply
+- **Cách 2**: Sửa trực tiếp bằng kubectl overwrite:
+```bash
+kubectl -n canary-ingress annotate ingress web-canary \
+  nginx.ingress.kubernetes.io/canary-weight="20" \
+  --overwrite
+```
+- **Cách 3**: Edit: `kubectl -n canary-ingress edit ingress web-canary`
+
+### 32.2 Sau khi test xong
+- Bạn test xong và cho rằng v2 đã hoàn toàn tốt và ổn định đủ để thay thế bản cũ:
+  - Sửa main ingress:
+```yaml
+backend:
+  service:
+    name: web-v2
+```
+- Apply lại
+- Sau đó xóa Canary Ingress: `kubectl -n canary-ingress delete ingress web-canary`
+
+
 
 ## 33. Ingress Path Rewriting
 ```bash
