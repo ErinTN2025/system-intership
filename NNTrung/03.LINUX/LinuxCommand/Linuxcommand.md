@@ -114,3 +114,19 @@ sudo find /etc/kubernetes -type f \(-name"*.crt" -o -name "*.key" -o -name "*.pe
 # hoặc tìm rộng hơn
 sudo find / -type f \( -name "*.crt" -o -name "*.key" -o -name "*.pem"\) 2> /dev/null
 ``` 
+
+## 9. Cách dùng lệnh grep
+`grep` có option để lấy cả các dòng xung quanh dòng match.
+- Dùng context
+```bash
+grep -C 3 "error" file.log
+```
+Nghĩa là tìm dòng chứa `error` và hiển thị 3 dòng trước + dòng chứa error + 3 dòng sau.
+- Dùng before
+```bash
+grep -B 3 "error" file.log
+```
+- Dùng After
+```bash
+grep -C 3 "error" file.log
+```
