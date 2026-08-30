@@ -107,6 +107,8 @@ Cú pháp: `ssh -J user@jump_host user@target_internal_ip`
     - Client giải mã bằng private key của nó rồi so sánh với bản lưu trong `~/.ssh/known_hosts`: Nếu khớp tin tưởng server nếu khác: cảnh báo host key has changed.
     - Nếu không có thì sẽ xác nhận là ssh lần đầu. -> lưu vào trong `/.ssh/known_hosts`
     - Sau đó 2 Client và server mỗi bên sinh ra 1 cặp public - private key gọi chung là empheral key
+  - **SSH client/server dùng một bộ sinh số ngẫu nhiên mật mã (CSPRNG) của hệ điều hành để sinh ephemeral private key.**
+  - Cụ thể hơn:  Client cần một private key a. Nó không lấy từ file, không lấy từ ~/.ssh/, cũng không phải password. Nó yêu cầu hệ điều hành cung cấp cryptographically secure random bytes: `CSPRNG → random bytes → a`. Ephemeral key được tạo bằng random number generator + thuật toán toán học của KEX.
   - **Ephemeral key pair** được tạo tức thời cho quá trình KEX (ví dụ ECDH/DH ephemeral).
 ```bash
     Ephemeral Private A      Ephemeral Private B
