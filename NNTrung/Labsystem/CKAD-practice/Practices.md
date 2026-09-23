@@ -1032,3 +1032,18 @@ kubectl -n ingress-path-rewrite get ingress web-ingress
 NODE_IP=$(kubectl get nodes -o jsonpath='{range .items[*]}{.status.addresses[?(@.type=="InternalIP")].address}{"\n"}{end}')
 curl -I -H 'Host: rewrite.example.com' http://$NODE_IP:30000/app
 ```
+
+
+## 34. Monitoring Kubernetes with Metrics Server
+- Run the command `k top no controlplane` to view the CPU and memory usage on the control plane node.
+- Run the command `kubectl top po emptydir-simple --containers` to show the metrics for a pod and it's containers
+```bash
+# show the cpu and memory metrics for the pod named pod-hostpath
+k top po pod-hostpath
+```
+- If you are running a lot of pods, and want to quickly determine which pods are consuming the most CPU, run the command `k top po --sort-by=cpu`
+- If you'd like to determine which pods are consuming the most memory, run the command `k top po --sort-by=memory`
+```bash
+# show the pod and container metrics for the pod named `php-apache` <span class='kc-markdown-code-copy'></span>, sorted by memory
+k top po php-apache --containers --sort-by=memory
+```
