@@ -1,0 +1,4 @@
+# Create a patch file: allow-scheduling.yaml
+cluster:
+  allowSchedulingOnControlPlanes: true
+

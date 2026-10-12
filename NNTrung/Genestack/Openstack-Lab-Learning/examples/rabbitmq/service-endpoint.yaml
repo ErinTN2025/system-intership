@@ -1,0 +1,9 @@
+endpoints:
+  oslo_messaging:
+    hosts:
+      default: rabbitmq-genestack
+    host_fqdn_override:
+      default: rabbitmq-genestack.openstack.svc.cluster.local
+manifests:
+  job_rabbit_init: false
+  rabbitmq_topology: false

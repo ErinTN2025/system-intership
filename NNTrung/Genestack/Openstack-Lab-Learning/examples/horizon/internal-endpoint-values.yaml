@@ -1,0 +1,5 @@
+conf:
+  horizon:
+    local_settings:
+      config:
+        endpoint_type: internalURL

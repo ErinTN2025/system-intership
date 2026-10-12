@@ -1,0 +1,13 @@
+conf:
+  horizon:
+    local_settings:
+      config:
+        allowed_hosts:
+        - horizon.lab.test
+        csrf_trusted_origins:
+        - https://horizon.lab.test:31384
+        secure_proxy_ssl_header: true
+        use_ssl: 'True'
+        csrf_cookie_secure: 'True'
+        session_cookie_secure: 'True'
+        endpoint_type: internalURL

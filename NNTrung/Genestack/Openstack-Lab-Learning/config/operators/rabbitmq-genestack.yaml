@@ -1,0 +1,35 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: rabbitmq-genestack
+  namespace: openstack
+spec:
+  replicas: 1
+  image: rabbitmq:4.3.5-management
+  service:
+    type: ClusterIP
+  persistence:
+    storageClassName: local-path
+    storage: 1Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 1Gi
+    limits:
+      memory: 1Gi
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - controlplane-01
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+  rabbitmq:
+    additionalConfig: |
+      disk_free_limit.absolute = 200MB

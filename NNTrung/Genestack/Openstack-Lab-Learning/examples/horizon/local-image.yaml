@@ -1,0 +1,6 @@
+# Learning example: apply only after both image references exist in this registry.
+# Other image keys (db_init, dep_check, hooks...) still need their own archives/overrides.
+images:
+  tags:
+    horizon: 192.168.207.138:5001/quay.io/airshipit/horizon:2026.1-ubuntu_noble
+    horizon_db_sync: 192.168.207.138:5001/quay.io/airshipit/horizon:2026.1-ubuntu_noble

@@ -1,0 +1,17 @@
+pod:
+  mounts:
+    nova_compute:
+      nova_compute:
+        volumeMounts:
+        - name: shared-ovn-run
+          mountPath: /run/openvswitch
+        volumes:
+        - name: shared-ovn-run
+          hostPath:
+            path: /run/openvswitch
+            type: Directory
+conf:
+  nova:
+    os_vif_ovs:
+      ovsdb_interface: vsctl
+      ovsdb_connection: unix:/run/openvswitch/db.sock

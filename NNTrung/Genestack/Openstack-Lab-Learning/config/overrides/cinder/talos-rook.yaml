@@ -1,0 +1,24 @@
+ceph_client:
+  configmap: cinder-rook-ceph-etc
+  user_secret_name: cinder-rook-client-key
+
+conf:
+  cinder:
+    DEFAULT:
+      enabled_backends: rbd1
+      default_volume_type: rbd1
+  backends:
+    rbd1:
+      rbd_pool: cinder-volumes
+      rbd_user: cinder
+
+manifests:
+  job_storage_init: false
+  job_backup_storage_init: false
+  deployment_backup: false
+  pvc_backup: false
+  job_clean: false
+
+secrets:
+  rbd:
+    volume: cinder-rook-client-key

@@ -1,0 +1,19 @@
+conf:
+  ceph:
+    enabled: false
+  enable_iscsi: false
+
+network:
+  backend:
+    - openvswitch
+
+dependencies:
+  dynamic:
+    targeted:
+      openvswitch:
+        compute:
+          pod: []
+
+bootstrap:
+  wait_for_computes:
+    enabled: false

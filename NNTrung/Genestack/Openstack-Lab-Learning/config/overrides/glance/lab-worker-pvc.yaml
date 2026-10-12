@@ -1,0 +1,18 @@
+storage: pvc
+
+labels:
+  api:
+    node_selector_key: kubernetes.io/hostname
+    node_selector_value: workerplane-01
+
+volume:
+  class_name: local-path
+  size: 10Gi
+  accessModes:
+    - ReadWriteOnce
+
+volume_staging:
+  class_name: local-path
+  size: 2Gi
+  accessModes:
+    - ReadWriteOnce

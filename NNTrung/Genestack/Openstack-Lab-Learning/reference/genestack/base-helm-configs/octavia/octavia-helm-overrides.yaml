@@ -1,0 +1,320 @@
+---
+images:
+  tags:
+    bootstrap: "ghcr.io/rackerlabs/genestack-images/openstack-client:2026.1-latest"
+    db_drop: "ghcr.io/rackerlabs/genestack-images/openstack-client:2026.1-latest"
+    db_init: "ghcr.io/rackerlabs/genestack-images/openstack-client:2026.1-latest"
+    dep_check: "ghcr.io/rackerlabs/genestack-images/kubernetes-entrypoint:latest"
+    image_repo_sync: null
+    ks_endpoints: "ghcr.io/rackerlabs/genestack-images/openstack-client:2026.1-latest"
+    ks_service: "ghcr.io/rackerlabs/genestack-images/openstack-client:2026.1-latest"
+    ks_user: "ghcr.io/rackerlabs/genestack-images/openstack-client:2026.1-latest"
+    octavia_api: "ghcr.io/rackerlabs/genestack-images/octavia:2026.1-latest"
+    octavia_db_sync: "ghcr.io/rackerlabs/genestack-images/octavia:2026.1-latest"
+    octavia_health_manager: "ghcr.io/rackerlabs/genestack-images/octavia:2026.1-latest"
+    octavia_health_manager_init: "ghcr.io/rackerlabs/genestack-images/openstack-client:2026.1-latest"
+    octavia_housekeeping: "ghcr.io/rackerlabs/genestack-images/octavia:2026.1-latest"
+    octavia_worker_init: "ghcr.io/rackerlabs/genestack-images/openstack-client:2026.1-latest"
+    octavia_worker: "ghcr.io/rackerlabs/genestack-images/octavia:2026.1-latest"
+    openvswitch_vswitchd: "ghcr.io/rackerlabs/genestack-images/ovs:v3.5.1-latest"
+    rabbit_init: null
+    test: null
+
+labels:
+  api:
+    node_selector_key: openstack-control-plane
+    node_selector_value: enabled
+  driver_agent:
+    node_selector_key: openstack-control-plane
+    node_selector_value: enabled
+  worker:
+    node_selector_key: openstack-control-plane
+    node_selector_value: enabled
+  housekeeping:
+    node_selector_key: openstack-control-plane
+    node_selector_value: enabled
+  health_manager:
+    node_selector_key: openstack-control-plane
+    node_selector_value: enabled
+  job:
+    node_selector_key: openstack-control-plane
+    node_selector_value: enabled
+
+bootstrap:
+  enabled: false
+
+dependencies:
+  static:
+    api:
+      jobs:
+        - octavia-db-sync
+        - octavia-ks-user
+        - octavia-ks-endpoints
+    driver_agent:
+      jobs:
+        - octavia-db-sync
+        - octavia-ks-user
+        - octavia-ks-endpoints
+    db_sync:
+      jobs: []
+    health_manager:
+      jobs:
+        - octavia-db-sync
+        - octavia-ks-user
+        - octavia-ks-endpoints
+    housekeeping:
+      jobs:
+        - octavia-db-sync
+        - octavia-ks-user
+        - octavia-ks-endpoints
+    worker:
+      jobs:
+        - octavia-db-sync
+        - octavia-ks-user
+        - octavia-ks-endpoints
+
+conf:
+  logging:
+    logger_root:
+      handlers:
+        - stdout
+      level: INFO
+  octavia:
+    amphora_agent:
+      disable_local_log_storage: true
+    api_settings:
+      default_provider_driver: amphora
+      enabled_provider_drivers: >-
+        ovn: "The Octavia OVN driver",
+        amphora: "The Octavia Amphora driver"
+    certificates:
+      endpoint_type: internalURL
+    cinder:
+      endpoint_type: internalURL
+      valid_interfaces: internal
+    controller_worker:
+      loadbalancer_topology: ACTIVE_STANDBY
+      workers: 2
+    database:
+      connection_debug: 0
+      connection_recycle_time: 600
+      connection_trace: true
+      mysql_sql_mode: {}
+      use_db_reconnect: true
+      pool_timeout: 60
+      max_retries: -1
+      max_overflow: 60
+      max_pool_size: 30
+    driver_agent:
+      enabled_provider_agents: ovn
+    glance:
+      endpoint_type: internalURL
+      valid_interfaces: internal
+    keystone_authtoken:
+      service_token_roles: service
+      service_token_roles_required: true
+      auth_type: password
+      auth_version: v3
+      memcache_security_strategy: ENCRYPT
+      service_type: load-balancer
+      valid_interfaces: internal
+    neutron:
+      endpoint_type: internalURL
+      valid_interfaces: internal
+    nova:
+      enable_anti_affinity: "True"
+      endpoint_type: internalURL
+    oslo_concurrency:
+      lock_path: /tmp/octavia
+    oslo_messaging_rabbit:
+      amqp_durable_queues: false
+      rabbit_ha_queues: false
+      rabbit_quorum_queue: true
+      rabbit_transient_quorum_queue: false
+      use_queue_manager: false
+      rabbit_interval_max: 10
+      # Send more frequent heartbeats and fail unhealthy nodes faster
+      # heartbeat_timeout / heartbeat_rate / 2.0 = 30 / 3 / 2.0 = 5
+      # https://opendev.org/openstack/oslo.messaging/commit/36fb5bceabe08a982ebd52e4a8f005cd26fdf6b8
+      heartbeat_rate: 3
+      heartbeat_timeout_threshold: 60
+      # Setting lower kombu_reconnect_delay should resolve issue with HA failing when one node is down
+      # https://lists.openstack.org/pipermail/openstack-discuss/2023-April/033314.html
+      # https://review.opendev.org/c/openstack/oslo.messaging/+/866617
+      kombu_reconnect_delay: 0.5
+    ovn:
+      ovn_nb_connection: "tcp:127.0.0.1:6641"
+      ovn_sb_connection: "tcp:127.0.0.1:6642"
+    service_auth:
+      insecure: true
+    task_flow:
+      jobboard_enabled: false
+      jobboard_backend_driver: redis_taskflow_driver
+      jobboard_redis_sentinel: myMaster
+      jobboard_redis_backend_db: 0
+      jobboard_redis_backend_ssl_options: "ssl:False"
+      jobboard_redis_sentinel_ssl_options: "ssl:False"
+      jobboard_backend_port: 26379
+      jobboard_backend_hosts:
+        - redis-sentinel-sentinel-0.redis-sentinel-sentinel-headless.redis-systems.svc.cluster.local
+        - redis-sentinel-sentinel-1.redis-sentinel-sentinel-headless.redis-systems.svc.cluster.local
+        - redis-sentinel-sentinel-2.redis-sentinel-sentinel-headless.redis-systems.svc.cluster.local
+
+  octavia_api_uwsgi:
+    uwsgi:
+      processes: 2
+      threads: 1
+      # wsgi script was removed so adding this as upstream is doing same in octavia value overrides here
+      # https://github.com/openstack/openstack-helm/blob/master/values_overrides/octavia/2025.1-ubuntu_jammy.yaml#L27
+      wsgi-file: /var/lib/openstack/bin/octavia-wsgi
+
+endpoints:
+  fluentd:
+    namespace: fluentbit
+  identity:
+    port:
+      api:
+        admin: 5000
+        default: 5000
+        internal: 5000
+        public: 80
+        service: 5000
+    scheme:
+      default: http
+      service: http
+  load_balancer:
+    hosts:
+      default: octavia
+      internal: octavia-api
+    port:
+      api:
+        default: 9876
+        internal: 9876
+        public: 80
+        service: 9876
+    scheme:
+      default: http
+      service: http
+  network:
+    port:
+      api:
+        default: 9696
+        internal: 9696
+        public: 80
+        service: 9696
+    scheme:
+      default: http
+      service: http
+  oslo_db:
+    host_fqdn_override:
+      default: mariadb-cluster-primary.openstack.svc.cluster.local
+    hosts:
+      default: mariadb-cluster-primary
+  oslo_db_persistence:
+    hosts:
+      default: mariadb-cluster-primary
+    host_fqdn_override:
+      default: mariadb-cluster-primary.openstack.svc.cluster.local
+    path: /octavia-persistence
+  oslo_cache:
+    host_fqdn_override:
+      default: memcached.openstack.svc.cluster.local
+    hosts:
+      default: memcached
+    statefulset:
+      name: memcached-memcached
+      replicas: 3
+  oslo_messaging:
+    host_fqdn_override:
+      default: rabbitmq.openstack.svc.cluster.local
+    hosts:
+      default: rabbitmq-nodes
+
+  valkey:
+    name: valkey
+    hosts:
+      default: redis-sentinel-sentinel.redis-systems.svc.cluster.local
+    # NOTE(rlin): we should only provide password when not using CA cert.
+    password: null
+    host_fqdn_override:
+      default: redis-sentinel-sentinel.redis-systems.svc.cluster.local
+    port:
+      server:
+        default: 26379
+        sentinel: 26379
+
+# NOTE: (brew) requests cpu/mem values based on a three node
+# hyperconverged lab (/scripts/hyperconverged-lab.sh).
+# limit values based on defaults from the openstack-helm charts unless defined
+pod:
+  lifecycle:
+    upgrades:
+      deployments:
+        revision_history: 3
+        pod_replacement_strategy: RollingUpdate
+        rolling_update:
+          max_unavailable: 20%
+          max_surge: 3
+      daemonsets:
+        pod_replacement_strategy: RollingUpdate
+        health_manager:
+          enabled: true
+          min_ready_seconds: 0
+          max_unavailable: 20%
+    disruption_budget:
+      api:
+        min_available: 0
+    termination_grace_period:
+      api:
+        timeout: 60
+  resources:
+    enabled: true
+    api:
+      requests:
+        memory: "768Mi"
+        cpu: "300m"
+      limits:
+        memory: "3072Mi"
+        cpu: "2000m"
+    worker:
+      requests:
+        memory: "256Mi"
+        cpu: "1000m"
+      limits: {}
+  affinity:
+    anti:
+      weight:
+        default: 10
+  mounts:
+    octavia_api:
+      init_container: null
+      octavia_api:
+        volumeMounts:
+          - name: pod-run-octavia
+            mountPath: /var/run/octavia
+        volumes:
+          - name: pod-run-octavia
+            emptyDir: {}
+    octavia_worker:
+      init_container: null
+      octavia_worker:
+        volumeMounts:
+          - name: pod-run-octavia
+            mountPath: /var/run/octavia
+        volumes:
+          - name: pod-run-octavia
+            emptyDir: {}
+    octavia_driver_agent:
+      init_container: null
+      octavia_bootstrap:
+        volumeMounts:
+        volumes:
+
+manifests:
+  ingress_api: false
+  job_bootstrap: false
+  job_db_init: false
+  job_rabbit_init: false
+  secret_ingress_tls: false
+  service_ingress_api: false
+  deployment_driver_agent: false

@@ -1,0 +1,22 @@
+operatorNamespace: rook-ceph
+
+cephClusterSpec:
+  mon:
+    count: 1
+    allowMultiplePerNode: false
+  mgr:
+    count: 1
+  storage:
+    useAllNodes: false
+    useAllDevices: false
+    nodes:
+      - name: workerplane-01
+        devices:
+          - name: sdc
+
+cephBlockPools: []
+cephFileSystems: []
+cephObjectStores: []
+
+toolbox:
+  enabled: true

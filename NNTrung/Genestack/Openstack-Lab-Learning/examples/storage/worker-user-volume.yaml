@@ -1,0 +1,8 @@
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: local-path-provisioner
+provisioning:
+  diskSelector:
+    match: "disk.dev_path == '/dev/sdb' && !system_disk"
+  minSize: 9GB
+  maxSize: 9GB

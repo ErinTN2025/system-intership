@@ -1,0 +1,17 @@
+conf:
+  ceph:
+    enabled: false
+  libvirt:
+    log_level: "1"
+    log_outputs: "1:stderr"
+
+network:
+  backend:
+    - openvswitch
+
+dependencies:
+  dynamic:
+    targeted:
+      openvswitch:
+        libvirt:
+          pod: []

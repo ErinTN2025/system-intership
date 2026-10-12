@@ -1,0 +1,15 @@
+/artifacts/*
+/workspace/*
+!/artifacts/.gitkeep
+!/workspace/.gitkeep
+/secrets/
+/private/
+*.key
+*.pcap
+*.iso
+*.tar
+*.tgz
+*.log
+.env
+
+!/assets/chart-archives/*.tgz

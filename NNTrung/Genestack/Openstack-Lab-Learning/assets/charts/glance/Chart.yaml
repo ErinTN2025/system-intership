@@ -1,0 +1,16 @@
+apiVersion: v2
+appVersion: 32.0.0
+dependencies:
+- name: helm-toolkit
+  repository: file://../helm-toolkit
+  version: '>= 0.1.0'
+description: OpenStack-Helm Glance
+home: https://docs.openstack.org/glance/latest/
+icon: https://www.openstack.org/themes/openstack/images/project-mascots/Glance/OpenStack_Project_Glance_vertical.png
+maintainers:
+- name: OpenStack-Helm Authors
+name: glance
+sources:
+- https://opendev.org/openstack/glance
+- https://opendev.org/openstack/openstack-helm
+version: 2026.1.39+dd5656a9c

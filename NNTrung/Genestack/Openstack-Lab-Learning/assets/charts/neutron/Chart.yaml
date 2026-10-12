@@ -1,0 +1,16 @@
+apiVersion: v2
+appVersion: 28.0.0
+dependencies:
+- name: helm-toolkit
+  repository: file://../helm-toolkit
+  version: '>= 0.1.0'
+description: OpenStack-Helm Neutron
+home: https://docs.openstack.org/neutron/latest/
+icon: https://www.openstack.org/themes/openstack/images/project-mascots/Neutron/OpenStack_Project_Neutron_vertical.png
+maintainers:
+- name: OpenStack-Helm Authors
+name: neutron
+sources:
+- https://opendev.org/openstack/neutron
+- https://opendev.org/openstack/openstack-helm
+version: 2026.1.69+4e05862fc

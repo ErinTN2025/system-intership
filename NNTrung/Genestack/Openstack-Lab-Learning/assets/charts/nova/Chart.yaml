@@ -1,0 +1,16 @@
+apiVersion: v2
+appVersion: 33.0.0
+dependencies:
+- name: helm-toolkit
+  repository: file://../helm-toolkit
+  version: '>= 0.1.0'
+description: OpenStack-Helm Nova
+home: https://docs.openstack.org/nova/latest/
+icon: https://www.openstack.org/themes/openstack/images/project-mascots/Nova/OpenStack_Project_Nova_vertical.png
+maintainers:
+- name: OpenStack-Helm Authors
+name: nova
+sources:
+- https://opendev.org/openstack/nova
+- https://opendev.org/openstack/openstack-helm
+version: 2026.1.44+89c5a3c84
