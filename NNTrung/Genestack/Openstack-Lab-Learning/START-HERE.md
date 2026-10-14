@@ -1,12 +1,12 @@
-# Bắt đầu từ đây: dựng lại bằng file, học từng bước
+# Hướng dẫn sử dụng bộ tài liệu triển khai
 
-Mục tiêu là dựng lại lab và biết mình đã làm gì. Không yêu cầu giữ dữ liệu DB/VM cũ. Bản private không phải đầu vào bắt buộc của việc học hoặc dựng cụm mới; folder này giữ chart/cấu hình để không phụ thuộc bản chụp bastion đã bị thu hồi.
+Bộ tài liệu lưu kiến trúc, chart, cấu hình và quy trình triển khai của cụm thử nghiệm. Mục tiêu là tái tạo cấu hình trên một cụm mới và xác định chức năng của từng thành phần. Phục hồi dữ liệu cơ sở dữ liệu hoặc máy ảo từ cụm cũ là một quy trình riêng, không phải điều kiện bắt buộc của luồng dựng mới.
 
 **Dựng mới từ Kubernetes đã có:** theo [09 New Cluster](docs/09-New-Cluster.md). **Octavia tiếp theo:** theo [08 Octavia](docs/08-Octavia-Genestack.md). Không cần đọc bài cài Talos; không cần folder bastion bên ngoài để lấy chart/config đã giữ.
 
-## 1. Chỗ nào là cấu hình chính?
+## 1. Nguồn cấu hình triển khai
 
-| Chỗ | Vai trò | Có chạy trực tiếp không? |
+| Vị trí | Chức năng | Công cụ sử dụng |
 |---|---|---|
 | assets/charts/ | Chart OpenStack local, giữ patch Talos và dependencies | Helm đọc |
 | assets/gateway-api/charts/ | Chart Envoy controller và CRD | Helm đọc |
@@ -21,9 +21,9 @@ Mục tiêu là dựng lại lab và biết mình đã làm gì. Không yêu c�
 
 Trong config có IP/node/disk lab cũ. Khi dựng mới phải đối chiếu chúng, không áp dụng nguyên xi trên một cụm khác. Nova có cả talos-lab và shared-ovn: list mounts thay toàn bộ, cần so sánh render, không coi hai file này đã được hợp nhất đúng chỉ vì cùng tồn tại.
 
-## 2. Đưa file sang bastion mới
+## 2. Chuẩn bị thư mục trên bastion
 
-Copy folder sang ~/Openstack-Lab-Learning. Cài/chuẩn bị Helm3, kubectl, talosctl đúng Talos, Python3/PyYAML. Công cụ, container images và OS packages không tự có vì bạn clone Git.
+Mã nguồn được đặt tại ~/Openstack-Lab-Learning trên bastion. Môi trường thực thi gồm Helm 3, kubectl, talosctl tương thích với node, Python3 và PyYAML. Việc sao chép repository chỉ cung cấp các tệp đã lưu; công cụ, container image và gói hệ điều hành được chuẩn bị riêng.
 
 Để tạo một thư mục làm việc mới từ assets/config, không đè ~/osh-lab hiện có:
 
@@ -31,9 +31,9 @@ Copy folder sang ~/Openstack-Lab-Learning. Cài/chuẩn bị Helm3, kubectl, tal
 bash ~/Openstack-Lab-Learning/tools/prepare-files.sh
 ```
 
-Script in đường dẫn vừa tạo. Nó chỉ copy file/giải nén chart local, không cài cluster, không restore dữ liệu, không tải Internet. Đọc script để hiểu thao tác. Thư mục mới là nơi tập render; cần kubeconfig/talosconfig đúng cụm cho thao tác quản trị sau đó.
+Script in đường dẫn thư mục vừa tạo, sao chép cấu hình và giải nén chart local. Nó không triển khai workload, phục hồi dữ liệu hoặc tải tài nguyên từ Internet. Thư mục kết quả phục vụ render và chuẩn bị triển khai; thao tác quản trị tiếp theo yêu cầu kubeconfig/talosconfig của cụm đích.
 
-## 3. Thứ tự dựng lại về mặt kỹ thuật
+## 3. Trình tự triển khai hạ tầng và dịch vụ
 
 | Bước | Làm gì và vì sao | Phần phụ thuộc môi trường |
 |---|---|---|
@@ -48,20 +48,20 @@ Script in đường dẫn vừa tạo. Nó chỉ copy file/giải nén chart loc
 | 9 | Test API, VM, volume, console | Không suy ra runtime OK từ render/Helm deployed |
 | 10 | Octavia OVN → Gateway → LB | Bài 08 dùng cấu hình cuối; backend/traffic cần nghiệm thu riêng |
 
-Đây là bản đồ thứ tự, không phải một installer đã được chạy nghiệm thu trên cụm sạch. Các bài học hiện có hướng dẫn đầy đủ thực hành Helm/Horizon/image; chưa có một chuỗi lệnh tự động chạy 1–9 cho cụm mới. Nếu muốn copy-paste dựng hết, cần hoàn thiện từng bước và kiểm thử trên cụm sạch, đặc biệt credential/topology/OVN/Ceph sinh mới. Không dùng snapshot old credentials làm shortcut.
+Bảng trên xác định thứ tự phụ thuộc giữa các thành phần, chưa phải bộ cài tự động đã được nghiệm thu trên cụm sạch. Các chương cung cấp quy trình Helm, Horizon và image; việc dựng mới toàn bộ cần nghiệm thu các bước tạo thông tin xác thực, topology RabbitMQ, OVN và Ceph trong môi trường đích. Snapshot thông tin xác thực của cụm cũ không thay thế quá trình chuẩn bị này.
 
 Các tài liệu gốc được lưu trong reference để học lại cách đã triển khai. File 05 là baseline đã từng dùng RabbitMQ Helm; file 06 là migration sang Operator sau đó. Chúng không phải hai bước vô hại để chạy lại trên cụm hiện tại.
 
-## 4. Sau mỗi bước, mình cần biết năm điều
+## 4. Hồ sơ cấu hình và tiêu chí kiểm tra
 
-- File vừa tạo nằm ở đâu và ai đọc nó?
-- Giá trị nào là defaults, giá trị nào do mình chọn?
-- Lệnh chỉ đọc/render, hay thực sự thay đổi cluster/disk?
-- Kết quả nào chứng minh bước đạt, kết quả nào chưa đủ?
-- File nào cần giữ cho lần sửa sau, file nào chỉ là output có thể tạo lại?
+- Vị trí tệp đầu vào và thành phần sử dụng tệp.
+- Giá trị mặc định và các tham số được điều chỉnh cho môi trường.
+- Tác động của lệnh: đọc, render, thay đổi tài nguyên hoặc ghi dữ liệu lên disk.
+- Kết quả kiểm tra và giới hạn của bằng chứng nghiệm thu.
+- Tệp nguồn cần lưu và dữ liệu đầu ra có thể tạo lại.
 
-Xem [giữ và xóa file](docs/07-Keep-or-Delete.md) trước khi dọn dung lượng. File chưa biết mục đích không cần giữ vĩnh viễn: phân loại và kiểm tra thay vì gom mọi thứ.
+Xem [giữ và xóa file](docs/07-Keep-or-Delete.md) trước khi dọn dung lượng. Việc lưu trữ dựa trên chức năng và khả năng tái tạo của từng loại tệp.
 
-## CLI sau khi Gateway đã có
+## 5. Môi trường CLI sau khi triển khai Gateway
 
 Dùng [admin.sh](docs/10-Admin-Environment.md): source một lần mỗi terminal, không gọi load_osh_admin hoặc port-forward ở luồng hằng ngày.

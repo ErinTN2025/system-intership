@@ -1,12 +1,12 @@
-# 05. Từ folder loạn tới repo mình hiểu được
+# 05. Tổ chức cấu hình triển khai trong Git
 
-## 1. Git giữ cấu hình, không giữ cụm đang chạy
+## 1. Phạm vi quản lý của Git
 
 Commit là mốc của file. Helm revision là mốc một release trong Kubernetes. Hai mốc không tự đồng bộ. Git không backup database, PVC, Ceph hoặc VM disk. Registry chứa image; Git thường giữ tên/tag/digest image và source build, không giữ hàng GB archive.
 
-Genestack có giá trị ở cách tổ chức: version pin, cấu hình base, override môi trường, installer và tài liệu. Bạn không cần chép cả Genestack để học ý tưởng này.
+Genestack có giá trị ở cách tổ chức: version pin, cấu hình base, override môi trường, installer và tài liệu. Mô hình tổ chức này có thể áp dụng cho cấu hình lab mà không sao chép toàn bộ framework Genestack.
 
-## 2. Một cấu trúc mình có thể tiến tới
+## 2. Cấu trúc repository đề xuất
 
 ```text
 my-openstack-lab/
@@ -24,7 +24,7 @@ my-openstack-lab/
 
 Đây là thiết kế để học, không phải tất cả đã được tự động hóa trong folder hiện tại. environments/lab.yaml không tự thay IP trong mọi file: cần template/generator đọc nó và render đúng. Đặt biến vào YAML rồi quên viết cơ chế thay thế vẫn là cấu hình sai.
 
-## 3. Chọn cấu hình cuối từ bastion
+## 3. Xác định cấu hình đang có hiệu lực
 
 Thực hiện từng dịch vụ, không gom đồng thời tất cả:
 
@@ -38,7 +38,7 @@ Thực hiện từng dịch vụ, không gom đồng thời tất cả:
 
 Ví dụ cuối Horizon: distro → HTTPS config có internalURL. Bản example https-final.yaml đã hợp nhất hai override dễ đọc, nhưng chưa tự chứa toàn bộ DB/auth/placement của release. Nova/Libvirt cần giữ patch template; Neutron cần lấy NB/SB IP mới từ Service, không mang ClusterIP cũ sang cluster mới. Cinder cần key/FSID/MON mới do Ceph sinh.
 
-## 4. Học Git trên folder tài liệu này
+## 4. Khởi tạo repository và quản lý thay đổi
 
 Sau khi copy folder sang bastion và kiểm tra không có credential nhạy cảm:
 
@@ -52,16 +52,16 @@ git diff --cached --stat
 
 git init tạo repository local, không upload. git add chọn file vào staging. Xem nội dung staged riêng trước commit; .gitignore không xóa bí mật đã tracked. File reference có thể chứa hướng dẫn cũ/credential mẫu nên đọc lại trước khi đưa repo public.
 
-Khi đã tự đọc diff:
+Sau khi kiểm tra nội dung diff:
 
 ```bash
 git commit -m 'Add notes and examples for learning the OpenStack lab'
 ```
 
-Git có thể yêu cầu user.name/user.email; cấu hình danh tính của bạn trong repo. Chưa cần GitHub hoặc Internet để commit local. Muốn đồng bộ server mới thêm remote/push; không đưa cluster credentials lên server để tiện copy.
+Git có thể yêu cầu user.name/user.email; danh tính tác giả được cấu hình trong repository. Chưa cần GitHub hoặc Internet để commit local. Muốn đồng bộ server mới thêm remote/push; không đưa cluster credentials lên server để tiện copy.
 
-## 5. Quy tắc sửa từ lần sau
+## 5. Hồ sơ thay đổi và quy trình cập nhật
 
 Mỗi thay đổi ghi: vấn đề → file/key sửa → lệnh render/apply → kết quả → hạn chế. Giữ script đọc rõ thay vì một installer dài che toàn bộ logic. Render tốt chưa đủ để commit nhãn “tested deployment”: cần có bằng chứng runtime/tác vụ tương ứng.
 
-Nếu muốn sửa code thật của Horizon: lấy đúng source version, lưu patch/Containerfile, build image tag mới, push registry, đổi images.tags và upgrade. helm upgrade không biên dịch Python và không tạo image từ source cho bạn.
+Thay đổi mã nguồn Horizon yêu cầu chọn đúng phiên bản nguồn, lưu patch/Containerfile, build image mới, xuất bản lên registry và cập nhật images.tags trước khi upgrade. Helm triển khai image đã tồn tại; nó không biên dịch Python hoặc build image từ mã nguồn.

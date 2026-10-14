@@ -1,6 +1,6 @@
-# 01. Cụm mình đang có: đọc từ dưới lên
+# 01. Kiến trúc cụm và nguồn cấu hình
 
-| Phần | Vai trò | Bạn đụng tới nó khi nào? |
+| Thành phần | Chức năng | Phạm vi quản trị |
 |---|---|---|
 | Bastion Ubuntu | Chạy talosctl/kubectl/Helm, lưu file | Sửa chart/values, render, gửi lệnh tới cluster |
 | controlplane-01 .137 | Kubernetes control plane và nhiều service | Machine config, scheduling, storage |
@@ -10,7 +10,7 @@
 | Helm | Chart + values thành tài nguyên | template/upgrade/get/history |
 | Genestack | Repo cấu hình, workflow và công cụ | Học cách quy hoạch; không phải daemon tự chạy trên node |
 
-## 1. Request dashboard đi đâu?
+## 1. Luồng truy cập dashboard
 
 ```mermaid
 flowchart LR
@@ -24,7 +24,7 @@ flowchart LR
 
 TLS kết thúc tại Envoy. Horizon nhận HTTP phía sau proxy, dùng forwarded header để hiểu client đi HTTPS. HTTPRoute chọn backend; không tự sửa Keystone catalog. Catalog là danh sách URL Horizon/CLI dùng để tìm API.
 
-## 2. File Horizon của mình
+## 2. Tệp cấu hình Horizon
 
 | File trên bastion | Ý nghĩa |
 |---|---|
@@ -39,9 +39,9 @@ TLS kết thúc tại Envoy. Horizon nhận HTTP phía sau proxy, dùng forwarde
 
 Tất cả đường dẫn trên dưới `~/osh-lab`. File before/current không tự đồng bộ với cluster. Chart/template/config local là nguồn mong muốn; tài nguyên cluster là trạng thái thực tế. Patch trực tiếp Deployment có thể chưa được ghi về file.
 
-## 3. Vì sao nhiều file làm bạn thấy loạn?
+## 3. Phân loại nguồn cấu hình và trạng thái triển khai
 
-Triển khai và debug để lại nhánh VXLAN, shared OVN, migration RabbitMQ, HTTPS. Cần phân biệt bản cuối có chủ đích, snapshot, render và nhánh đã bỏ. Không gộp mọi YAML rồi apply: Helm values, Kubernetes manifest và Talos config có cú pháp/mục đích khác nhau.
+Quá trình triển khai tạo ra cấu hình VXLAN, OVN dùng chung, chuyển đổi RabbitMQ và HTTPS tại các thời điểm khác nhau. Cấu hình đang có hiệu lực được phân biệt với snapshot, manifests đã render và các phương án thử nghiệm đã ngừng sử dụng. Helm values, manifests Kubernetes và cấu hình Talos có công cụ thực thi khác nhau, dù cùng sử dụng định dạng YAML.
 
 ```bash
 # Chỉ đọc: context, node, release, workload và storage

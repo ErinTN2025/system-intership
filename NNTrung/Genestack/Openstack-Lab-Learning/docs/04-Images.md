@@ -1,8 +1,8 @@
-# 04. Image: tải từ đâu, lưu local rồi dùng như thế nào?
+# 04. Quản lý container image và triển khai ngoại tuyến
 
-## 1. Bốn thứ khác nhau
+## 1. Chart, image, archive và registry
 
-| Thứ | Ví dụ | Ai đọc/dùng? |
+| Loại tài nguyên | Ví dụ | Thành phần sử dụng |
 |---|---|---|
 | Helm chart | charts/horizon/ | Helm trên bastion |
 | Container image | quay.io/airshipit/horizon:2026.1-ubuntu_noble | containerd trên node |
@@ -11,7 +11,7 @@
 
 Tên image có registry/repository/tag. `quay.io` là server; `airshipit/horizon` là repository; `2026.1-ubuntu_noble` là tag. Tag có thể thay đổi ở server; digest định danh nội dung manifest. Image là gói chương trình/libraries; container là tiến trình tạo từ image. Tải image không tải dữ liệu PVC/database.
 
-Ví dụ nguồn có thật trong chart Horizon của bastion:
+Ví dụ image reference trong chart Horizon đã lưu trên bastion:
 
 ```yaml
 images:
@@ -24,7 +24,7 @@ images:
 
 Đổi mỗi horizon không đổi image của init Job/container. Đọc images.tags trong chart và bản render để hiểu key nào được dùng. Mất Internet mà pod đã chạy thì pod không tự dừng; pod mới có thể lỗi pull nếu thiếu cache hoặc pull policy yêu cầu liên hệ registry. Cache Docker trên bastion khác cache containerd của node.
 
-## 2. Kiểm kê trước khi tải
+## 2. Kiểm kê image của cụm
 
 Trên bastion có kubectl trỏ đúng cụm:
 
@@ -37,7 +37,7 @@ Output là images-pods.txt, images-workloads.txt và images-observed.txt. Script
 
 Đây chưa phải danh sách đầy đủ cho cài từ đầu: Job cũ có thể đã bị xóa; controller có thể tạo workload mới; image Talos installer và image core Kubernetes có thể không xuất hiện trong workload list. Muốn đủ, kết hợp image trong render (kể cả Helm hooks), defaults/effective values, Operator spec, core images trên machine config và kiểm thử cold boot. Không copy machine config chứa secrets lên Git để kiểm kê.
 
-## 3. Thực hành tải MỘT image về archive
+## 3. Tải image và tạo archive
 
 Thực hiện trên Ubuntu/Linux amd64 có Internet, có skopeo. Nếu chưa có, lệnh sau dùng Internet và cài công cụ trên máy tải, không chạy trên Talos:
 
@@ -71,7 +71,7 @@ sha256sum -c horizon.tar.sha256
 
 Tới đây mới có file trên ổ đĩa, node Talos vẫn chưa dùng được nó.
 
-## 4. Dựng registry local để hiểu chỗ lưu image
+## 4. Triển khai registry trong mạng nội bộ
 
 Bài tập dùng bastion .138:5001 làm registry HTTPS. Chọn port 5001 để không trùng port-forward Keystone 5000. Đây là một dịch vụ mới, không phải phần cụm đang có. Cần bastion có Docker Engine hoạt động và skopeo/openssl, đủ disk, port 5001 chưa dùng và node kết nối tới .138. Không cài Docker lên Talos.
 
@@ -107,7 +107,7 @@ curl --cacert ~/registry-lab/tls/registry.crt https://192.168.207.138:5001/v2/
 
 /v2/ trả {} với HTTP 200 chứng minh registry endpoint đáp ứng, chưa chứng minh có Horizon image. Volume data lưu image qua restart. Cert/key riêng cho registry, không dùng nhầm wildcard-lab-tls của dashboard. Registry thử này chưa có user/password/access control: chỉ đặt trong LAN lab kiểm soát được, không expose public. Nếu tên container tồn tại, inspect nó trước; không tự xóa data để chạy lại.
 
-## 5. Nạp archive vào registry
+## 5. Nhập image vào registry nội bộ
 
 Trên bastion có archive Horizon:
 
@@ -119,9 +119,9 @@ skopeo inspect --cert-dir "$HOME/registry-lab/tls" \
   docker://192.168.207.138:5001/quay.io/airshipit/horizon:2026.1-ubuntu_noble
 ```
 
-Ở registry local, quay.io là một phần tên repository để tránh trùng image cùng tên từ hai registry gốc. Bạn tự chọn quy ước này; registry không tự mirror vì có thư mục tên quay.io. inspect đích giúp xác nhận metadata/architecture có thật.
+Ở registry local, quay.io là một phần tên repository để tránh trùng image cùng tên từ hai registry gốc. Đây là quy ước đặt tên repository; nó không tự thiết lập cơ chế mirror. Kiểm tra image đích bằng inspect xác nhận metadata và kiến trúc của image đã nhập.
 
-## 6. Cho Talos tin certificate registry
+## 6. Cấu hình CA của registry trên Talos
 
 TLS certificate tự ký phải được node tin. Docker/skopeo trên bastion tin không có nghĩa Talos tin. Tạo patch riêng (có thay đổi machine config khi áp dụng):
 
@@ -151,7 +151,7 @@ talosctl -n 192.168.207.139 patch machineconfig \
 
 Không bỏ verification bằng insecureSkipVerify chỉ để tránh đọc lỗi cert. Patch CA không tải image, không đổi image của pod, và không mở đường mạng nếu node không tới được .138:5001. Đây là ví dụ patch v1alpha1 machine registries; kiểm tra schema/CLI đúng Talos 1.13.10 của lab trước khi thực hành.
 
-## 7. Đổi image trong values Horizon
+## 7. Cấu hình Horizon sử dụng registry nội bộ
 
 File mẫu `examples/horizon/local-image.yaml` đổi cả horizon và horizon_db_sync sang repository local vừa nạp. Đọc file đó rồi dùng như override cuối cùng trong bài 03. Trong bước render/upgrade, thêm:
 
@@ -159,7 +159,7 @@ File mẫu `examples/horizon/local-image.yaml` đổi cả horizon và horizon_d
 -f "$STUDY_ROOT/examples/horizon/local-image.yaml"
 ```
 
-Không chạy dòng -f một mình: nó là tham số bổ sung vào lệnh Helm đầy đủ. Sau render, đối chiếu image trong Deployment/Job. Sau upgrade, xem pods/events; ImagePullBackOff là triệu chứng, describe pod cho biết thiếu image, sai CA, sai repository hay network.
+Dòng -f là tham số bổ sung vào lệnh Helm đầy đủ, không phải lệnh độc lập. Sau render, đối chiếu image trong Deployment/Job. Sau upgrade, xem pods/events; ImagePullBackOff là triệu chứng, describe pod cho biết thiếu image, sai CA, sai repository hay network.
 
 ```bash
 kubectl -n openstack get pods -l application=horizon
@@ -168,7 +168,7 @@ kubectl -n openstack describe pod -l application=horizon
 
 Bài tập chỉ chuyển hai key dùng image Horizon. DB init/dep_check/other image vẫn có thể đi registry public. Muốn offline toàn chart phải tải và đổi tất cả image thực sự cần, gồm hooks/jobs/init; muốn toàn cụm còn cần hạ tầng/Operator/Kubernetes/Talos.
 
-## 8. Registry mirror khác đổi values thế nào?
+## 8. Registry mirror và image override
 
 Đổi values: pod spec nhìn thấy `192.168.207.138:5001/quay.io/airshipit/horizon:...`. Chỉ ảnh hưởng những key đã đổi.
 
@@ -176,7 +176,7 @@ Mirror Talos: pod spec vẫn có quay.io/... nhưng containerd chuyển request 
 
 Khi học cài offline toàn cụm, mirror là phương án giảm sửa mọi chart nhưng cần thiết kế namespace từng upstream và xử lý fallback Internet. Talos upstream có hướng dẫn air-gapped; không coi chỉ thêm endpoint mirror là đã đóng gói đủ image.
 
-## 9. Mất Wi-Fi và mất Internet
+## 9. Phụ thuộc mạng khi vận hành và triển khai
 
 Mất Wi-Fi kết nối LAN: laptop không vào dashboard; cluster có thể vẫn chạy. LAN còn nhưng Internet mất: ứng dụng đã chạy và API nội bộ có thể tiếp tục. Registry local cần bastion/host registry chạy nếu node phải pull lại. Helm local chỉ tránh tải chart; nó không làm image public tự xuất hiện. Tạo VM dùng Glance image đã upload khác tải VM image từ Internet. NTP/DNS/discovery ngoài LAN và công cụ bootstrap cũng cần tính trong cài mới offline.
 

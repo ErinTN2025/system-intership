@@ -1,4 +1,4 @@
-# Các nguồn Genestack được giữ local
+# Phạm vi mã nguồn Genestack lưu trong repository
 
 Đây là tập source chọn lọc để học/đối chiếu Octavia, RabbitMQ, MariaDB, Gateway. Không phải checkout Genestack đầy đủ. Installer có thể cần framework/config ở /etc/genestack và /opt/genestack chưa dựng; không chạy nguyên script lên lab chỉ vì file tồn tại.
 

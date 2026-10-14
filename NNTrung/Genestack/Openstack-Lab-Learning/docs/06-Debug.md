@@ -1,6 +1,6 @@
-# 06. Đọc lỗi theo đường đi, không thử lệnh ngẫu nhiên
+# 06. Chẩn đoán sự cố theo luồng yêu cầu
 
-## 1. Sơ đồ tìm vị trí lỗi
+## 1. Các lớp xử lý yêu cầu
 
 Browser → node IP/NodePort → Envoy listener/route → Service endpoint → Horizon → Keystone catalog → API → DB/MQ/storage.
 
@@ -17,7 +17,7 @@ Chọn bước gần triệu chứng nhất, kiểm tra kết quả rồi mới 
 | Pending | describe pod/events | Affinity, taint, resources hay PVC? |
 | PVC Bound nhưng app hỏng | Mount/filesystem/data/application log | Bound không chứng minh dữ liệu đúng/đủ disk |
 
-## 2. Ca thật: HTTPS login 200 nhưng /project/ 500
+## 2. Phân tích sự cố truy cập API Neutron từ Horizon
 
 GET login 200 cho biết browser → Gateway → Horizon hoạt động. Log /project/ báo không resolve neutron.openstack.svc.cluster.local. Service thực là neutron-server:9696; DNS của keystone-api và neutron-server resolve được. Catalog Network internal đã đúng; URL public mới là neutron:80.
 
@@ -25,7 +25,7 @@ Sai nằm ở chọn endpoint_type trong Horizon: internal cần sửa thành in
 
 Đây là cách suy luận: lấy hostname từ exception → kiểm tra Service tồn tại → test DNS từ đúng pod → đối chiếu catalog/interface. DNS bastion không resolve cluster hostname và DNS pod không resolve là hai ngữ cảnh khác nhau.
 
-## 3. Lệnh chỉ đọc, chạy khi có lỗi
+## 3. Thu thập trạng thái và log
 
 ```bash
 kubectl -n openstack get pods -l application=horizon -o wide
@@ -34,7 +34,7 @@ kubectl -n openstack describe httproute horizon-gateway-route
 kubectl -n openstack get endpointslices -l kubernetes.io/service-name=horizon-int
 ```
 
---since giới hạn khoảng thời gian; --tail giới hạn số dòng. Tạo lại lỗi trên browser rồi đọc log ngay để nối hai sự kiện. Không paste raw Secret/local_settings/password lên chat.
+--since giới hạn khoảng thời gian; --tail giới hạn số dòng. Tạo lại lỗi trên browser rồi đọc log ngay để nối hai sự kiện. Secret, local_settings và mật khẩu được loại khỏi dữ liệu công bố.
 
 Nếu cần kiểm tra HTTP, dùng GET thay HEAD. Ca lab có HEAD /403 nhưng GET /302, GET login200; không kết luận CSRF từ HEAD:
 
@@ -49,17 +49,17 @@ curl --max-time 20 -sS -D - -o /dev/null \
 
 --resolve ép hostname/port tới IP nhưng vẫn giữ Host/SNI. --cacert tin certificate lab. -D - in response headers, -o /dev/null bỏ body; lệnh vẫn gửi GET. HTTP login200 không kiểm tra token/API panel.
 
-## 4. Vì sao lag không nên kết luận do Gateway?
+## 4. Phân tích thời gian đáp ứng
 
 Horizon gọi nhiều API để dựng trang. Chậm có thể nằm ở xử lý Horizon, API, DB hoặc tài nguyên VM, cũng có thể ở mạng/browser. Log policy scope warning không đủ chứng minh nguyên nhân chậm. Chọn project phù hợp khi thao tác tài nguyên project; không sửa policy chỉ để bỏ warning.
 
 F12 → Network → reload → tìm request chậm và Waiting/TTFB. Ghi request nào chậm, thời gian, response status; đối chiếu log cùng thời điểm. Chưa có Metrics API nên kubectl top sẽ lỗi; không coi lỗi Metrics API là nguyên nhân Horizon hỏng.
 
-## 5. Tài liệu tham khảo ở đâu?
+## 5. Tài liệu chẩn đoán liên quan
 
 [06 migration RabbitMQ](../reference/06.OpenstackOperatorMigration.md) giải thích cluster/topology/cutover. [18 Infrastructure](../reference/18.Infrastructure.md) là kiến trúc Genestack tổng quan, không chứng minh lab có mọi thành phần như MetalLB/HA. Quy trình thực tế Gateway ở [file 19 local](../reference/19.Gateway.md); bản này đã nằm trong folder học.
 
-## 6. Horizon timeout khi workload đang restart
+## 6. Timeout trong quá trình workload khởi động lại
 
 Output ngày 09/10/2026: Horizon 0/1 Ready, restart18, lần cuối khoảng61s trước; log hiện tại là startup compilemessages/collectstatic/compress và Apache. Nova conductor vừa restart khoảng3 phút trước; nhiều pod MariaDB/Nova/RabbitMQ có lần restart khoảng28 phút trước. Đây là bằng chứng workload không ổn định, chưa xác định OOM/probe/node/containerd hay thao tác quản trị. Các mốc restart giống nhau không tự chứng minh node reboot. Warning distutils/Apache ServerName không đủ để quy nguyên nhân timeout.
 

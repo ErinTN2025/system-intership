@@ -1,0 +1,14 @@
+# Cấu hình public đã nghiệm thu ngày 13/10/2026.
+# Dùng cùng chart đã patch bằng tools/patch-horizon-static.py.
+# Thay digest/hostname khi dùng image hoặc cụm khác.
+images:
+  tags:
+    horizon: ghcr.io/erintn2025/horizon-octavia@sha256:5a0e344e9ef4193ca2da2c7f98a7f3a131603c715c94770a1a2ce8b0b6952587
+labels:
+  dashboard:
+    node_selector_key: kubernetes.io/hostname
+    node_selector_value: controlplane-01
+conf:
+  horizon:
+    extra_panels:
+      - octavia_dashboard
